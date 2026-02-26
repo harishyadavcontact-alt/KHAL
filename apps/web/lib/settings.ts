@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { existsSync } from "node:fs";
 
 const SETTINGS_PATH = path.resolve(process.cwd(), "..", "..", ".khal.local.json");
 
@@ -12,7 +13,13 @@ export async function readSettings(): Promise<KhalSettings> {
     const raw = await fs.readFile(SETTINGS_PATH, "utf-8");
     return JSON.parse(raw) as KhalSettings;
   } catch {
-    return { workbookPath: path.resolve(process.cwd(), "..", "..", "Genesis.xlsx") };
+    const candidates = [
+      path.resolve(process.cwd(), "Genesis.xlsx"),
+      path.resolve(process.cwd(), "..", "Genesis.xlsx"),
+      path.resolve(process.cwd(), "..", "..", "Genesis.xlsx")
+    ];
+    const workbookPath = candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
+    return { workbookPath };
   }
 }
 

@@ -5,12 +5,24 @@ import { useEffect, useState } from "react";
 export default function SettingsPage() {
   const [workbookPath, setWorkbookPath] = useState("");
   const [message, setMessage] = useState("");
+  const [diagnostics, setDiagnostics] = useState("");
+
+  async function parseJsonSafely(res: Response): Promise<any> {
+    const text = await res.text();
+    if (!text) return {};
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { error: `Unexpected response (${res.status})` };
+    }
+  }
 
   useEffect(() => {
     fetch("/api/workbook/validate")
-      .then((res) => res.json())
+      .then((res) => parseJsonSafely(res))
       .then((json) => {
         if (json.workbookPath) setWorkbookPath(json.workbookPath);
+        if (json.error) setMessage(`Validate failed: ${json.error}`);
       });
   }, []);
 
@@ -20,13 +32,21 @@ export default function SettingsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ workbookPath })
     });
-    setMessage(res.ok ? "Saved." : "Failed.");
+    const json = await parseJsonSafely(res);
+    setMessage(res.ok ? "Saved." : `Failed: ${json.error || "unknown error"}`);
   }
 
   async function normalizeWorkbook() {
     const res = await fetch("/api/workbook/normalize", { method: "POST" });
-    const json = await res.json();
+    const json = await parseJsonSafely(res);
     setMessage(json.ok ? "Workbook normalized." : `Normalize failed: ${json.error || json.issues?.join(", ")}`);
+  }
+
+  async function diagnoseWorkbook() {
+    const res = await fetch("/api/workbook/diagnose");
+    const json = await parseJsonSafely(res);
+    setDiagnostics(JSON.stringify(json, null, 2));
+    setMessage(res.ok ? "Diagnostics complete." : `Diagnostics failed: ${json.error || "see payload below"}`);
   }
 
   return (
@@ -38,8 +58,14 @@ export default function SettingsPage() {
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={save}>Save Workbook Path</button>
           <button onClick={normalizeWorkbook}>Normalize Workbook</button>
+          <button onClick={diagnoseWorkbook}>Run Diagnose</button>
         </div>
         {message && <p>{message}</p>}
+        {diagnostics && (
+          <pre style={{ margin: 0, padding: 12, borderRadius: 8, background: "#111827", color: "#e5e7eb", overflowX: "auto" }}>
+            {diagnostics}
+          </pre>
+        )}
       </div>
     </div>
   );

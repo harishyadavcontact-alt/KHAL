@@ -53,9 +53,25 @@ export function ok(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
 }
 
+function extractTopStackFrame(stack?: string): string | undefined {
+  if (!stack) return undefined;
+  const line = stack.split("\n").map((value) => value.trim()).find((value) => value.startsWith("at "));
+  return line;
+}
+
 export function fail(error: unknown, status = 400) {
+  const traceId = randomUUID();
   const message = error instanceof Error ? error.message : "Unknown error";
-  return NextResponse.json({ error: message }, { status });
+  const payload: Record<string, unknown> = { error: message, traceId };
+
+  if (process.env.NODE_ENV !== "production") {
+    payload.debug = {
+      topStackFrame: error instanceof Error ? extractTopStackFrame(error.stack) : undefined
+    };
+  }
+
+  console.error("[khal-api-error]", { traceId, status, message, stack: error instanceof Error ? error.stack : undefined });
+  return NextResponse.json(payload, { status });
 }
 
 export async function handleState() {

@@ -1,10 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
+import * as fs from "node:fs";
 import * as XLSX from "xlsx";
 import { computeFragilityScore, normalizeStatus, type Affair, type Interest, type KhalState, type Task } from "@khal/domain";
 
 const META_SHEET = "_khal_meta";
 const REQUIRED_SOURCE_SHEETS = ["War Room", "Affairs", "Interests"] as const;
+
+// In Next/ESM runtimes, xlsx may not auto-wire Node fs. Bind it explicitly.
+const xlsxWithFs = XLSX as typeof XLSX & { set_fs?: (nodeFs: typeof fs) => void };
+xlsxWithFs.set_fs?.(fs);
 
 function normalizeSheetName(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, " ");
@@ -55,7 +60,20 @@ export function validateWorkbook(filePath: string): WorkbookValidation {
     return { ok: false, issues: ["Workbook file not found"], sheets: [] };
   }
 
-  const workbook = XLSX.readFile(filePath, { cellDates: true });
+  let workbook: XLSX.WorkBook;
+  try {
+    workbook = XLSX.readFile(filePath, { cellDates: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown workbook access error";
+    const prefixed = `Cannot access file ${filePath}: `;
+    const issue = message.startsWith(prefixed) ? message : `${prefixed}${message}`;
+    return {
+      ok: false,
+      issues: [issue],
+      sheets: []
+    };
+  }
+
   const sheets = workbook.SheetNames;
   const issues: string[] = [];
 
@@ -306,9 +324,8 @@ export function loadWorkbookState(filePath: string): KhalState & { meta: Workboo
   const warRoomLines = warRoomRows.flat().map((v) => normalizeText(v)).filter(Boolean);
 
   const now = new Date().toISOString();
+  // Read path must stay non-mutating so UI can load even when the workbook is open/locked in Excel.
   meta.lastLoadedTimestamp = now;
-  writeMeta(workbook, meta);
-  XLSX.writeFile(workbook, filePath, { bookType: "xlsx" });
 
   const domains = Array.from(new Set([...affairs.map((a) => a.domainId), ...interests.map((i) => i.domainId)])).map((domainId) => ({
     id: domainId,
