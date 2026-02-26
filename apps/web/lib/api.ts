@@ -44,9 +44,9 @@ const taskSchema = z.object({
   lastSeenModifiedAt: z.string().optional()
 });
 
-export async function withWorkbook<T>(fn: (workbookPath: string) => Promise<T> | T): Promise<T> {
+export async function withStore<T>(fn: (dbPath: string) => Promise<T> | T): Promise<T> {
   const settings = await readSettings();
-  return fn(settings.workbookPath);
+  return fn(settings.dbPath);
 }
 
 export function ok(data: unknown, status = 200) {
@@ -55,8 +55,7 @@ export function ok(data: unknown, status = 200) {
 
 function extractTopStackFrame(stack?: string): string | undefined {
   if (!stack) return undefined;
-  const line = stack.split("\n").map((value) => value.trim()).find((value) => value.startsWith("at "));
-  return line;
+  return stack.split("\n").map((value) => value.trim()).find((value) => value.startsWith("at "));
 }
 
 export function fail(error: unknown, status = 400) {
@@ -75,39 +74,35 @@ export function fail(error: unknown, status = 400) {
 }
 
 export async function handleState() {
-  return withWorkbook((workbookPath) => ok(loadState(workbookPath)));
+  return withStore((dbPath) => ok(loadState(dbPath)));
 }
 
 export async function handleRefresh() {
-  return withWorkbook((workbookPath) => ok(refreshIfStale(workbookPath)));
+  return withStore((dbPath) => ok(refreshIfStale(dbPath)));
 }
 
 export async function handleNormalize() {
-  return withWorkbook((workbookPath) => ok(normalize(workbookPath)));
+  return withStore((dbPath) => ok(normalize(dbPath)));
 }
 
 export async function handleAffair(rawBody: unknown) {
   const parsed = affairSchema.parse(rawBody);
   const id = parsed.id ?? randomUUID();
-  return withWorkbook((workbookPath) =>
-    ok(writeAffair(workbookPath, { ...parsed, id }, parsed.lastSeenModifiedAt), parsed.id ? 200 : 201)
-  );
+  return withStore((dbPath) => ok(writeAffair(dbPath, { ...parsed, id }, parsed.lastSeenModifiedAt), parsed.id ? 200 : 201));
 }
 
 export async function handleInterest(rawBody: unknown) {
   const parsed = interestSchema.parse(rawBody);
   const id = parsed.id ?? randomUUID();
-  return withWorkbook((workbookPath) =>
-    ok(writeInterest(workbookPath, { ...parsed, id }, parsed.lastSeenModifiedAt), parsed.id ? 200 : 201)
-  );
+  return withStore((dbPath) => ok(writeInterest(dbPath, { ...parsed, id }, parsed.lastSeenModifiedAt), parsed.id ? 200 : 201));
 }
 
 export async function handleTask(rawBody: unknown) {
   const parsed = taskSchema.parse(rawBody);
   const id = parsed.id ?? randomUUID();
 
-  return withWorkbook((workbookPath) => {
-    const loaded = loadState(workbookPath);
-    return ok(writeTask(workbookPath, { ...parsed, id }, loaded.state.tasks, parsed.lastSeenModifiedAt), parsed.id ? 200 : 201);
+  return withStore((dbPath) => {
+    const loaded = loadState(dbPath);
+    return ok(writeTask(dbPath, { ...parsed, id }, loaded.state.tasks, parsed.lastSeenModifiedAt), parsed.id ? 200 : 201);
   });
 }

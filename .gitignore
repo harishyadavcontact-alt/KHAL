@@ -6,3 +6,6 @@ dist
 coverage
 .khal.local.json
 *.log
+data/
+exports/
+*.tsbuildinfo

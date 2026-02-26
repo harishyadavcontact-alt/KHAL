@@ -1,5 +1,5 @@
 {
-  "name": "@khal/excel-io",
+  "name": "@khal/sqlite-core",
   "version": "0.1.0",
   "type": "module",
   "main": "./src/index.ts",
@@ -11,13 +11,13 @@
     "build": "tsc -p tsconfig.json",
     "lint": "tsc --noEmit -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@khal/domain": "file:../domain",
-    "xlsx": "^0.18.5"
+    "better-sqlite3": "^11.8.1"
   },
   "devDependencies": {
-    "vitest": "^3.0.9"
+    "@types/better-sqlite3": "^7.6.12",
+    "vitest": "^3.2.4"
   }
 }

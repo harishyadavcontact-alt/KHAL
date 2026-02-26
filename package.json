@@ -14,8 +14,9 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --check .",
-    "bootstrap:workbook": "tsx scripts/bootstrap-workbook.ts",
-    "verify:workbook": "tsx scripts/verify-workbook.ts"
+    "db:init": "tsx scripts/bootstrap-sqlite.ts",
+    "db:export:json": "tsx scripts/export-sqlite-json.ts",
+    "db:export:csv": "tsx scripts/export-sqlite-csv.ts"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",

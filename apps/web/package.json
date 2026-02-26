@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@khal/domain": "file:../../packages/domain",
-    "@khal/excel-io": "file:../../packages/excel-io",
     "@khal/sync-engine": "file:../../packages/sync-engine",
     "@khal/ui": "file:../../packages/ui",
     "chart.js": "^4.4.8",

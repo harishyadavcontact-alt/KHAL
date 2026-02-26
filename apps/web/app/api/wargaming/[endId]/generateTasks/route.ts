@@ -1,16 +1,16 @@
 import { randomUUID } from "node:crypto";
-import { fail, ok, withWorkbook } from "../../../../../lib/api";
+import { fail, ok, withStore } from "../../../../../lib/api";
 import { loadState, writeTask } from "@khal/sync-engine";
 
 export async function POST(_: Request, { params }: { params: Promise<{ endId: string }> }) {
   try {
     const { endId } = await params;
 
-    return await withWorkbook((workbookPath) => {
-      const loaded = loadState(workbookPath);
+    return await withStore((dbPath) => {
+      const loaded = loadState(dbPath);
       const created = [1, 2, 3].map((step) =>
         writeTask(
-          workbookPath,
+          dbPath,
           {
             id: randomUUID(),
             sourceType: "PLAN",

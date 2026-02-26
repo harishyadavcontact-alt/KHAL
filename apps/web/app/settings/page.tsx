@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 export default function SettingsPage() {
-  const [workbookPath, setWorkbookPath] = useState("");
+  const [dbPath, setDbPath] = useState("");
   const [message, setMessage] = useState("");
   const [diagnostics, setDiagnostics] = useState("");
 
@@ -18,47 +18,39 @@ export default function SettingsPage() {
   }
 
   useEffect(() => {
-    fetch("/api/workbook/validate")
+    fetch("/api/db/path")
       .then((res) => parseJsonSafely(res))
       .then((json) => {
-        if (json.workbookPath) setWorkbookPath(json.workbookPath);
-        if (json.error) setMessage(`Validate failed: ${json.error}`);
+        if (json.dbPath) setDbPath(json.dbPath);
       });
   }, []);
 
   async function save() {
-    const res = await fetch("/api/workbook/validate", {
+    const res = await fetch("/api/db/path", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ workbookPath })
+      body: JSON.stringify({ dbPath })
     });
     const json = await parseJsonSafely(res);
     setMessage(res.ok ? "Saved." : `Failed: ${json.error || "unknown error"}`);
   }
 
-  async function normalizeWorkbook() {
-    const res = await fetch("/api/workbook/normalize", { method: "POST" });
-    const json = await parseJsonSafely(res);
-    setMessage(json.ok ? "Workbook normalized." : `Normalize failed: ${json.error || json.issues?.join(", ")}`);
-  }
-
-  async function diagnoseWorkbook() {
-    const res = await fetch("/api/workbook/diagnose");
+  async function inspectDb() {
+    const res = await fetch("/api/db/inspect");
     const json = await parseJsonSafely(res);
     setDiagnostics(JSON.stringify(json, null, 2));
-    setMessage(res.ok ? "Diagnostics complete." : `Diagnostics failed: ${json.error || "see payload below"}`);
+    setMessage(res.ok ? "DB inspection complete." : `Inspection failed: ${json.error || "see output below"}`);
   }
 
   return (
     <div className="card">
       <h2>Settings</h2>
-      <p>Configure local workbook path and normalization status.</p>
-      <div style={{ display: "grid", gap: 8, maxWidth: 760 }}>
-        <input value={workbookPath} onChange={(e) => setWorkbookPath(e.target.value)} placeholder="C:\\path\\to\\Genesis.xlsx" />
+      <p>Configure local SQLite path and inspect table state.</p>
+      <div style={{ display: "grid", gap: 8, maxWidth: 960 }}>
+        <input value={dbPath} onChange={(e) => setDbPath(e.target.value)} placeholder="C:\\path\\to\\KHAL.sqlite" />
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={save}>Save Workbook Path</button>
-          <button onClick={normalizeWorkbook}>Normalize Workbook</button>
-          <button onClick={diagnoseWorkbook}>Run Diagnose</button>
+          <button onClick={save}>Save DB Path</button>
+          <button onClick={inspectDb}>Inspect Database</button>
         </div>
         {message && <p>{message}</p>}
         {diagnostics && (

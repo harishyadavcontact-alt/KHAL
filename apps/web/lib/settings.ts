@@ -5,22 +5,25 @@ import { existsSync } from "node:fs";
 const SETTINGS_PATH = path.resolve(process.cwd(), "..", "..", ".khal.local.json");
 
 export interface KhalSettings {
-  workbookPath: string;
+  dbPath: string;
 }
 
 export async function readSettings(): Promise<KhalSettings> {
   try {
     const raw = await fs.readFile(SETTINGS_PATH, "utf-8");
-    return JSON.parse(raw) as KhalSettings;
+    const parsed = JSON.parse(raw) as Partial<KhalSettings>;
+    if (parsed.dbPath) return { dbPath: parsed.dbPath };
   } catch {
-    const candidates = [
-      path.resolve(process.cwd(), "Genesis.xlsx"),
-      path.resolve(process.cwd(), "..", "Genesis.xlsx"),
-      path.resolve(process.cwd(), "..", "..", "Genesis.xlsx")
-    ];
-    const workbookPath = candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
-    return { workbookPath };
+    // ignore and use fallback
   }
+
+  const candidates = [
+    path.resolve(process.cwd(), "data", "KHAL.sqlite"),
+    path.resolve(process.cwd(), "..", "data", "KHAL.sqlite"),
+    path.resolve(process.cwd(), "..", "..", "data", "KHAL.sqlite")
+  ];
+
+  return { dbPath: candidates.find((candidate) => existsSync(candidate)) ?? candidates[0] };
 }
 
 export async function writeSettings(next: KhalSettings): Promise<void> {
