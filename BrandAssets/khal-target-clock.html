@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KHAL — Target Clock Icon</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    font-family: 'Space Mono', monospace;
+    padding: 60px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 70px;
+    color: #fff;
+  }
+
+  h1 {
+    font-size: 10px;
+    letter-spacing: 6px;
+    color: #333;
+    text-transform: uppercase;
+  }
+
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes spin-r { from{transform:rotate(360deg)} to{transform:rotate(0deg)} }
+  @keyframes pulse-glow {
+    0%,100%{ filter: drop-shadow(0 0 24px rgba(255,140,0,0.5)); }
+    50%{ filter: drop-shadow(0 0 55px rgba(255,140,0,0.95)); }
+  }
+  @keyframes tick {
+    0%{ transform: rotate(0deg); }
+    100%{ transform: rotate(360deg); }
+  }
+  @keyframes dot-pulse {
+    0%,100%{ r: 5; opacity:1; }
+    50%{ r: 7; opacity:0.7; }
+  }
+
+  .hero-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    animation: pulse-glow 4s ease-in-out infinite;
+  }
+
+  /* SIZE VARIANTS */
+  .variants {
+    display: flex;
+    align-items: center;
+    gap: 44px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .variant {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .vlabel {
+    font-size: 7px;
+    letter-spacing: 3px;
+    color: #2a2a2a;
+    text-transform: uppercase;
+  }
+
+  /* APP ICONS */
+  .app-row {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .app-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .shell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .alabel {
+    font-size: 7px;
+    letter-spacing: 3px;
+    color: #252525;
+    text-transform: uppercase;
+  }
+
+  /* LOCKUP */
+  .lockup {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .divider-v {
+    width: 1px;
+    height: 64px;
+    background: linear-gradient(to bottom, transparent, rgba(255,140,0,0.4), transparent);
+  }
+  .wordmark { display: flex; flex-direction: column; gap: 8px; }
+  .wm-khal {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 52px;
+    font-weight: 900;
+    color: #ff8c00;
+    letter-spacing: 10px;
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(255,140,0,0.35);
+  }
+  .wm-tag {
+    font-size: 7.5px;
+    letter-spacing: 5px;
+    color: rgba(255,140,0,0.4);
+    text-transform: uppercase;
+    font-family: sans-serif;
+  }
+
+  .section-label {
+    font-size: 8px;
+    letter-spacing: 5px;
+    color: #1e1e1e;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<!-- SIZE VARIANTS -->
+<div class="section-label">— Size Variants —</div>
+<div class="variants">
+
+  <!-- 80px -->
+  <div class="variant">
+    <svg width="80" height="80" viewBox="0 0 260 260" fill="none" style="filter:drop-shadow(0 0 6px rgba(255,140,0,0.6))">
+      <circle cx="130" cy="130" r="110" stroke="#ff8c00" stroke-width="3"/>
+      <line x1="130" y1="20"  x2="130" y2="80"  stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+      <line x1="130" y1="180" x2="130" y2="240" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+      <line x1="20"  y1="130" x2="80"  y2="130" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+      <line x1="180" y1="130" x2="240" y2="130" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="130" cy="130" r="74" stroke="#ff8c00" stroke-width="2" opacity="0.6"/>
+      <circle cx="130" cy="130" r="48" stroke="#ff8c00" stroke-width="2"/>
+      <!-- <line x1="130" y1="130" x2="169" y2="91"  stroke="#ff8c00" stroke-width="3.5" stroke-linecap="round"/> -->
+      <!-- <line x1="130" y1="130" x2="101" y2="102" stroke="#ff8c00" stroke-width="5" stroke-linecap="round"/> -->
+      <circle cx="130" cy="130" r="22" fill="rgba(255,140,0,0.08)" stroke="#ff8c00" stroke-width="2"/>
+      <circle cx="130" cy="130" r="8" fill="#ff8c00"/>
+    </svg>
+    <div class="vlabel">80px</div>
+  </div>
+
+  <!-- 48px -->
+  <div class="variant">
+    <svg width="48" height="48" viewBox="0 0 260 260" fill="none" style="filter:drop-shadow(0 0 5px rgba(255,140,0,0.6))">
+      <circle cx="130" cy="130" r="110" stroke="#ff8c00" stroke-width="5"/>
+      <line x1="130" y1="20"  x2="130" y2="80"  stroke="#ff8c00" stroke-width="6" stroke-linecap="round"/>
+      <line x1="130" y1="180" x2="130" y2="240" stroke="#ff8c00" stroke-width="6" stroke-linecap="round"/>
+      <line x1="20"  y1="130" x2="80"  y2="130" stroke="#ff8c00" stroke-width="6" stroke-linecap="round"/>
+      <line x1="180" y1="130" x2="240" y2="130" stroke="#ff8c00" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="130" cy="130" r="48" stroke="#ff8c00" stroke-width="3"/>
+      <!-- <line x1="130" y1="130" x2="169" y2="91"  stroke="#ff8c00" stroke-width="5" stroke-linecap="round"/>
+      <line x1="130" y1="130" x2="101" y2="102" stroke="#ff8c00" stroke-width="7" stroke-linecap="round"/> -->
+      <circle cx="130" cy="130" r="14" fill="#ff8c00"/>
+    </svg>
+    <div class="vlabel">48px</div>
+  </div>
+
+  <!-- 32px -->
+  <div class="variant">
+    <svg width="32" height="32" viewBox="0 0 260 260" fill="none" style="filter:drop-shadow(0 0 4px rgba(255,140,0,0.7))">
+      <circle cx="130" cy="130" r="108" stroke="#ff8c00" stroke-width="8"/>
+      <line x1="130" y1="22"  x2="130" y2="78"  stroke="#ff8c00" stroke-width="9" stroke-linecap="round"/>
+      <line x1="130" y1="182" x2="130" y2="238" stroke="#ff8c00" stroke-width="9" stroke-linecap="round"/>
+      <line x1="22"  y1="130" x2="78"  y2="130" stroke="#ff8c00" stroke-width="9" stroke-linecap="round"/>
+      <line x1="182" y1="130" x2="238" y2="130" stroke="#ff8c00" stroke-width="9" stroke-linecap="round"/>
+      <line x1="130" y1="130" x2="168" y2="92"  stroke="#ff8c00" stroke-width="7" stroke-linecap="round"/>
+      <line x1="130" y1="130" x2="100" y2="104" stroke="#ff8c00" stroke-width="10" stroke-linecap="round"/>
+      <circle cx="130" cy="130" r="20" fill="#ff8c00"/>
+    </svg>
+    <div class="vlabel">32px</div>
+  </div>
+
+  <!-- 16px -->
+  <div class="variant">
+    <svg width="16" height="16" viewBox="0 0 260 260" fill="none">
+      <circle cx="130" cy="130" r="120" fill="#ff8c00"/>
+      <line x1="130" y1="10"  x2="130" y2="70"  stroke="#0a0a0a" stroke-width="18" stroke-linecap="round"/>
+      <line x1="130" y1="190" x2="130" y2="250" stroke="#0a0a0a" stroke-width="18" stroke-linecap="round"/>
+      <line x1="10"  y1="130" x2="70"  y2="130" stroke="#0a0a0a" stroke-width="18" stroke-linecap="round"/>
+      <line x1="190" y1="130" x2="250" y2="130" stroke="#0a0a0a" stroke-width="18" stroke-linecap="round"/>
+      <line x1="130" y1="130" x2="170" y2="90"  stroke="#0a0a0a" stroke-width="12" stroke-linecap="round"/>
+      <line x1="130" y1="130" x2="98"  y2="104" stroke="#0a0a0a" stroke-width="16" stroke-linecap="round"/>
+      <circle cx="130" cy="130" r="22" fill="#0a0a0a"/>
+      <circle cx="130" cy="130" r="10" fill="#ff8c00"/>
+    </svg>
+    <div class="vlabel">16px</div>
+  </div>
+
+</div>
+
+<!-- APP ICON MOCKUPS -->
+<div class="section-label">— App Icon Mockups —</div>
+<div class="app-row">
+
+  <!-- Dark -->
+  <div class="app-icon">
+    <div class="shell" style="width:86px;height:86px;background:linear-gradient(145deg,#1e0d00,#080808);">
+      <svg width="64" height="64" viewBox="0 0 260 260" fill="none" style="filter:drop-shadow(0 0 8px rgba(255,140,0,0.5))">
+        <circle cx="130" cy="130" r="110" stroke="#ff8c00" stroke-width="3.5"/>
+        <line x1="130" y1="20"  x2="130" y2="80"  stroke="#ff8c00" stroke-width="5" stroke-linecap="round"/>
+        <line x1="130" y1="180" x2="130" y2="240" stroke="#ff8c00" stroke-width="5" stroke-linecap="round"/>
+        <line x1="20"  y1="130" x2="80"  y2="130" stroke="#ff8c00" stroke-width="5" stroke-linecap="round"/>
+        <line x1="180" y1="130" x2="240" y2="130" stroke="#ff8c00" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="130" cy="130" r="74" stroke="#ff8c00" stroke-width="2" opacity="0.5"/>
+        <circle cx="130" cy="130" r="48" stroke="#ff8c00" stroke-width="2.5"/>
+          stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+        <!-- <line x1="130" y1="130" x2="101" y2="102" stroke="#ff8c00" stroke-width="6" stroke-linecap="round"/> -->
+        <!-- <line x1="130" y1="148" x2="130" y2="90"  stroke=<line x1="130" y1="130" x2="169" y2="91""#ff8c00" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+        <circle cx="130" cy="130" r="20" fill="rgba(255,140,0,0.1)" stroke="#ff8c00" stroke-width="2"/> -->
+        <circle cx="130" cy="130" r="7" fill="#ff8c00"/>
+        <circle cx="130" cy="130" r="2.5" fill="#080808"/>
+        <path d="M52 76 L52 52 L76 52" stroke="#ff8c00" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+        <path d="M208 76 L208 52 L184 52" stroke="#ff8c00" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+        <path d="M52 184 L52 208 L76 208" stroke="#ff8c00" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+        <path d="M208 184 L208 208 L184 208" stroke="#ff8c00" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="alabel">Dark</div>
+  </div>
+
+  <!-- Orange -->
+  <div class="app-icon">
+    <div class="shell" style="width:86px;height:86px;background:linear-gradient(145deg,#ff9500,#c44d00);">
+      <svg width="64" height="64" viewBox="0 0 260 260" fill="none">
+        <circle cx="130" cy="130" r="110" stroke="rgba(0,0,0,0.6)" stroke-width="3.5"/>
+        <line x1="130" y1="20"  x2="130" y2="80"  stroke="rgba(0,0,0,0.7)" stroke-width="5" stroke-linecap="round"/>
+        <line x1="130" y1="180" x2="130" y2="240" stroke="rgba(0,0,0,0.7)" stroke-width="5" stroke-linecap="round"/>
+        <line x1="20"  y1="130" x2="80"  y2="130" stroke="rgba(0,0,0,0.7)" stroke-width="5" stroke-linecap="round"/>
+        <line x1="180" y1="130" x2="240" y2="130" stroke="rgba(0,0,0,0.7)" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="130" cy="130" r="48" stroke="rgba(0,0,0,0.5)" stroke-width="2.5"/>
+        <!-- <line x1="130" y1="130" x2="169" y2="91"  stroke="rgba(0,0,0,0.8)" stroke-width="4" stroke-linecap="round"/>
+        <line x1="130" y1="130" x2="101" y2="102" stroke="rgba(0,0,0,0.9)" stroke-width="6" stroke-linecap="round"/> -->
+        <circle cx="130" cy="130" r="20" fill="rgba(0,0,0,0.15)" stroke="rgba(0,0,0,0.4)" stroke-width="2"/>
+        <circle cx="130" cy="130" r="7" fill="rgba(0,0,0,0.8)"/>
+      </svg>
+    </div>
+    <div class="alabel">Orange</div>
+  </div>
+
+  <!-- Black -->
+  <div class="app-icon">
+    <div class="shell" style="width:86px;height:86px;background:#000;">
+      <svg width="64" height="64" viewBox="0 0 260 260" fill="none" style="filter:drop-shadow(0 0 10px rgba(255,140,0,0.7))">
+        <circle cx="130" cy="130" r="110" stroke="#ff8c00" stroke-width="3.5"/>
+        <line x1="130" y1="20"  x2="130" y2="80"  stroke="#ff8c00" stroke-width="5" stroke-linecap="round"/>
+        <line x1="130" y1="180" x2="130" y2="240" stroke="#ff8c00" stroke-width="5" stroke-linecap="round"/>
+        <line x1="20"  y1="130" x2="80"  y2="130" stroke="#ff8c00" stroke-width="5" stroke-linecap="round"/>
+        <line x1="180" y1="130" x2="240" y2="130" stroke="#ff8c00" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="130" cy="130" r="74" stroke="#ff8c00" stroke-width="1.5" opacity="0.4"/>
+        <circle cx="130" cy="130" r="48" stroke="#ff8c00" stroke-width="2.5"/>
+          stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+        <!-- <line x1="130" y1="130" x2="101" y<line x1="130" y1="130" x2="169" y2="91"2="102" stroke="#ff8c00" stroke-width="6" stroke-linecap="round"/> -->
+        <circle cx="130" cy="130" r="20" fill="rgba(255,140,0,0.08)" stroke="#ff8c00" stroke-width="2"/>
+        <circle cx="130" cy="130" r="7" fill="#ff8c00"/>
+        <circle cx="130" cy="130" r="2.5" fill="#000"/>
+      </svg>
+    </div>
+    <div class="alabel">Black</div>
+  </div>
+
+  <!-- White -->
+  <div class="app-icon">
+    <div class="shell" style="width:86px;height:86px;background:#f5f5f5;">
+      <svg width="64" height="64" viewBox="0 0 260 260" fill="none">
+        <circle cx="130" cy="130" r="110" stroke="#c44d00" stroke-width="3.5"/>
+        <line x1="130" y1="20"  x2="130" y2="80"  stroke="#c44d00" stroke-width="5" stroke-linecap="round"/>
+        <line x1="130" y1="180" x2="130" y2="240" stroke="#c44d00" stroke-width="5" stroke-linecap="round"/>
+        <line x1="20"  y1="130" x2="80"  y2="130" stroke="#c44d00" stroke-width="5" stroke-linecap="round"/>
+        <line x1="180" y1="130" x2="240" y2="130" stroke="#c44d00" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="130" cy="130" r="74" stroke="#c44d00" stroke-width="1.5" opacity="0.4"/>
+        <circle cx="130" cy="130" r="48" stroke="#c44d00" stroke-width="2.5"/>
+        <!-- <line x1="130" y1="130" x2="169" y2="91"  stroke="#c44d00" stroke-width="4" stroke-linecap="round"/>
+        <line x1="130" y1="130" x2="101" y2="102" stroke="#c44d00" stroke-width="6" stroke-linecap="round"/> -->
+        <circle cx="130" cy="130" r="20" fill="rgba(196,77,0,0.08)" stroke="#c44d00" stroke-width="2"/>
+        <circle cx="130" cy="130" r="7" fill="#c44d00"/>
+        <circle cx="130" cy="130" r="2.5" fill="#f5f5f5"/>
+      </svg>
+    </div>
+    <div class="alabel">White</div>
+  </div>
+
+</div>
+
+<!-- FULL LOCKUP -->
+<div class="section-label">— Full Wordmark Lockup —</div>
+<div class="lockup">
+  <svg width="72" height="72" viewBox="0 0 260 260" fill="none" style="filter:drop-shadow(0 0 18px rgba(255,140,0,0.5))">
+    <circle cx="130" cy="130" r="110" stroke="#ff8c00" stroke-width="3"/>
+    <line x1="130" y1="20"  x2="130" y2="80"  stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+    <line x1="130" y1="180" x2="130" y2="240" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+    <line x1="20"  y1="130" x2="80"  y2="130" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+    <line x1="180" y1="130" x2="240" y2="130" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="130" cy="130" r="74" stroke="#ff8c00" stroke-width="1.5" opacity="0.5"/>
+    <circle cx="130" cy="130" r="48" stroke="#ff8c00" stroke-width="2"/>
+    <!-- <line x1="130" y1="130" x2="169" y2="91"  stroke="#ff8c00" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="130" y1="130" x2="101" y2="102" stroke="#ff8c00" stroke-width="5" stroke-linecap="round"/> -->
+    <line x1="130" y1="148" x2="130" y2="90"  stroke="#ff8c00" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+    <circle cx="130" cy="130" r="20" fill="rgba(255,140,0,0.08)" stroke="#ff8c00" stroke-width="1.5"/>
+    <circle cx="130" cy="130" r="6" fill="#ff8c00"/>
+    <circle cx="130" cy="130" r="2" fill="#0a0a0a"/>
+  </svg>
+  <div class="divider-v"></div>
+  <div class="wordmark">
+    <div class="wm-khal">KHAL</div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Genesis HUD v0.01 — Monolith Prototype</title>
+  <style>
+    :root{--bg:#0b0e12;--panel:#0f141b;--panel2:#111a24;--text:#e6edf3;--muted:#9aa7b2;--line:#233040;--accent:#7aa2ff;--warn:#ffcc66;--bad:#ff6b6b;--good:#7ee787;--chip:#172131;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;--sans:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans","Liberation Sans",sans-serif;--fs:13px}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:var(--fs);line-height:1.35}
+    .topbar{height:44px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0f141b,#0b0e12);gap:10px}
+    .brand{font-family:var(--mono);font-weight:700;letter-spacing:.4px;color:#dbe7ff}
+    .pill{padding:3px 8px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.03);color:var(--muted);font-family:var(--mono);font-size:12px;white-space:nowrap}
+    .grow{flex:1}
+    .search{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;min-width:280px;background:rgba(255,255,255,.02);color:var(--muted)}
+    .search input{width:100%;border:none;outline:none;background:transparent;color:var(--text);font-size:13px}
+    .btn{border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--text);padding:6px 10px;border-radius:10px;cursor:pointer;font-size:12px}
+    .btn:hover{border-color:#355070}
+    .btn.primary{border-color:#2c4d91;background:rgba(122,162,255,.10)}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+    .main{display:grid;grid-template-columns:220px 1fr;height:calc(100vh - 44px)}
+    .nav{border-right:1px solid var(--line);background:var(--panel);padding:10px;display:flex;flex-direction:column;gap:8px}
+    .nav .item{padding:10px;border:1px solid transparent;border-radius:12px;cursor:pointer;color:var(--muted);display:flex;gap:10px;align-items:center;user-select:none}
+    .nav .item.active{border-color:#2c4d91;background:rgba(122,162,255,.08);color:var(--text)}
+    .nav .item:hover{border-color:#2a3a4f}
+    .nav .icon{width:22px;height:22px;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.03);border:1px solid var(--line);font-family:var(--mono);font-size:12px;color:#cfe1ff}
+    .content{display:flex;flex-direction:column;min-width:0}
+    .viewHeader{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+    .viewTitle{font-weight:700;letter-spacing:.2px}
+    .subtle{color:var(--muted)}
+    .grid3{display:grid;grid-template-columns:240px 260px 1fr;gap:10px;padding:10px;height:100%;min-height:0}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px;height:100%;min-height:0}
+    .panel{background:var(--panel2);border:1px solid var(--line);border-radius:14px;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+    .panelHeader{padding:10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.02)}
+    .panelHeader .title{font-family:var(--mono);font-size:12px;color:#cfe1ff;letter-spacing:.2px;font-weight:700}
+    .panelBody{padding:10px;overflow:auto;min-height:0}
+    .list{display:flex;flex-direction:column;gap:6px}
+    .row{padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.12);cursor:pointer;user-select:none}
+    .row:hover{border-color:#355070}
+    .row.active{border-color:#2c4d91;background:rgba(122,162,255,.08)}
+    .row .h{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .row .name{font-weight:700}
+    .row .meta{color:var(--muted);font-family:var(--mono);font-size:12px}
+    .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+    .chip{background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+    .chip.good{color:var(--good);border-color:#264b36}
+    .chip.bad{color:var(--bad);border-color:#5a2f2f}
+    .chip.warn{color:var(--warn);border-color:#5b4a2a}
+    .form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    label{color:var(--muted);font-family:var(--mono);font-size:12px}
+    input,select,textarea{width:100%;border:1px solid var(--line);background:rgba(0,0,0,.15);color:var(--text);border-radius:10px;padding:8px 10px;outline:none;font-size:13px}
+    textarea{min-height:90px;resize:vertical}
+    .sep{height:1px;background:var(--line);margin:10px 0}
+    .kpi{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+    .kpi .box{border:1px solid var(--line);border-radius:12px;padding:10px;background:rgba(0,0,0,.10)}
+    .kpi .box .v{font-family:var(--mono);font-size:18px;font-weight:800}
+    .kpi .box .t{color:var(--muted);font-family:var(--mono);font-size:11px;margin-top:2px}
+    table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+    th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+    th{color:#cfe1ff;font-weight:800}
+    tr:hover td{background:rgba(122,162,255,.05)}
+    .rightActions{display:flex;gap:8px;flex-wrap:wrap}
+    .notice{border:1px solid var(--line);border-left:4px solid #2c4d91;padding:10px;border-radius:12px;background:rgba(122,162,255,.06);color:var(--muted);font-family:var(--mono);font-size:12px}
+    .notice.bad{border-left-color:var(--bad);background:rgba(255,107,107,.06)}
+    .notice.warn{border-left-color:var(--warn);background:rgba(255,204,102,.06)}
+    .tiny{font-size:11px;color:var(--muted);font-family:var(--mono)}
+    .tabs{display:flex;gap:6px;flex-wrap:wrap}
+    .tab{padding:6px 8px;border:1px solid var(--line);border-radius:10px;font-family:var(--mono);font-size:12px;color:var(--muted);cursor:pointer;background:rgba(255,255,255,.02)}
+    .tab.active{border-color:#2c4d91;color:var(--text);background:rgba(122,162,255,.08)}
+    .footerActions{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px;border-top:1px solid var(--line);background:rgba(255,255,255,.02)}
+    .mono{font-family:var(--mono)}
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">GENESIS HUD</div>
+    <div class="pill">v0.01 • monolith</div>
+    <div class="pill" id="pillFile">file: (mock)</div>
+    <div class="pill" id="pillSave">status: idle</div>
+    <div class="grow"></div>
+    <div class="search" title="Search domains, affairs, interests">
+      <span class="mono">/</span>
+      <input id="searchInput" placeholder="search…" />
+    </div>
+    <button class="btn primary" id="btnOpen">Open Excel</button>
+    <button class="btn" id="btnSave" disabled>Save</button>
+  </div>
+
+  <div class="main">
+    <div class="nav">
+      <div class="item active" data-view="warroom"><div class="icon">WR</div>War Room</div>
+      <div class="item" data-view="affairs"><div class="icon">AF</div>Affairs</div>
+      <div class="item" data-view="interests"><div class="icon">IN</div>Interests</div>
+      <div class="item" data-view="mission"><div class="icon">MC</div>Mission Command</div>
+      <div class="item" data-view="wargame"><div class="icon">WG</div>War Gaming</div>
+      <div class="item" data-view="data"><div class="icon">DB</div>Data</div>
+
+      <div style="margin-top:auto" class="notice">
+        <div><b class="mono">Prototype notes</b></div>
+        <div class="tiny" style="margin-top:6px">
+          • Single HTML file.<br/>
+          • Uses mock data if it can't parse your workbook.<br/>
+          • Save exports an .xlsx (final will save in-place).
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="viewHeader">
+        <div class="viewTitle" id="viewTitle">War Room</div>
+        <div class="subtle" id="viewSub">State of the Art → Drill-down editing</div>
+        <div class="grow"></div>
+        <div class="tabs" id="warroomTabs">
+          <div class="tab active" data-tab="soa">State of the Art</div>
+          <div class="tab" data-tab="sofa">State of Affairs</div>
+        </div>
+      </div>
+
+      <div id="view-warroom" style="flex:1;min-height:0">
+        <div class="grid3">
+          <div class="panel">
+            <div class="panelHeader"><div class="title">LAWS</div></div>
+            <div class="panelBody"><div class="list" id="lawsList"></div></div>
+          </div>
+
+          <div class="panel">
+            <div class="panelHeader"><div class="title">DOMAINS</div><div class="grow"></div><span class="tiny" id="domainsCount"></span></div>
+            <div class="panelBody"><div class="list" id="domainsList"></div></div>
+          </div>
+
+          <div class="panel">
+            <div class="panelHeader">
+              <div class="title">DOMAIN DRILL</div>
+              <div class="grow"></div>
+              <div class="rightActions">
+                <button class="btn" id="btnNewAffair">+ Affair</button>
+                <button class="btn" id="btnNewInterest">+ Interest</button>
+              </div>
+            </div>
+            <div class="panelBody" id="domainDrill"><div class="notice">Select a domain to drill down.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-affairs" class="hidden" style="flex:1;min-height:0">
+        <div class="grid2">
+          <div class="panel">
+            <div class="panelHeader"><div class="title">AFFAIRS (OBLIGATIONS → ROBUSTNESS)</div><div class="grow"></div><button class="btn" id="btnAddAffair">+ Add</button></div>
+            <div class="panelBody" id="affairsTableWrap"></div>
+          </div>
+          <div class="panel">
+            <div class="panelHeader"><div class="title">EDITOR</div><div class="grow"></div><span class="tiny" id="affairEditorHint"></span></div>
+            <div class="panelBody" id="affairEditor"><div class="notice">Select an affair to edit.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-interests" class="hidden" style="flex:1;min-height:0">
+        <div class="grid2">
+          <div class="panel">
+            <div class="panelHeader"><div class="title">INTERESTS (OPTIONS → ANTIFRAGILE)</div><div class="grow"></div><button class="btn" id="btnAddInterest">+ Add</button></div>
+            <div class="panelBody" id="interestsTableWrap"></div>
+          </div>
+          <div class="panel">
+            <div class="panelHeader"><div class="title">EDITOR</div><div class="grow"></div><span class="tiny" id="interestEditorHint"></span></div>
+            <div class="panelBody" id="interestEditor"><div class="notice">Select an interest to edit.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-mission" class="hidden" style="flex:1;min-height:0">
+        <div class="grid2">
+          <div class="panel"><div class="panelHeader"><div class="title">MISSION COMMAND QUEUE</div></div><div class="panelBody" id="missionQueue"></div></div>
+          <div class="panel"><div class="panelHeader"><div class="title">NEXT CONSTRAINT</div></div><div class="panelBody" id="missionConstraint"></div></div>
+        </div>
+      </div>
+
+      <div id="view-wargame" class="hidden" style="flex:1;min-height:0">
+        <div class="grid2">
+          <div class="panel">
+            <div class="panelHeader"><div class="title">WAR GAMING (DECISION + PLAN/PREP)</div></div>
+            <div class="panelBody" id="wargameEditor"></div>
+            <div class="footerActions">
+              <div class="tiny" id="wargameStatus">No session saved yet.</div>
+              <div class="rightActions">
+                <button class="btn" id="btnSaveSession">Save Session</button>
+                <button class="btn primary" id="btnCompile">Compile → Affair + Tasks</button>
+              </div>
+            </div>
+          </div>
+          <div class="panel"><div class="panelHeader"><div class="title">SESSIONS LOG (LATEST)</div></div><div class="panelBody" id="sessionsLog"></div></div>
+        </div>
+      </div>
+
+      <div id="view-data" class="hidden" style="flex:1;min-height:0">
+        <div class="grid2">
+          <div class="panel"><div class="panelHeader"><div class="title">VALIDATION</div></div><div class="panelBody" id="validationPanel"></div></div>
+          <div class="panel"><div class="panelHeader"><div class="title">RAW MODEL (DEBUG)</div></div><div class="panelBody"><pre id="rawModel" class="mono" style="white-space:pre-wrap;word-break:break-word;margin:0;color:var(--muted)"></pre></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    const MODEL={meta:{fileName:null,lastSavedAt:null,saveStatus:"idle"},laws:[],domains:[],affairs:[],interests:[],tasks:[],sessions:[]};
+    const $=id=>document.getElementById(id);
+    const byId=(arr,key,val)=>arr.find(x=>x&&x[key]===val);
+    const uid=p=>p+"_"+String(Math.floor(Math.random()*1e9)).padStart(9,"0");
+    const nowIso=()=>new Date().toISOString();
+    function setSaveStatus(s){MODEL.meta.saveStatus=s;$("pillSave").textContent="status: "+s}
+    function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]))}
+    function escapeAttr(s){return escapeHtml(s).replace(/"/g,"&quot;")}
+    function formatPct(x){const n=Number(x);if(Number.isNaN(n))return"";return Math.round(n*100)+"%"}
+    function numOrNull(x){const n=Number(x);return Number.isFinite(n)?n:null}
+    function findDupes(arr){const m=new Map();arr.forEach(x=>{if(!x)return;m.set(x,(m.get(x)||0)+1)});return Array.from(m.entries()).filter(([k,v])=>v>1).map(([k])=>k)}
+    function seedMock(){
+      MODEL.laws=[{law_id:"LAW_UNIVERSE",law_name:"Laws of the Universe"},{law_id:"LAW_PHYSICS",law_name:"Laws of Physics"},{law_id:"LAW_NATURE",law_name:"Laws of Nature"},{law_id:"LAW_JUNGLE",law_name:"Law of Jungle"},{law_id:"LAW_LAND",law_name:"Law of the Land"},{law_id:"LAW_TIME",law_name:"Law of Time"},{law_id:"LAW_NURTURE",law_name:"Laws of Nurture"}];
+      MODEL.domains=[
+        {domain_id:"complexity",law_id:"LAW_UNIVERSE",domain_name:"Complexity",volatility:"Laws of the Universe",stakes:9,risks:8,vulnerabilities:"• Complexity\n• Causal opacity\n• Volatility\n• Tail risk",hedge:"Cap downside tail risk; move toward robustness via preparation.",edge:"Uncap upside; 10% speculative offensive; seek positive asymmetry.",means_raw:"Faraday cages; resonant frequency; Lindy skills; via negativa pruning",mastercraft:"More of an Art than a Science; amalgamation of techniques."},
+        {domain_id:"politics",law_id:"LAW_LAND",domain_name:"Politics",volatility:"Law of the Land",stakes:10,risks:9,vulnerabilities:"• Legislation\n• Bureaucrats\n• Judges\n• Coercion",hedge:"Law-abiding on paper/off-grid; avoid ruin; remain insulated.",edge:"Author laws; rule-set advantage; write laws then obey them.",means_raw:"Be lawful on paper; remain insulated; buy loyalty with gold/silver",mastercraft:"Statecraft"},
+        {domain_id:"finance",law_id:"LAW_TIME",domain_name:"Finance & Economics",volatility:"Law of Time",stakes:10,risks:10,vulnerabilities:"• Currency debasement\n• Market cycles\n• Grid failure",hedge:"90% safe assets; heuristics risk mgmt; escape forced labor.",edge:"10% highly speculative asymmetric bets; Lindy professions; optionality.",means_raw:"'F you' money; master a technical skill; buy time; avoid debt",mastercraft:"Tradecraft: Sales, distribution, products, services"}
+      ];
+      MODEL.affairs=[
+        {affair_id:"AF_0001",law_id:"LAW_TIME",domain_id:"finance",title:"Build cash buffer",horizon:"WEEKS",cadence:"WEEKLY",threshold_value:0.10,threshold_basis:"net buffer",status:"IN PROGRESS",completion:0.35,due_date:"2026-03-31",est_hours:6,dependencies:"",notes:"Obligation: anti-ruin hygiene."},
+        {affair_id:"AF_0002",law_id:"LAW_LAND",domain_id:"politics",title:"Reduce legal exposure surface",horizon:"QUARTER",cadence:"MONTHLY",threshold_value:0.10,threshold_basis:"exposure score",status:"NOT STARTED",completion:0.0,due_date:"2026-06-30",est_hours:10,dependencies:"AF_0001",notes:"Gate: do after buffer."}
+      ];
+      MODEL.interests=[{interest_id:"IN_0001",law_id:"LAW_TIME",domain_id:"finance",opportunity:"Small convex bet basket",horizon:"WEEKS",stakes:3,risks:7,asymmetry:9,convexity:9,status:"ACTIVE",thesis:"Many small bets; capped downside; uncapped upside.",upside:"Asymmetric payout",downside:"Limited loss",notes:"Optionality."}];
+      MODEL.tasks=[{task_id:"TSK_0001",affair_id:"AF_0001",title:"Track expenses (weekly)",horizon:"WEEKS",est_hours:1,due_date:"2026-03-05",status:"IN PROGRESS",completion:0.4},{task_id:"TSK_0002",affair_id:"AF_0001",title:"Cut 2 subscriptions",horizon:"DAYS",est_hours:0.5,due_date:"2026-02-28",status:"NOT STARTED",completion:0.0}];
+      MODEL.sessions=[{session_id:"WG_0001",timestamp:nowIso(),domain_id:"finance",hedge_ends:"Protect against ruin via buffer.",edge_ends:"10% convex bets.",means:"Via negativa; barbell; Lindy.",plan_hours:"Review cashflow today.",plan_days:"Set weekly review.",plan_weeks:"Build buffer + cut waste.",plan_quarter:"Add new income stream.",decisions:"Affairs first, then options.",compiled_affair_ids:"AF_0001",compiled_task_ids:"TSK_0001,TSK_0002"}];
+    }
+    function lawName(law_id){const l=byId(MODEL.laws,"law_id",law_id);return l?l.law_name:law_id}
+    function fragility(d){const s=Number(d.stakes||0),r=Number(d.risks||0);return Math.round(s*r*10)/10}
+    let STATE={view:"warroom",warroomTab:"soa",selectedLawId:null,selectedDomainId:null,selectedAffairId:null,selectedInterestId:null,search:""};
+    function setView(v){
+      STATE.view=v;
+      document.querySelectorAll(".nav .item").forEach(el=>el.classList.toggle("active",el.dataset.view===v));
+      ["warroom","affairs","interests","mission","wargame","data"].forEach(id=>$("view-"+id).classList.toggle("hidden",id!==v));
+      $("viewTitle").textContent=({warroom:"War Room",affairs:"Affairs",interests:"Interests",mission:"Mission Command",wargame:"War Gaming",data:"Data"}[v]||v);
+      $("warroomTabs").classList.toggle("hidden",v!=="warroom");
+      $("viewSub").textContent=v==="warroom"?(STATE.warroomTab==="soa"?"State of the Art → Drill-down editing":"State of Affairs → Linked obligations/options"):v==="mission"?"Path dependence • constraints • obligations first":v==="wargame"?"Ends → Means → Plan/Prep → Compile":"Fast edit • export to Excel";
+      renderAll();
+    }
+    function filteredDomains(){
+      const q=(STATE.search||"").trim().toLowerCase();
+      let doms=MODEL.domains.slice();
+      if(q) doms=doms.filter(d=>(d.domain_name||"").toLowerCase().includes(q)||(d.volatility||"").toLowerCase().includes(q)||(d.vulnerabilities||"").toLowerCase().includes(q)||(d.means_raw||"").toLowerCase().includes(q)||(lawName(d.law_id)||"").toLowerCase().includes(q));
+      return doms;
+    }
+    function renderLaws(){
+      const list=$("lawsList"); list.innerHTML="";
+      MODEL.laws.forEach(l=>{
+        const count=MODEL.domains.filter(d=>d.law_id===l.law_id).length;
+        const el=document.createElement("div");
+        el.className="row"+(STATE.selectedLawId===l.law_id?" active":"");
+        el.innerHTML=`<div class="h"><div class="name">${escapeHtml(l.law_name)}</div><div class="meta">${count}</div></div><div class="chips"><span class="chip">law_id:${escapeHtml(l.law_id)}</span></div>`;
+        el.onclick=()=>{
+          STATE.selectedLawId=l.law_id;
+          const doms=filteredDomains().filter(d=>d.law_id===l.law_id);
+          STATE.selectedDomainId=doms[0]?.domain_id||null;
+          renderAll();
+        };
+        list.appendChild(el);
+      });
+      if(!STATE.selectedLawId && MODEL.laws.length) STATE.selectedLawId=MODEL.laws[0].law_id;
+    }
+    function renderDomains(){
+      const list=$("domainsList");
+      const doms=filteredDomains().filter(d=>!STATE.selectedLawId||d.law_id===STATE.selectedLawId).sort((a,b)=>fragility(b)-fragility(a));
+      $("domainsCount").textContent=doms.length+" domains";
+      list.innerHTML="";
+      doms.forEach(d=>{
+        const el=document.createElement("div");
+        el.className="row"+(STATE.selectedDomainId===d.domain_id?" active":"");
+        const f=fragility(d); const fChip=f>=80?"bad":f>=50?"warn":"good";
+        el.innerHTML=`<div class="h"><div class="name">${escapeHtml(d.domain_name)}</div><div class="meta">${f}</div></div>
+          <div class="chips">
+            <span class="chip">${escapeHtml(d.volatility||lawName(d.law_id))}</span>
+            <span class="chip ${fChip}">fragility:${f}</span>
+            <span class="chip">stakes:${escapeHtml(d.stakes??"")}</span>
+            <span class="chip">risk:${escapeHtml(d.risks??"")}</span>
+          </div>`;
+        el.onclick=()=>{STATE.selectedDomainId=d.domain_id;renderAll()};
+        list.appendChild(el);
+      });
+      if(!STATE.selectedDomainId && doms.length) STATE.selectedDomainId=doms[0].domain_id;
+    }
+    function renderMiniList(items,type){
+      if(!items.length) return `<div class="tiny">None linked.</div>`;
+      return `<div class="list">`+items.map(it=>{
+        if(type==="affair"){
+          const st=it.status||"NOT STARTED"; const stChip=st==="DONE"?"good":st==="BLOCKED"?"bad":"warn";
+          return `<div class="row" data-mini="1" data-mini-type="affair" data-mini-id="${escapeAttr(it.affair_id)}">
+            <div class="h"><div class="name">${escapeHtml(it.title||it.affair_id)}</div><div class="meta">${escapeHtml(it.horizon||"")}</div></div>
+            <div class="chips"><span class="chip ${stChip}">${escapeHtml(st)}</span><span class="chip">10%:${formatPct(it.threshold_value)}</span><span class="chip">done:${formatPct(it.completion)}</span></div>
+          </div>`;
+        } else {
+          const st=it.status||"NOT STARTED"; const stChip=st==="ACTIVE"?"good":st==="ABANDONED"?"bad":"warn";
+          return `<div class="row" data-mini="1" data-mini-type="interest" data-mini-id="${escapeAttr(it.interest_id)}">
+            <div class="h"><div class="name">${escapeHtml(it.opportunity||it.interest_id)}</div><div class="meta">${escapeHtml(it.horizon||"")}</div></div>
+            <div class="chips"><span class="chip ${stChip}">${escapeHtml(st)}</span><span class="chip">asym:${escapeHtml(it.asymmetry??"")}</span><span class="chip">conv:${escapeHtml(it.convexity??"")}</span></div>
+          </div>`;
+        }
+      }).join("")+`</div>`;
+    }
+    function renderDomainDrill(){
+      const wrap=$("domainDrill"); const d=byId(MODEL.domains,"domain_id",STATE.selectedDomainId);
+      if(!d){wrap.innerHTML=`<div class="notice">Select a domain to drill down.</div>`;$("btnNewAffair").disabled=true;$("btnNewInterest").disabled=true;return}
+      $("btnNewAffair").disabled=false;$("btnNewInterest").disabled=false;
+      const linkedAffairs=MODEL.affairs.filter(a=>a.domain_id===d.domain_id);
+      const linkedInterests=MODEL.interests.filter(i=>i.domain_id===d.domain_id);
+      const f=fragility(d); const fChip=f>=80?"bad":f>=50?"warn":"good";
+      const soa=STATE.warroomTab==="soa";
+      wrap.innerHTML=`
+        <div class="kpi">
+          <div class="box"><div class="v">${escapeHtml(d.stakes??"")}</div><div class="t">STAKES</div></div>
+          <div class="box"><div class="v">${escapeHtml(d.risks??"")}</div><div class="t">RISK</div></div>
+          <div class="box"><div class="v">${f}</div><div class="t">FRAGILITY</div></div>
+        </div>
+        <div class="chips" style="margin-bottom:10px">
+          <span class="chip">${escapeHtml(lawName(d.law_id))}</span>
+          <span class="chip">${escapeHtml(d.volatility||"")}</span>
+          <span class="chip ${fChip}">fragility:${f}</span>
+          <span class="chip">domain_id:${escapeHtml(d.domain_id)}</span>
+        </div>
+        <div class="notice ${soa?"":"warn"}" style="margin-bottom:10px">
+          <b class="mono">${soa?"STATE OF THE ART":"STATE OF AFFAIRS"}</b><br/>
+          <span class="tiny">${soa?"Exposure map: vulnerabilities → ends → means.":"Operations: obligations (affairs) → options (interests) linked to this domain."}</span>
+        </div>
+        <div class="form">
+          <div class="field"><label>stakes (1–10)</label><input type="number" step="0.1" min="0" max="10" data-bind="domain.stakes" value="${escapeAttr(d.stakes??"")}"></div>
+          <div class="field"><label>risk (1–10)</label><input type="number" step="0.1" min="0" max="10" data-bind="domain.risks" value="${escapeAttr(d.risks??"")}"></div>
+          <div class="field" style="grid-column:1/3"><label>vulnerabilities (bullets)</label><textarea data-bind="domain.vulnerabilities">${escapeHtml(d.vulnerabilities||"")}</textarea></div>
+          <div class="field"><label>ends • hedge</label><textarea data-bind="domain.hedge">${escapeHtml(d.hedge||"")}</textarea></div>
+          <div class="field"><label>ends • edge</label><textarea data-bind="domain.edge">${escapeHtml(d.edge||"")}</textarea></div>
+          <div class="field" style="grid-column:1/3"><label>means (heuristics / methods / tactics)</label><textarea data-bind="domain.means_raw">${escapeHtml(d.means_raw||"")}</textarea></div>
+          <div class="field" style="grid-column:1/3"><label>mastercraft</label><textarea data-bind="domain.mastercraft">${escapeHtml(d.mastercraft||"")}</textarea></div>
+        </div>
+        <div class="sep"></div>
+        <div class="panel" style="border-radius:12px">
+          <div class="panelHeader"><div class="title">LINKED • AFFAIRS (OBLIGATIONS)</div><div class="grow"></div><span class="tiny">${linkedAffairs.length}</span></div>
+          <div class="panelBody" style="padding:8px">${renderMiniList(linkedAffairs,"affair")}</div>
+        </div>
+        <div style="height:10px"></div>
+        <div class="panel" style="border-radius:12px">
+          <div class="panelHeader"><div class="title">LINKED • INTERESTS (OPTIONS)</div><div class="grow"></div><span class="tiny">${linkedInterests.length}</span></div>
+          <div class="panelBody" style="padding:8px">${renderMiniList(linkedInterests,"interest")}</div>
+        </div>`;
+      wrap.querySelectorAll("[data-bind]").forEach(el=>{
+        el.addEventListener("input",()=>{
+          const field=el.getAttribute("data-bind").split(".")[1];
+          const val=(el.type==="number")?(el.value===""?null:Number(el.value)):el.value;
+          d[field]=val; setSaveStatus("dirty"); $("btnSave").disabled=false;
+          renderDomainDrill(); renderDomains(); renderDataView();
+        });
+      });
+      wrap.querySelectorAll("[data-mini]").forEach(el=>{
+        el.addEventListener("click",()=>{
+          const type=el.getAttribute("data-mini-type");
+          const id=el.getAttribute("data-mini-id");
+          if(type==="affair"){STATE.selectedAffairId=id;setView("affairs")}
+          else{STATE.selectedInterestId=id;setView("interests")}
+        });
+      });
+    }
+    function renderAffairsTable(){
+      const wrap=$("affairsTableWrap"); const q=(STATE.search||"").trim().toLowerCase();
+      let rows=MODEL.affairs.slice();
+      if(q) rows=rows.filter(a=>(a.title||"").toLowerCase().includes(q)||(a.domain_id||"").toLowerCase().includes(q)||(lawName(a.law_id)||"").toLowerCase().includes(q)||(a.status||"").toLowerCase().includes(q));
+      rows.sort((a,b)=>(a.status==="DONE")-(b.status==="DONE")||(a.due_date||"").localeCompare(b.due_date||""));
+      wrap.innerHTML=`<table><thead><tr><th>id</th><th>law</th><th>domain</th><th>title</th><th>horizon</th><th>status</th><th>done</th><th>10%</th><th>deps</th></tr></thead><tbody>`+
+        rows.map(a=>`<tr data-row="affair" data-id="${escapeAttr(a.affair_id)}" style="${STATE.selectedAffairId===a.affair_id?"outline:1px solid #2c4d91":""}">
+          <td>${escapeHtml(a.affair_id)}</td><td>${escapeHtml(lawName(a.law_id))}</td><td>${escapeHtml(a.domain_id||"")}</td><td>${escapeHtml(a.title||"")}</td>
+          <td>${escapeHtml(a.horizon||"")}</td><td>${escapeHtml(a.status||"")}</td><td>${formatPct(a.completion)}</td><td>${formatPct(a.threshold_value)}</td><td>${escapeHtml(a.dependencies||"")}</td>
+        </tr>`).join("")+
+        `</tbody></table>`;
+      wrap.querySelectorAll("tr[data-row='affair']").forEach(tr=>tr.addEventListener("click",()=>{STATE.selectedAffairId=tr.getAttribute("data-id");renderAffairEditor();renderAffairsTable();renderMission();renderDataView()}));
+    }
+    function renderAffairEditor(){
+      const wrap=$("affairEditor"); const a=byId(MODEL.affairs,"affair_id",STATE.selectedAffairId);
+      if(!a){wrap.innerHTML=`<div class="notice">Select an affair to edit.</div>`;return}
+      $("affairEditorHint").textContent="editing "+a.affair_id;
+      const tasks=MODEL.tasks.filter(t=>t.affair_id===a.affair_id).sort((x,y)=>(x.due_date||"").localeCompare(y.due_date||""));
+      const riskFlag=(a.completion??0)<(a.threshold_value??0)?"bad":"good";
+      wrap.innerHTML=`
+        <div class="chips" style="margin-bottom:10px">
+          <span class="chip">${escapeHtml(lawName(a.law_id))}</span>
+          <span class="chip">domain:${escapeHtml(a.domain_id||"")}</span>
+          <span class="chip ${riskFlag}">threshold:${formatPct(a.threshold_value)} vs done:${formatPct(a.completion)}</span>
+          <span class="chip">cadence:${escapeHtml(a.cadence||"")}</span>
+        </div>
+        <div class="form">
+          <div class="field"><label>title</label><input data-bind="affair.title" value="${escapeAttr(a.title||"")}"></div>
+          <div class="field"><label>status</label><select data-bind="affair.status">${["NOT STARTED","IN PROGRESS","BLOCKED","DONE"].map(s=>`<option ${a.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
+          <div class="field"><label>horizon</label><select data-bind="affair.horizon">${["HOURS","DAYS","WEEKS","QUARTER"].map(s=>`<option ${a.horizon===s?"selected":""}>${s}</option>`).join("")}</select></div>
+          <div class="field"><label>due date</label><input type="date" data-bind="affair.due_date" value="${escapeAttr(a.due_date||"")}"></div>
+          <div class="field"><label>completion (0..1)</label><input type="number" step="0.01" min="0" max="1" data-bind="affair.completion" value="${escapeAttr(a.completion??"")}"></div>
+          <div class="field"><label>threshold (10% = 0.10)</label><input type="number" step="0.01" min="0" max="1" data-bind="affair.threshold_value" value="${escapeAttr(a.threshold_value??"")}"></div>
+          <div class="field"><label>dependencies (comma affair_id)</label><input data-bind="affair.dependencies" value="${escapeAttr(a.dependencies||"")}"></div>
+          <div class="field"><label>est hours</label><input type="number" step="0.1" min="0" data-bind="affair.est_hours" value="${escapeAttr(a.est_hours??"")}"></div>
+          <div class="field" style="grid-column:1/3"><label>notes</label><textarea data-bind="affair.notes">${escapeHtml(a.notes||"")}</textarea></div>
+        </div>
+        <div class="sep"></div>
+        <div class="panel" style="border-radius:12px">
+          <div class="panelHeader"><div class="title">TASKS (WITHIN AFFAIR)</div><div class="grow"></div><button class="btn" id="btnAddTask">+ Task</button></div>
+          <div class="panelBody" style="padding:8px">
+            ${tasks.length?`<table><thead><tr><th>id</th><th>title</th><th>horizon</th><th>due</th><th>status</th><th>done</th></tr></thead><tbody>`+
+              tasks.map(t=>`<tr><td>${escapeHtml(t.task_id)}</td><td>${escapeHtml(t.title||"")}</td><td>${escapeHtml(t.horizon||"")}</td><td>${escapeHtml(t.due_date||"")}</td><td>${escapeHtml(t.status||"")}</td><td>${formatPct(t.completion)}</td></tr>`).join("")+
+              `</tbody></table><div class="tiny" style="margin-top:8px">v0.01: quick-add only (full task editor later).</div>`:`<div class="tiny">No tasks yet.</div>`}
+          </div>
+        </div>`;
+      wrap.querySelectorAll("[data-bind]").forEach(el=>el.addEventListener("input",()=>{
+        const field=el.getAttribute("data-bind").split(".")[1];
+        const val=(el.type==="number")?(el.value===""?null:Number(el.value)):el.value;
+        a[field]=val; setSaveStatus("dirty"); $("btnSave").disabled=false;
+        renderAffairsTable(); renderMission(); renderDataView();
+      }));
+      wrap.querySelector("#btnAddTask")?.addEventListener("click",()=>{
+        MODEL.tasks.push({task_id:uid("TSK"),affair_id:a.affair_id,title:"New task",horizon:a.horizon||"WEEKS",est_hours:1,due_date:a.due_date||"",status:"NOT STARTED",completion:0});
+        setSaveStatus("dirty"); $("btnSave").disabled=false;
+        renderAffairEditor(); renderMission(); renderDataView();
+      });
+    }
+    function renderInterestsTable(){
+      const wrap=$("interestsTableWrap"); const q=(STATE.search||"").trim().toLowerCase();
+      let rows=MODEL.interests.slice();
+      if(q) rows=rows.filter(i=>(i.opportunity||"").toLowerCase().includes(q)||(i.domain_id||"").toLowerCase().includes(q)||(lawName(i.law_id)||"").toLowerCase().includes(q)||(i.status||"").toLowerCase().includes(q));
+      rows.sort((a,b)=>(a.status==="CLOSED")-(b.status==="CLOSED")||(Number(b.convexity||0)-Number(a.convexity||0)));
+      wrap.innerHTML=`<table><thead><tr><th>id</th><th>law</th><th>domain</th><th>opportunity</th><th>horizon</th><th>status</th><th>asym</th><th>conv</th></tr></thead><tbody>`+
+        rows.map(i=>`<tr data-row="interest" data-id="${escapeAttr(i.interest_id)}" style="${STATE.selectedInterestId===i.interest_id?"outline:1px solid #2c4d91":""}">
+          <td>${escapeHtml(i.interest_id)}</td><td>${escapeHtml(lawName(i.law_id))}</td><td>${escapeHtml(i.domain_id||"")}</td><td>${escapeHtml(i.opportunity||"")}</td>
+          <td>${escapeHtml(i.horizon||"")}</td><td>${escapeHtml(i.status||"")}</td><td>${escapeHtml(i.asymmetry??"")}</td><td>${escapeHtml(i.convexity??"")}</td>
+        </tr>`).join("")+
+        `</tbody></table>`;
+      wrap.querySelectorAll("tr[data-row='interest']").forEach(tr=>tr.addEventListener("click",()=>{STATE.selectedInterestId=tr.getAttribute("data-id");renderInterestEditor();renderInterestsTable();renderMission();renderDataView()}));
+    }
+    function renderInterestEditor(){
+      const wrap=$("interestEditor"); const i=byId(MODEL.interests,"interest_id",STATE.selectedInterestId);
+      if(!i){wrap.innerHTML=`<div class="notice">Select an interest to edit.</div>`;return}
+      $("interestEditorHint").textContent="editing "+i.interest_id;
+      wrap.innerHTML=`
+        <div class="chips" style="margin-bottom:10px">
+          <span class="chip">${escapeHtml(lawName(i.law_id))}</span><span class="chip">domain:${escapeHtml(i.domain_id||"")}</span><span class="chip good">optionality</span>
+        </div>
+        <div class="form">
+          <div class="field"><label>opportunity</label><input data-bind="interest.opportunity" value="${escapeAttr(i.opportunity||"")}"></div>
+          <div class="field"><label>status</label><select data-bind="interest.status">${["NOT STARTED","IN PROGRESS","ACTIVE","CLOSED","ABANDONED"].map(s=>`<option ${i.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
+          <div class="field"><label>horizon</label><select data-bind="interest.horizon">${["HOURS","DAYS","WEEKS","QUARTER"].map(s=>`<option ${i.horizon===s?"selected":""}>${s}</option>`).join("")}</select></div>
+          <div class="field"><label>stakes (1–10)</label><input type="number" step="0.1" min="0" max="10" data-bind="interest.stakes" value="${escapeAttr(i.stakes??"")}"></div>
+          <div class="field"><label>risk (1–10)</label><input type="number" step="0.1" min="0" max="10" data-bind="interest.risks" value="${escapeAttr(i.risks??"")}"></div>
+          <div class="field"><label>asymmetry</label><input type="number" step="0.1" data-bind="interest.asymmetry" value="${escapeAttr(i.asymmetry??"")}"></div>
+          <div class="field"><label>convexity</label><input type="number" step="0.1" data-bind="interest.convexity" value="${escapeAttr(i.convexity??"")}"></div>
+          <div class="field" style="grid-column:1/3"><label>thesis</label><textarea data-bind="interest.thesis">${escapeHtml(i.thesis||"")}</textarea></div>
+          <div class="field"><label>upside</label><textarea data-bind="interest.upside">${escapeHtml(i.upside||"")}</textarea></div>
+          <div class="field"><label>downside</label><textarea data-bind="interest.downside">${escapeHtml(i.downside||"")}</textarea></div>
+          <div class="field" style="grid-column:1/3"><label>notes</label><textarea data-bind="interest.notes">${escapeHtml(i.notes||"")}</textarea></div>
+        </div>`;
+      wrap.querySelectorAll("[data-bind]").forEach(el=>el.addEventListener("input",()=>{
+        const field=el.getAttribute("data-bind").split(".")[1];
+        const val=(el.type==="number")?(el.value===""?null:Number(el.value)):el.value;
+        i[field]=val; setSaveStatus("dirty"); $("btnSave").disabled=false;
+        renderInterestsTable(); renderMission(); renderDataView();
+      }));
+    }
+    function renderMission(){
+      const qWrap=$("missionQueue"), cWrap=$("missionConstraint");
+      const affairs=MODEL.affairs.filter(a=>a.status!=="DONE").slice().sort((a,b)=>({HOURS:0,DAYS:1,WEEKS:2,QUARTER:3}[a.horizon||"WEEKS"]??9)-({HOURS:0,DAYS:1,WEEKS:2,QUARTER:3}[b.horizon||"WEEKS"]??9)||(a.due_date||"").localeCompare(b.due_date||""));
+      const interests=MODEL.interests.filter(i=>["ACTIVE","IN PROGRESS"].includes(i.status)).slice().sort((a,b)=>Number(b.convexity||0)-Number(a.convexity||0));
+      const doneSet=new Set(MODEL.affairs.filter(a=>a.status==="DONE").map(a=>a.affair_id));
+      const isBlocked=a=>{if(!a.dependencies)return false;const deps=a.dependencies.split(",").map(s=>s.trim()).filter(Boolean);return deps.some(dep=>!doneSet.has(dep))};
+      qWrap.innerHTML=`
+        <div class="notice"><b class="mono">Queue</b><br/><span class="tiny">Affairs = obligations. Interests = options. Blocked affairs show dependencies.</span></div>
+        <div style="height:10px"></div>
+        <div class="panel" style="border-radius:12px;margin-bottom:10px"><div class="panelHeader"><div class="title">AFFAIRS</div><div class="grow"></div><span class="tiny">${affairs.length}</span></div>
+          <div class="panelBody" style="padding:8px">${affairs.length?`<div class="list">`+affairs.map(a=>{
+            const blocked=isBlocked(a); const chip=blocked?"bad":"warn";
+            return `<div class="row" data-mc="affair" data-id="${escapeAttr(a.affair_id)}"><div class="h"><div class="name">${escapeHtml(a.title||a.affair_id)}</div><div class="meta">${escapeHtml(a.horizon||"")}</div></div>
+              <div class="chips"><span class="chip ${chip}">${blocked?"BLOCKED":escapeHtml(a.status||"")}</span><span class="chip">due:${escapeHtml(a.due_date||"")}</span><span class="chip">done:${formatPct(a.completion)}</span>${blocked?`<span class="chip bad">deps:${escapeHtml(a.dependencies||"")}</span>`:""}</div></div>`;
+          }).join("")+`</div>`:`<div class="tiny">No active affairs.</div>`}</div></div>
+        <div class="panel" style="border-radius:12px"><div class="panelHeader"><div class="title">INTERESTS</div><div class="grow"></div><span class="tiny">${interests.length}</span></div>
+          <div class="panelBody" style="padding:8px">${interests.length?`<div class="list">`+interests.map(i=>`<div class="row" data-mc="interest" data-id="${escapeAttr(i.interest_id)}"><div class="h"><div class="name">${escapeHtml(i.opportunity||i.interest_id)}</div><div class="meta">conv:${escapeHtml(i.convexity??"")}</div></div><div class="chips"><span class="chip good">${escapeHtml(i.status||"")}</span><span class="chip">domain:${escapeHtml(i.domain_id||"")}</span><span class="chip">asym:${escapeHtml(i.asymmetry??"")}</span></div></div>`).join("")+`</div>`:`<div class="tiny">No active interests.</div>`}</div></div>`;
+      const blockedFirst=affairs.find(isBlocked); const next=blockedFirst||affairs[0]||null;
+      if(!next) cWrap.innerHTML=`<div class="notice">No constraints detected.</div>`;
+      else{
+        cWrap.innerHTML=`<div class="notice ${isBlocked(next)?"bad":"warn"}"><b class="mono">${escapeHtml(next.title||next.affair_id)}</b><br/><span class="tiny">law: ${escapeHtml(lawName(next.law_id))} • domain: ${escapeHtml(next.domain_id||"")} • horizon: ${escapeHtml(next.horizon||"")}</span></div>
+          <div style="height:10px"></div>
+          <div class="panel" style="border-radius:12px"><div class="panelHeader"><div class="title">DETAIL</div></div><div class="panelBody" style="padding:10px">
+            <div class="tiny">status: ${escapeHtml(next.status||"")}</div>
+            <div class="tiny">due: ${escapeHtml(next.due_date||"")}</div>
+            <div class="tiny">threshold: ${formatPct(next.threshold_value)} • completion: ${formatPct(next.completion)}</div>
+            ${isBlocked(next)?`<div class="tiny" style="margin-top:8px;color:var(--bad)">blocked by: ${escapeHtml(next.dependencies||"")}</div>`:""}
+            <div class="sep"></div>
+            <div class="tiny">notes</div>
+            <div class="mono" style="white-space:pre-wrap;color:var(--muted)">${escapeHtml(next.notes||"")}</div>
+            <div class="sep"></div>
+            <button class="btn primary" id="btnOpenConstraint">Open in Affairs</button>
+          </div></div>`;
+        cWrap.querySelector("#btnOpenConstraint")?.addEventListener("click",()=>{STATE.selectedAffairId=next.affair_id;setView("affairs")});
+      }
+      qWrap.querySelectorAll("[data-mc]").forEach(el=>el.addEventListener("click",()=>{
+        const type=el.getAttribute("data-mc"), id=el.getAttribute("data-id");
+        if(type==="affair"){STATE.selectedAffairId=id;setView("affairs")} else {STATE.selectedInterestId=id;setView("interests")}
+      }));
+    }
+    function renderSessionsLog(){
+      const wrap=$("sessionsLog");
+      const sessions=MODEL.sessions.slice().sort((a,b)=>(b.timestamp||"").localeCompare(a.timestamp||"")).slice(0,10);
+      wrap.innerHTML=sessions.length?`<div class="list">`+sessions.map(s=>`<div class="row"><div class="h"><div class="name">${escapeHtml(byId(MODEL.domains,"domain_id",s.domain_id)?.domain_name||s.domain_id)}</div><div class="meta">${escapeHtml((s.timestamp||"").slice(0,19).replace("T"," "))}</div></div><div class="chips"><span class="chip">compiled:${escapeHtml(s.compiled_affair_ids||"-")}</span><span class="chip">tasks:${escapeHtml(s.compiled_task_ids||"-")}</span></div><div class="tiny" style="margin-top:6px">ends: ${escapeHtml((s.hedge_ends||"").slice(0,70))}${(s.hedge_ends||"").length>70?"…":""}</div></div>`).join("")+`</div>`:`<div class="tiny">No sessions yet.</div>`;
+    }
+    function renderWarGaming(){
+      const wrap=$("wargameEditor");
+      const doms=MODEL.domains.slice().sort((a,b)=>(a.domain_name||"").localeCompare(b.domain_name||""));
+      const selected=byId(MODEL.domains,"domain_id",STATE.selectedDomainId)||doms[0]||null;
+      if(selected) STATE.selectedDomainId=selected.domain_id;
+      wrap.innerHTML=`
+        <div class="notice"><b class="mono">Decision workflow</b><br/><span class="tiny">Ends → Means → Plan/Prep (Hours/Days/Weeks/Quarter) → Compile into Affairs + Tasks.</span></div>
+        <div class="sep"></div>
+        <div class="field"><label>domain</label><select id="wgDomain">`+
+          doms.map(d=>`<option value="${escapeAttr(d.domain_id)}" ${d.domain_id===STATE.selectedDomainId?"selected":""}>${escapeHtml(lawName(d.law_id))} • ${escapeHtml(d.domain_name)}</option>`).join("")+
+        `</select></div>
+        <div style="height:10px"></div>
+        <div class="form">
+          <div class="field"><label>ends • hedge (robustness)</label><textarea id="wgHedge" placeholder="Anti-ruin…"></textarea></div>
+          <div class="field"><label>ends • edge (optionality)</label><textarea id="wgEdge" placeholder="Convex bets…"></textarea></div>
+          <div class="field" style="grid-column:1/3"><label>means</label><textarea id="wgMeans" placeholder="Via negativa; barbell…"></textarea></div>
+          <div class="field"><label>plan & prep • hours</label><textarea id="wgHours" placeholder="Today/next few hours…"></textarea></div>
+          <div class="field"><label>plan & prep • days</label><textarea id="wgDays" placeholder="Next 1–7 days…"></textarea></div>
+          <div class="field"><label>plan & prep • weeks</label><textarea id="wgWeeks" placeholder="Next 2–8 weeks…"></textarea></div>
+          <div class="field"><label>plan & prep • quarter</label><textarea id="wgQuarter" placeholder="Quarter-level…"></textarea></div>
+          <div class="field" style="grid-column:1/3"><label>decisions</label><textarea id="wgDecisions" placeholder="What is decided, what is not…"></textarea></div>
+        </div>`;
+      $("wgHedge").value=selected?.hedge||""; $("wgEdge").value=selected?.edge||""; $("wgMeans").value=selected?.means_raw||"";
+      $("wgDomain").addEventListener("change",()=>{STATE.selectedDomainId=$("wgDomain").value;renderWarGaming()});
+      renderSessionsLog();
+    }
+    function renderValidation(){
+      const wrap=$("validationPanel");
+      const issues=[];
+      issues.push(...findDupes(MODEL.affairs.map(a=>a.affair_id)).map(id=>({level:"bad",msg:`Duplicate affair_id: ${id}`})));
+      issues.push(...findDupes(MODEL.interests.map(i=>i.interest_id)).map(id=>({level:"bad",msg:`Duplicate interest_id: ${id}`})));
+      issues.push(...findDupes(MODEL.domains.map(d=>d.domain_id)).map(id=>({level:"bad",msg:`Duplicate domain_id: ${id}`})));
+      const domainSet=new Set(MODEL.domains.map(d=>d.domain_id));
+      MODEL.affairs.forEach(a=>{if(a.domain_id && !domainSet.has(a.domain_id)) issues.push({level:"warn",msg:`Affair ${a.affair_id} references missing domain_id: ${a.domain_id}`})});
+      MODEL.interests.forEach(i=>{if(i.domain_id && !domainSet.has(i.domain_id)) issues.push({level:"warn",msg:`Interest ${i.interest_id} references missing domain_id: ${i.domain_id}`})});
+      MODEL.affairs.forEach(a=>{const tv=Number(a.threshold_value??0); if(tv<0||tv>1) issues.push({level:"warn",msg:`Affair ${a.affair_id} threshold_value out of range: ${a.threshold_value}`});
+        const c=Number(a.completion??0); if(c<0||c>1) issues.push({level:"warn",msg:`Affair ${a.affair_id} completion out of range: ${a.completion}`});});
+      wrap.innerHTML=issues.length?`<div class="list">`+issues.map(x=>`<div class="notice ${x.level}">${escapeHtml(x.msg)}</div>`).join("")+`</div>`:`<div class="notice">No validation issues detected.</div>`;
+    }
+    function renderDataView(){
+      $("rawModel").textContent=JSON.stringify({meta:MODEL.meta,laws:MODEL.laws,domains:MODEL.domains,affairs:MODEL.affairs,interests:MODEL.interests,tasks:MODEL.tasks,sessions:MODEL.sessions.slice(-5)},null,2);
+      renderValidation();
+    }
+    function renderAll(){
+      if(STATE.view==="warroom"){renderLaws();renderDomains();renderDomainDrill()}
+      if(STATE.view==="affairs"){renderAffairsTable();renderAffairEditor()}
+      if(STATE.view==="interests"){renderInterestsTable();renderInterestEditor()}
+      if(STATE.view==="mission"){renderMission()}
+      if(STATE.view==="wargame"){renderWarGaming()}
+      if(STATE.view==="data"){renderDataView()}
+    }
+    document.querySelectorAll(".nav .item").forEach(el=>el.addEventListener("click",()=>setView(el.dataset.view)));
+    document.querySelectorAll("#warroomTabs .tab").forEach(el=>el.addEventListener("click",()=>{
+      document.querySelectorAll("#warroomTabs .tab").forEach(t=>t.classList.remove("active")); el.classList.add("active");
+      STATE.warroomTab=el.dataset.tab; $("viewSub").textContent=STATE.warroomTab==="soa"?"State of the Art → Drill-down editing":"State of Affairs → Linked obligations/options";
+      renderDomainDrill();
+    }));
+    $("searchInput").addEventListener("input",()=>{STATE.search=$("searchInput").value||"";renderAll()});
+    $("btnNewAffair").addEventListener("click",()=>{
+      const d=byId(MODEL.domains,"domain_id",STATE.selectedDomainId); if(!d) return;
+      const a={affair_id:uid("AF"),law_id:d.law_id,domain_id:d.domain_id,title:"New affair",horizon:"WEEKS",cadence:"WEEKLY",threshold_value:0.10,threshold_basis:"progress",status:"NOT STARTED",completion:0,due_date:"",est_hours:1,dependencies:"",notes:""};
+      MODEL.affairs.push(a); STATE.selectedAffairId=a.affair_id; setSaveStatus("dirty"); $("btnSave").disabled=false; setView("affairs");
+    });
+    $("btnNewInterest").addEventListener("click",()=>{
+      const d=byId(MODEL.domains,"domain_id",STATE.selectedDomainId); if(!d) return;
+      const i={interest_id:uid("IN"),law_id:d.law_id,domain_id:d.domain_id,opportunity:"New interest",horizon:"WEEKS",stakes:2,risks:6,asymmetry:8,convexity:8,status:"NOT STARTED",thesis:"",upside:"",downside:"",notes:""};
+      MODEL.interests.push(i); STATE.selectedInterestId=i.interest_id; setSaveStatus("dirty"); $("btnSave").disabled=false; setView("interests");
+    });
+    $("btnAddAffair").addEventListener("click",()=>$("btnNewAffair").click());
+    $("btnAddInterest").addEventListener("click",()=>$("btnNewInterest").click());
+    $("btnSaveSession").addEventListener("click",()=>{
+      const domain_id=$("wgDomain")?.value||STATE.selectedDomainId;
+      const s={session_id:uid("WG"),timestamp:nowIso(),domain_id,hedge_ends:$("wgHedge")?.value||"",edge_ends:$("wgEdge")?.value||"",means:$("wgMeans")?.value||"",
+        plan_hours:$("wgHours")?.value||"",plan_days:$("wgDays")?.value||"",plan_weeks:$("wgWeeks")?.value||"",plan_quarter:$("wgQuarter")?.value||"",decisions:$("wgDecisions")?.value||"",
+        compiled_affair_ids:"",compiled_task_ids:""};
+      MODEL.sessions.push(s); $("wargameStatus").textContent="Saved session "+s.session_id+" at "+s.timestamp.slice(0,19).replace("T"," ");
+      setSaveStatus("dirty"); $("btnSave").disabled=false; renderSessionsLog(); renderDataView();
+    });
+    $("btnCompile").addEventListener("click",()=>{
+      const domain_id=$("wgDomain")?.value||STATE.selectedDomainId; const d=byId(MODEL.domains,"domain_id",domain_id); if(!d) return;
+      const affair={affair_id:uid("AF"),law_id:d.law_id,domain_id:d.domain_id,title:"Compiled: "+(d.domain_name||d.domain_id),horizon:"WEEKS",cadence:"WEEKLY",threshold_value:0.10,threshold_basis:"progress",status:"NOT STARTED",completion:0,due_date:"",est_hours:4,dependencies:"",
+        notes:"Compiled from War Gaming.\n\nHedge:\n"+($("wgHedge")?.value||"")+"\n\nEdge:\n"+($("wgEdge")?.value||"")};
+      MODEL.affairs.push(affair);
+      const tasks=[];
+      const makeTasksFrom=(text,horizon)=>{const t=(text||"").trim(); if(!t) return; t.split("\n").map(x=>x.trim()).filter(Boolean).slice(0,6).forEach(line=>tasks.push({task_id:uid("TSK"),affair_id:affair.affair_id,title:line.replace(/^[-•]\s*/,""),horizon,est_hours:horizon==="HOURS"?0.5:1,due_date:"",status:"NOT STARTED",completion:0}))};
+      makeTasksFrom($("wgHours")?.value,"HOURS"); makeTasksFrom($("wgDays")?.value,"DAYS"); makeTasksFrom($("wgWeeks")?.value,"WEEKS"); makeTasksFrom($("wgQuarter")?.value,"QUARTER");
+      MODEL.tasks.push(...tasks);
+      const last=MODEL.sessions[MODEL.sessions.length-1]; if(last && last.domain_id===domain_id){last.compiled_affair_ids=affair.affair_id; last.compiled_task_ids=tasks.map(t=>t.task_id).join(",")}
+      setSaveStatus("dirty"); $("btnSave").disabled=false; $("wargameStatus").textContent="Compiled affair "+affair.affair_id+" and "+tasks.length+" tasks.";
+      renderSessionsLog(); renderMission(); renderAffairsTable(); renderDataView(); STATE.selectedAffairId=affair.affair_id; setView("affairs");
+    });
+    $("btnOpen").addEventListener("click",async()=>{
+      const input=document.createElement("input"); input.type="file"; input.accept=".xlsx,.xls,.csv";
+      input.onchange=async()=>{
+        const file=input.files?.[0]; if(!file) return;
+        MODEL.meta.fileName=file.name; $("pillFile").textContent="file: "+file.name;
+        try{
+          if(window.XLSX){
+            const data=await file.arrayBuffer(); const wb=XLSX.read(data,{type:"array"});
+            if(wb.SheetNames.includes("DOMAINS")){
+              const rows=XLSX.utils.sheet_to_json(wb.Sheets["DOMAINS"],{defval:""});
+              MODEL.domains=rows.map(r=>({domain_id:String(r.domain_id||uid("domain")).trim(),law_id:String(r.law_id||"LAW_UNKNOWN").trim(),domain_name:String(r.domain_name||r.Domain||"Unnamed").trim(),
+                volatility:String(r.volatility||"").trim(),stakes:numOrNull(r.stakes),risks:numOrNull(r.risks||r.risk),vulnerabilities:String(r.vulnerabilities||"").trim(),
+                hedge:String(r.hedge||"").trim(),edge:String(r.edge||"").trim(),means_raw:String(r.means_raw||r.means||"").trim(),mastercraft:String(r.mastercraft||"").trim()}));
+              const map=new Map(); MODEL.domains.forEach(d=>{if(!map.has(d.law_id)) map.set(d.law_id,{law_id:d.law_id,law_name:d.law_id})}); MODEL.laws=Array.from(map.values());
+              MODEL.affairs=wb.SheetNames.includes("AFFAIRS")?XLSX.utils.sheet_to_json(wb.Sheets["AFFAIRS"],{defval:""}).map(r=>({affair_id:String(r.affair_id||uid("AF")),law_id:String(r.law_id||""),domain_id:String(r.domain_id||""),title:String(r.title||r.name||""),horizon:String(r.horizon||"WEEKS"),
+                cadence:String(r.cadence||"WEEKLY"),threshold_value:numOrNull(r.threshold_value??0.10),threshold_basis:String(r.threshold_basis||"progress"),status:String(r.status||"NOT STARTED"),completion:numOrNull(r.completion??0),due_date:String(r.due_date||""),est_hours:numOrNull(r.est_hours??1),dependencies:String(r.dependencies||""),notes:String(r.notes||"")})):MODEL.affairs;
+              MODEL.interests=wb.SheetNames.includes("INTERESTS")?XLSX.utils.sheet_to_json(wb.Sheets["INTERESTS"],{defval:""}).map(r=>({interest_id:String(r.interest_id||uid("IN")),law_id:String(r.law_id||""),domain_id:String(r.domain_id||""),opportunity:String(r.opportunity||r.bet||""),horizon:String(r.horizon||"WEEKS"),
+                stakes:numOrNull(r.stakes??2),risks:numOrNull(r.risks??6),asymmetry:numOrNull(r.asymmetry??8),convexity:numOrNull(r.convexity??r.asymmetry??8),status:String(r.status||"NOT STARTED"),thesis:String(r.thesis||""),upside:String(r.upside||""),downside:String(r.downside||""),notes:String(r.notes||"")})):MODEL.interests;
+              MODEL.tasks=wb.SheetNames.includes("TASKS")?XLSX.utils.sheet_to_json(wb.Sheets["TASKS"],{defval:""}).map(r=>({task_id:String(r.task_id||uid("TSK")),affair_id:String(r.affair_id||""),title:String(r.title||""),horizon:String(r.horizon||"WEEKS"),est_hours:numOrNull(r.est_hours??1),due_date:String(r.due_date||""),status:String(r.status||"NOT STARTED"),completion:numOrNull(r.completion??0)})):MODEL.tasks;
+              MODEL.sessions=wb.SheetNames.includes("WAR_GAMING_SESSIONS")?XLSX.utils.sheet_to_json(wb.Sheets["WAR_GAMING_SESSIONS"],{defval:""}).map(r=>({session_id:String(r.session_id||uid("WG")),timestamp:String(r.timestamp||nowIso()),domain_id:String(r.domain_id||""),hedge_ends:String(r.hedge_ends||""),edge_ends:String(r.edge_ends||""),means:String(r.means||""),plan_hours:String(r.plan_hours||""),plan_days:String(r.plan_days||""),plan_weeks:String(r.plan_weeks||""),plan_quarter:String(r.plan_quarter||""),decisions:String(r.decisions||""),compiled_affair_ids:String(r.compiled_affair_ids||""),compiled_task_ids:String(r.compiled_task_ids||"")})):MODEL.sessions;
+            } else {
+              seedMock();
+            }
+          } else seedMock();
+        } catch(e){console.error(e);seedMock()}
+        setSaveStatus("loaded"); $("btnSave").disabled=true;
+        STATE.selectedLawId=MODEL.laws[0]?.law_id||null;
+        const doms=filteredDomains().filter(d=>d.law_id===STATE.selectedLawId);
+        STATE.selectedDomainId=doms[0]?.domain_id||MODEL.domains[0]?.domain_id||null;
+        renderAll(); renderDataView();
+      };
+      input.click();
+    });
+    $("btnSave").addEventListener("click",async()=>{
+      if(!window.XLSX){alert("XLSX not available. Final build will bundle it.");return}
+      const wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(MODEL.domains),"DOMAINS");
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(MODEL.affairs),"AFFAIRS");
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(MODEL.interests),"INTERESTS");
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(MODEL.tasks),"TASKS");
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(MODEL.sessions),"WAR_GAMING_SESSIONS");
+      setSaveStatus("saving");
+      const fname=(MODEL.meta.fileName?MODEL.meta.fileName.replace(/\.xlsx$/i,""):"genesis")+"_export.xlsx";
+      XLSX.writeFile(wb,fname);
+      MODEL.meta.lastSavedAt=nowIso();
+      setSaveStatus("saved"); $("btnSave").disabled=true;
+    });
+    function renderWarRoom(){renderLaws();renderDomains();renderDomainDrill()}
+    function renderAll(){
+      if(STATE.view==="warroom") renderWarRoom();
+      if(STATE.view==="affairs"){renderAffairsTable();renderAffairEditor()}
+      if(STATE.view==="interests"){renderInterestsTable();renderInterestEditor()}
+      if(STATE.view==="mission") renderMission();
+      if(STATE.view==="wargame") renderWarGaming();
+      if(STATE.view==="data") renderDataView();
+    }
+    seedMock();
+    STATE.selectedLawId=MODEL.laws[0]?.law_id||null;
+    STATE.selectedDomainId=MODEL.domains[0]?.domain_id||null;
+    renderAll(); renderDataView();
+  </script>
+</body>
+</html>

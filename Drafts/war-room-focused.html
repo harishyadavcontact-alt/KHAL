@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genesis War Room - Antifragility Operating System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #fafafa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f5f5f5;
+            --text: #1a1a1a;
+            --text-secondary: #666;
+            --border: #e0e0e0;
+            --accent-defense: #2e7d32;
+            --accent-offense: #c62828;
+            --accent-neutral: #1976d2;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 3px solid var(--text);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .hud {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .hud-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .hud-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        /* Main Layout - Simple 2-column */
+        .container {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            height: calc(100vh - 80px);
+        }
+
+        /* Left Nav */
+        .nav {
+            background: var(--bg-secondary);
+            border-right: 2px solid var(--border);
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+            border-left-color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--bg-tertiary);
+            border-left-color: var(--text);
+            font-weight: bold;
+        }
+
+        .nav-item-name {
+            font-size: 0.9rem;
+        }
+
+        .nav-item-fragility {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Main Content Area */
+        .content {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        /* Logic Diagram */
+        .logic-flow {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .logic-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .logic-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .logic-box {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .logic-box-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .logic-box-content {
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+
+        .arrow {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .logic-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .defense-box {
+            border-left: 4px solid var(--accent-defense);
+        }
+
+        .offense-box {
+            border-left: 4px solid var(--accent-offense);
+        }
+
+        .barbell-label {
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        /* War Gaming Canvas */
+        .war-gaming-section {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .thinking-canvas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .canvas-block {
+            background: var(--bg-tertiary);
+            border: 2px dashed var(--border);
+            padding: 1.5rem;
+            min-height: 300px;
+        }
+
+        .canvas-label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .canvas-textarea {
+            width: 100%;
+            min-height: 250px;
+            background: transparent;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--text);
+            resize: vertical;
+            outline: none;
+        }
+
+        .canvas-textarea::placeholder {
+            color: #ccc;
+        }
+
+        /* Affairs & Interests Lists */
+        .lists-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .list-block {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            padding: 1.5rem;
+        }
+
+        .list-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .list-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .list-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-item-text {
+            flex: 1;
+        }
+
+        .list-item-priority {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-left: 1rem;
+        }
+
+        .add-button {
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--text);
+            color: var(--bg);
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .add-button:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Data Import */
+        .import-section {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .import-button {
+            padding: 0.75rem 1.5rem;
+            background: var(--accent-neutral);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-right: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .connection-status {
+            display: inline-block;
+            margin-left: 1rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-connected {
+            background: var(--accent-defense);
+        }
+
+        .status-disconnected {
+            background: var(--text-secondary);
+        }
+
+        /* Metrics Summary */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .metric-trend {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        // Simple vanilla JS - no React needed for focused thinking tool
+        
+        const DOMAINS = [
+            { id: 'physics', name: 'Physics', law: 'Laws of Universe', fragility: 85 },
+            { id: 'biology', name: 'Biology', law: 'Laws of Nature', fragility: 65 },
+            { id: 'ecology', name: 'Ecology', law: 'Law of Jungle', fragility: 55 },
+            { id: 'politics', name: 'Politics', law: 'Law of Land', fragility: 70 },
+            { id: 'finance', name: 'Finance', law: 'Law of Time', fragility: 80 },
+            { id: 'nurture', name: 'Nurture', law: 'Laws of Culture', fragility: 45 }
+        ];
+
+        let currentDomain = DOMAINS[0];
+        let spreadsheetData = null;
+
+        function init() {
+            const root = document.getElementById('root');
+            root.innerHTML = `
+                ${renderHeader()}
+                <div class="container">
+                    ${renderNav()}
+                    ${renderContent()}
+                </div>
+            `;
+            attachEventListeners();
+        }
+
+        function renderHeader() {
+            const now = new Date();
+            return `
+                <div class="header">
+                    <div class="title">GENESIS WAR ROOM</div>
+                    <div class="hud">
+                        <div class="hud-item">
+                            <div class="hud-label">Time</div>
+                            <div>${now.toLocaleTimeString()}</div>
+                        </div>
+                        <div class="hud-item">
+                            <div class="hud-label">Mode</div>
+                            <div>WAR GAMING</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderNav() {
+            return `
+                <div class="nav">
+                    <div class="nav-section">
+                        <div class="nav-section-title">Domains</div>
+                        ${DOMAINS.map(domain => `
+                            <div class="nav-item ${domain.id === currentDomain.id ? 'active' : ''}" 
+                                 data-domain="${domain.id}">
+                                <div class="nav-item-name">${domain.name}</div>
+                                <div class="nav-item-fragility">F: ${domain.fragility}/100</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="nav-section">
+                        <div class="nav-section-title">Views</div>
+                        <div class="nav-item" data-view="logic">
+                            <div class="nav-item-name">Logic Flow</div>
+                        </div>
+                        <div class="nav-item" data-view="wargame">
+                            <div class="nav-item-name">War Gaming</div>
+                        </div>
+                        <div class="nav-item" data-view="execution">
+                            <div class="nav-item-name">Execution</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderContent() {
+            return `
+                <div class="content">
+                    ${renderImportSection()}
+                    ${renderMetrics()}
+                    ${renderLogicFlow()}
+                    ${renderWarGaming()}
+                    ${renderExecution()}
+                </div>
+            `;
+        }
+
+        function renderImportSection() {
+            return `
+                <div class="import-section">
+                    <div class="section-title">Data Source</div>
+                    <button class="import-button" onclick="document.getElementById('csv-upload').click()">
+                        Import CSV
+                    </button>
+                    <button class="import-button" onclick="connectGoogleSheets()">
+                        Connect Google Sheets
+                    </button>
+                    <input type="file" id="csv-upload" class="file-input" accept=".csv" onchange="handleCSVUpload(event)">
+                    <span class="connection-status">
+                        <span class="status-dot ${spreadsheetData ? 'status-connected' : 'status-disconnected'}"></span>
+                        ${spreadsheetData ? 'Data Loaded' : 'No Data'}
+                    </span>
+                </div>
+            `;
+        }
+
+        function renderMetrics() {
+            const avgFragility = Math.round(DOMAINS.reduce((sum, d) => sum + d.fragility, 0) / DOMAINS.length);
+            return `
+                <div class="metrics">
+                    <div class="metric-card">
+                        <div class="metric-label">Avg Fragility</div>
+                        <div class="metric-value">${avgFragility}</div>
+                        <div class="metric-trend">Across 6 domains</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Current Domain</div>
+                        <div class="metric-value" style="font-size: 1.2rem;">${currentDomain.name}</div>
+                        <div class="metric-trend">${currentDomain.fragility}/100</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Barbell</div>
+                        <div class="metric-value" style="font-size: 1.5rem;">90/10</div>
+                        <div class="metric-trend">Defense/Offense</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Stage</div>
+                        <div class="metric-value" style="font-size: 1.5rem;">2/4</div>
+                        <div class="metric-trend">Robust</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLogicFlow() {
+            return `
+                <div class="logic-flow">
+                    <div class="logic-title">Antifragility Logic - ${currentDomain.name}</div>
+                    
+                    <div class="logic-diagram">
+                        <!-- Domain & Volatility Source -->
+                        <div class="logic-box">
+                            <div class="logic-box-title">1. Source of Volatility</div>
+                            <div class="logic-box-content">
+                                <strong>${currentDomain.law}</strong>
+                                <br>Domain: ${currentDomain.name}
+                                <br>Volatility: [Define in war gaming section]
+                            </div>
+                        </div>
+                        
+                        <div class="arrow">↓</div>
+                        
+                        <!-- Stakes & Risk -->
+                        <div class="logic-box">
+                            <div class="logic-box-title">2. Asymmetry Analysis</div>
+                            <div class="logic-box-content">
+                                Stakes: [What you could lose]
+                                <br>Risk: [Probability of loss]
+                                <br>Fragility = Vulnerability × Stakes × Risk
+                                <br><strong>Current: ${currentDomain.fragility}/100</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow">↓</div>
+                        
+                        <!-- Non-Linearity -->
+                        <div class="logic-box">
+                            <div class="logic-box-title">3. Non-Linearity Check</div>
+                            <div class="logic-box-content">
+                                Ergodicity: Is this path-dependent? (Y/N)
+                                <br>Jensen's Inequality: Convex or Concave payoff?
+                                <br>Tail Risk: Black Swan domain? (Y/N)
+                                <br><strong>→ If non-ergodic: BARBELL REQUIRED</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow">↓</div>
+                        
+                        <!-- Barbell Strategy -->
+                        <div class="logic-split">
+                            <div class="logic-box defense-box">
+                                <div class="barbell-label" style="color: var(--accent-defense);">90% DEFENSE</div>
+                                <div class="logic-box-title">4a. Affairs (Hedge)</div>
+                                <div class="logic-box-content">
+                                    Remove fragility
+                                    <br>Cap downside risk
+                                    <br>Move to robustness
+                                    <br><br>
+                                    <strong>Ends:</strong> Hedge, Defense
+                                    <br><strong>Means:</strong> [Define heuristics below]
+                                </div>
+                            </div>
+                            
+                            <div class="logic-box offense-box">
+                                <div class="barbell-label" style="color: var(--accent-offense);">10% OFFENSE</div>
+                                <div class="logic-box-title">4b. Interests (Edge)</div>
+                                <div class="logic-box-content">
+                                    Add convexity
+                                    <br>Uncap upside
+                                    <br>Gain from volatility
+                                    <br><br>
+                                    <strong>Ends:</strong> Edge, Offense
+                                    <br><strong>Means:</strong> [Define heuristics below]
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="arrow">↓</div>
+                        
+                        <!-- Execution -->
+                        <div class="logic-box">
+                            <div class="logic-box-title">5. Surgical Execution</div>
+                            <div class="logic-box-content">
+                                Tasks → Subtasks → Schedules → Completion
+                                <br>Track: Time, Priority Score (Stakes × Risk × Asymmetry)
+                                <br><strong>Result: Virtue Spiral (Fragile → Robust → Antifragile → Convex)</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderWarGaming() {
+            return `
+                <div class="war-gaming-section">
+                    <div class="section-title">War Gaming Canvas - ${currentDomain.name}</div>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem; font-style: italic;">
+                        Sit. Think. Define clearly. This is where you figure out means, ends, affairs, and interests.
+                    </p>
+                    
+                    <div class="thinking-canvas">
+                        <div class="canvas-block">
+                            <div class="canvas-label">Ends (What you want)</div>
+                            <textarea class="canvas-textarea" placeholder="Define your ends:
+
+Barbell Strategy:
+- 90% in [safe asset/hedge]
+- 10% in [asymmetric bet]
+
+Hedge:
+- What tail risks to cap?
+
+Edge:
+- What upside to pursue?
+
+Defense:
+- What to protect?
+
+Offense:
+- Where to attack?"></textarea>
+                        </div>
+                        
+                        <div class="canvas-block">
+                            <div class="canvas-label">Means (How you get there)</div>
+                            <textarea class="canvas-textarea" placeholder="Define your means:
+
+Heuristics:
+- Via Negativa: What to remove?
+- Lindy: What has survived time?
+- Skin in the Game: Where to stake?
+
+Methods:
+- Techniques to apply
+- Protocols to follow
+
+Tactics:
+- Day-to-day actions
+- Response plans"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="thinking-canvas">
+                        <div class="canvas-block">
+                            <div class="canvas-label">State of Affairs</div>
+                            <textarea class="canvas-textarea" placeholder="What's the current situation?
+
+Vulnerabilities:
+- Where are you exposed?
+- What could go wrong?
+
+Threats:
+- Active risks right now
+- Tail events to prepare for
+
+Current Position:
+- What do you have?
+- What do you control?"></textarea>
+                        </div>
+                        
+                        <div class="canvas-block">
+                            <div class="canvas-label">Plans & Preparation</div>
+                            <textarea class="canvas-textarea" placeholder="What do you need to prepare?
+
+Supplies:
+- Physical resources
+
+Infrastructure:
+- Systems to build
+
+Logistics:
+- How to execute
+
+Contingencies:
+- If X happens, do Y"></textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderExecution() {
+            return `
+                <div class="war-gaming-section">
+                    <div class="section-title">Execution - Affairs & Interests</div>
+                    
+                    <div class="lists-container">
+                        <div class="list-block defense-box">
+                            <div class="list-title" style="color: var(--accent-defense);">
+                                ⚡ AFFAIRS (90% - Defense)
+                            </div>
+                            <div class="list-items" id="affairs-list">
+                                <div class="list-item">
+                                    <div class="list-item-text">[Define in war gaming above, then add here]</div>
+                                    <div class="list-item-priority">P: --</div>
+                                </div>
+                            </div>
+                            <button class="add-button" onclick="addAffair()">+ Add Affair</button>
+                        </div>
+                        
+                        <div class="list-block offense-box">
+                            <div class="list-title" style="color: var(--accent-offense);">
+                                🚀 INTERESTS (10% - Offense)
+                            </div>
+                            <div class="list-items" id="interests-list">
+                                <div class="list-item">
+                                    <div class="list-item-text">[Define in war gaming above, then add here]</div>
+                                    <div class="list-item-priority">A: --</div>
+                                </div>
+                            </div>
+                            <button class="add-button" onclick="addInterest()">+ Add Interest</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function attachEventListeners() {
+            // Domain navigation
+            document.querySelectorAll('[data-domain]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const domainId = el.dataset.domain;
+                    currentDomain = DOMAINS.find(d => d.id === domainId);
+                    init(); // Re-render
+                });
+            });
+        }
+
+        function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                parseCSV(text);
+                init(); // Re-render with new data
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            const headers = lines[0].split(',');
+            const data = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const values = lines[i].split(',');
+                const row = {};
+                headers.forEach((header, index) => {
+                    row[header.trim()] = values[index]?.trim();
+                });
+                data.push(row);
+            }
+
+            spreadsheetData = data;
+            console.log('Loaded data:', data);
+            alert('CSV data loaded! Check console for details.');
+        }
+
+        function connectGoogleSheets() {
+            alert('Google Sheets integration:\n\n1. Publish your sheet to web (File → Share → Publish to web)\n2. Get the CSV export URL\n3. Use that URL to fetch data\n\nFor now, use CSV import.');
+        }
+
+        function addAffair() {
+            const text = prompt('Enter affair (defensive task):');
+            if (!text) return;
+            const priority = prompt('Priority score (Stakes × Risk):');
+            
+            const list = document.getElementById('affairs-list');
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `
+                <div class="list-item-text">${text}</div>
+                <div class="list-item-priority">P: ${priority || '--'}</div>
+            `;
+            list.appendChild(item);
+        }
+
+        function addInterest() {
+            const text = prompt('Enter interest (offensive bet):');
+            if (!text) return;
+            const asymmetry = prompt('Asymmetry ratio (Upside/Downside):');
+            
+            const list = document.getElementById('interests-list');
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `
+                <div class="list-item-text">${text}</div>
+                <div class="list-item-priority">A: ${asymmetry || '--'}</div>
+            `;
+            list.appendChild(item);
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
