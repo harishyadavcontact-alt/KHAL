@@ -1,7 +1,6 @@
-import { existsSync, statSync } from "node:fs";
+import { statSync } from "node:fs";
 import Database from "better-sqlite3";
-import { randomUUID } from "node:crypto";
-import { rankDoNow, taskCanBeDone, type Affair, type DashboardDoNowItem, type Interest, type KhalState, type Task } from "@khal/domain";
+import { rankDoNow, taskCanBeDone, type Affair, type Craft, type DashboardDoNowItem, type Interest, type KhalState, type Law, type Task } from "@khal/domain";
 import { initDatabase, resolveDbPath } from "@khal/sqlite-core";
 
 export interface SyncStatus {
@@ -21,6 +20,8 @@ export interface LoadedState {
   sync: SyncStatus;
 }
 
+type AnyRow = Record<string, unknown>;
+
 function computeRobustnessProgress(affairs: Affair[]): number {
   if (!affairs.length) return 0;
   const weighted = affairs.reduce((acc, affair) => acc + ((affair.fragilityScore ?? 0) * (affair.completionPct ?? 0)), 0);
@@ -38,9 +39,7 @@ function computeOptionality(interests: Interest[]): number {
 
 function openDb(inputPath: string): Database.Database {
   const dbPath = resolveDbPath(inputPath);
-  if (!existsSync(dbPath)) {
-    initDatabase(dbPath);
-  }
+  initDatabase(dbPath);
   return new Database(dbPath);
 }
 
@@ -133,6 +132,132 @@ function mapTasks(rows: Array<Record<string, unknown>>, depsByTask: Map<string, 
   }));
 }
 
+function loadLaws(db: Database.Database): Law[] {
+  const rows = db.prepare("SELECT * FROM laws ORDER BY name").all() as AnyRow[];
+  const links = db.prepare("SELECT law_id, craft_id FROM law_craft_links ORDER BY sort_order").all() as Array<{ law_id: string; craft_id: string }>;
+  const map = new Map<string, string[]>();
+  for (const link of links) {
+    const current = map.get(link.law_id) ?? [];
+    current.push(link.craft_id);
+    map.set(link.law_id, current);
+  }
+
+  return rows.map((row) => ({
+    id: String(row.id),
+    name: String(row.name),
+    description: row.description ? String(row.description) : undefined,
+    volatilitySource: row.volatility_source ? String(row.volatility_source) : undefined,
+    associatedCrafts: map.get(String(row.id)) ?? []
+  }));
+}
+
+function loadCrafts(db: Database.Database): Craft[] {
+  const crafts = db.prepare("SELECT * FROM crafts ORDER BY name").all() as AnyRow[];
+  const heaps = db.prepare("SELECT * FROM craft_heaps ORDER BY sort_order, created_at").all() as AnyRow[];
+  const models = db.prepare("SELECT * FROM craft_models ORDER BY sort_order, created_at").all() as AnyRow[];
+  const frameworks = db.prepare("SELECT * FROM craft_frameworks ORDER BY sort_order, created_at").all() as AnyRow[];
+  const barbells = db.prepare("SELECT * FROM craft_barbell_strategies ORDER BY sort_order, created_at").all() as AnyRow[];
+  const heuristics = db.prepare("SELECT * FROM craft_heuristics ORDER BY sort_order, created_at").all() as AnyRow[];
+  const modelHeapLinks = db.prepare("SELECT model_id, heap_id FROM craft_model_heap_links ORDER BY sort_order").all() as Array<{ model_id: string; heap_id: string }>;
+  const frameworkModelLinks = db
+    .prepare("SELECT framework_id, model_id FROM craft_framework_model_links ORDER BY sort_order")
+    .all() as Array<{ framework_id: string; model_id: string }>;
+  const barbellFrameworkLinks = db
+    .prepare("SELECT barbell_id, framework_id FROM craft_barbell_framework_links ORDER BY sort_order")
+    .all() as Array<{ barbell_id: string; framework_id: string }>;
+  const heuristicBarbellLinks = db
+    .prepare("SELECT heuristic_id, barbell_id FROM craft_heuristic_barbell_links ORDER BY sort_order")
+    .all() as Array<{ heuristic_id: string; barbell_id: string }>;
+
+  const links = (records: Array<{ from: string; to: string }>) => {
+    const out = new Map<string, string[]>();
+    for (const record of records) {
+      const current = out.get(record.from) ?? [];
+      current.push(record.to);
+      out.set(record.from, current);
+    }
+    return out;
+  };
+  const heapByModel = links(modelHeapLinks.map((row) => ({ from: row.model_id, to: row.heap_id })));
+  const modelByFramework = links(frameworkModelLinks.map((row) => ({ from: row.framework_id, to: row.model_id })));
+  const frameworkByBarbell = links(barbellFrameworkLinks.map((row) => ({ from: row.barbell_id, to: row.framework_id })));
+  const barbellByHeuristic = links(heuristicBarbellLinks.map((row) => ({ from: row.heuristic_id, to: row.barbell_id })));
+
+  return crafts.map((craft) => {
+    const craftId = String(craft.id);
+    return {
+      id: craftId,
+      name: String(craft.name),
+      description: craft.description ? String(craft.description) : undefined,
+      heaps: heaps
+        .filter((item) => String(item.craft_id) === craftId)
+        .map((item) => ({
+          id: String(item.id),
+          title: String(item.title),
+          type: (String(item.type || "link") as "link" | "file"),
+          url: item.url ? String(item.url) : undefined,
+          notes: item.notes ? String(item.notes) : undefined
+        })),
+      models: models
+        .filter((item) => String(item.craft_id) === craftId)
+        .map((item) => ({
+          id: String(item.id),
+          title: String(item.title),
+          description: item.description ? String(item.description) : undefined,
+          heapIds: heapByModel.get(String(item.id)) ?? []
+        })),
+      frameworks: frameworks
+        .filter((item) => String(item.craft_id) === craftId)
+        .map((item) => ({
+          id: String(item.id),
+          title: String(item.title),
+          description: item.description ? String(item.description) : undefined,
+          modelIds: modelByFramework.get(String(item.id)) ?? []
+        })),
+      barbellStrategies: barbells
+        .filter((item) => String(item.craft_id) === craftId)
+        .map((item) => ({
+          id: String(item.id),
+          title: String(item.title),
+          hedge: item.hedge ? String(item.hedge) : undefined,
+          edge: item.edge ? String(item.edge) : undefined,
+          frameworkIds: frameworkByBarbell.get(String(item.id)) ?? []
+        })),
+      heuristics: heuristics
+        .filter((item) => String(item.craft_id) === craftId)
+        .map((item) => ({
+          id: String(item.id),
+          title: String(item.title),
+          content: item.content ? String(item.content) : undefined,
+          barbellStrategyIds: barbellByHeuristic.get(String(item.id)) ?? []
+        }))
+    };
+  });
+}
+
+function loadAffairMeans(db: Database.Database): Map<string, { craftId: string; selectedHeuristicIds: string[]; methodology?: string; technology?: string; techniques?: string }> {
+  const rows = db.prepare("SELECT * FROM affair_means").all() as AnyRow[];
+  const selected = db.prepare("SELECT affair_id, heuristic_id FROM affair_selected_heuristics").all() as Array<{ affair_id: string; heuristic_id: string }>;
+  const selectedMap = new Map<string, string[]>();
+  for (const row of selected) {
+    const current = selectedMap.get(row.affair_id) ?? [];
+    current.push(row.heuristic_id);
+    selectedMap.set(row.affair_id, current);
+  }
+  const result = new Map<string, { craftId: string; selectedHeuristicIds: string[]; methodology?: string; technology?: string; techniques?: string }>();
+  for (const row of rows) {
+    const affairId = String(row.affair_id);
+    result.set(affairId, {
+      craftId: String(row.craft_id),
+      selectedHeuristicIds: selectedMap.get(affairId) ?? [],
+      methodology: row.methodology ? String(row.methodology) : undefined,
+      technology: row.technology ? String(row.technology) : undefined,
+      techniques: row.techniques ? String(row.techniques) : undefined
+    });
+  }
+  return result;
+}
+
 export function loadState(dbPathInput: string): LoadedState {
   const dbPath = resolveDbPath(dbPathInput);
   const db = openDb(dbPath);
@@ -158,8 +283,33 @@ export function loadState(dbPathInput: string): LoadedState {
       createdAt: String(row.created_at),
       updatedAt: String(row.updated_at)
     }));
-
-    const affairs = mapAffairs(affairsRows);
+    const laws = loadLaws(db);
+    const crafts = loadCrafts(db);
+    const affairMeans = loadAffairMeans(db);
+    const affairs = mapAffairs(affairsRows).map((affair) => {
+      const fragilityState = ((affair.fragilityScore ?? 0) > 50 ? "fragile" : "robust") as "fragile" | "robust";
+      return {
+        ...affair,
+        context: {
+          associatedDomains: [affair.domainId],
+          volatilityExposure: affair.description ?? "Operational volatility"
+        },
+        means: affairMeans.get(affair.id) ?? (crafts[0] ? { craftId: crafts[0].id, selectedHeuristicIds: [] } : undefined),
+        strategy: {
+          posture: "defense",
+          positioning: "conventional",
+          mapping: { allies: [], enemies: [] }
+        },
+        entities: [
+          {
+            id: `entity-${affair.id}`,
+            name: affair.title,
+            type: "affair",
+            fragility: fragilityState
+          }
+        ]
+      };
+    });
     const interests = mapInterests(interestsRows);
     const tasks = mapTasks(taskRows, depsByTask);
 
@@ -169,6 +319,8 @@ export function loadState(dbPathInput: string): LoadedState {
     return {
       state: {
         domains,
+        laws,
+        crafts,
         ends: [],
         fragilities: [],
         affairs,
@@ -196,7 +348,7 @@ export function loadState(dbPathInput: string): LoadedState {
 
 export function detectConflict(dbPathInput: string, lastSeenModifiedAt: string): boolean {
   const dbPath = resolveDbPath(dbPathInput);
-  if (!existsSync(dbPath)) return false;
+  if (!statSync(dbPath, { throwIfNoEntry: false })) return false;
   const modifiedAt = statSync(dbPath).mtime.toISOString();
   return Boolean(lastSeenModifiedAt) && modifiedAt > lastSeenModifiedAt;
 }

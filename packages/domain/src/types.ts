@@ -37,6 +37,21 @@ export interface Fragility {
   fragilityScore?: number;
 }
 
+export interface AffairEntity {
+  id: EntityId;
+  name: string;
+  type?: string;
+  fragility?: "fragile" | "robust" | "antifragile";
+}
+
+export interface AffairMeans {
+  craftId: EntityId;
+  selectedHeuristicIds: EntityId[];
+  methodology?: string;
+  technology?: string;
+  techniques?: string;
+}
+
 export interface Affair {
   id: EntityId;
   domainId: EntityId;
@@ -50,6 +65,20 @@ export interface Affair {
   fragilityScore?: number;
   status: Status;
   completionPct: number;
+  context?: {
+    associatedDomains: EntityId[];
+    volatilityExposure?: string;
+  };
+  means?: AffairMeans;
+  strategy?: {
+    posture?: string;
+    positioning?: string;
+    mapping?: {
+      allies: string[];
+      enemies: string[];
+    };
+  };
+  entities?: AffairEntity[];
 }
 
 export interface Interest {
@@ -91,6 +120,62 @@ export interface MissionNode {
   dependencyIds: EntityId[];
 }
 
+export interface Law {
+  id: EntityId;
+  name: string;
+  description?: string;
+  volatilitySource?: string;
+  associatedCrafts?: EntityId[];
+}
+
+export interface CraftHeap {
+  id: EntityId;
+  title: string;
+  type: "link" | "file";
+  url?: string;
+  notes?: string;
+}
+
+export interface CraftModel {
+  id: EntityId;
+  title: string;
+  description?: string;
+  heapIds: EntityId[];
+}
+
+export interface CraftFramework {
+  id: EntityId;
+  title: string;
+  description?: string;
+  modelIds: EntityId[];
+}
+
+export interface CraftBarbellStrategy {
+  id: EntityId;
+  title: string;
+  hedge?: string;
+  edge?: string;
+  frameworkIds: EntityId[];
+}
+
+export interface CraftHeuristic {
+  id: EntityId;
+  title: string;
+  content?: string;
+  barbellStrategyIds: EntityId[];
+}
+
+export interface Craft {
+  id: EntityId;
+  name: string;
+  description?: string;
+  heaps: CraftHeap[];
+  models: CraftModel[];
+  frameworks: CraftFramework[];
+  barbellStrategies: CraftBarbellStrategy[];
+  heuristics: CraftHeuristic[];
+}
+
 export interface DashboardDoNowItem {
   refType: "AFFAIR" | "INTEREST" | "TASK";
   refId: EntityId;
@@ -101,6 +186,8 @@ export interface DashboardDoNowItem {
 
 export interface KhalState {
   domains: Domain[];
+  laws: Law[];
+  crafts: Craft[];
   ends: End[];
   fragilities: Fragility[];
   affairs: Affair[];
