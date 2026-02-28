@@ -1,4 +1,6 @@
 export type Perspective = "macro" | "meso" | "micro" | "local" | string;
+export type WarRoomViewState = "mission" | "laws" | "interests" | "affairs" | "war-gaming" | "execution" | "crafts";
+export type ParityStatus = "exact" | "functionally_equivalent" | "drifted" | "missing";
 
 export interface UserProfile {
   name?: string;
@@ -159,4 +161,10 @@ export interface AppData {
   interests: Interest[];
   affairs: Affair[];
   tasks: Task[];
+}
+
+export interface DeterministicFallbackContext {
+  entityId: string;
+  min?: number;
+  max?: number;
 }

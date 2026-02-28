@@ -1,0 +1,203 @@
+{
+  "summary": {
+    "generatedAt": "2026-02-28T17:11:09.480Z",
+    "componentCoverage": {
+      "total": 22,
+      "exact": 22,
+      "missing": 0
+    },
+    "copyCoverage": {
+      "total": 13,
+      "exact": 13,
+      "missing": 0
+    },
+    "conformance": {
+      "forbiddenPatterns": [
+        {
+          "pattern": "Math.random(",
+          "status": "exact"
+        },
+        {
+          "pattern": "const mockData",
+          "status": "exact"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "file": "HUD.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "StrategyCircle.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "FragilityRadar.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "TaskKillChain.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "LawCard.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "DecisionChamber.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "TaskCard.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "SurgicalExecution.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "DecisionModal.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "WarGaming.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "DomainCard.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "MissionCommand.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "LawDetail.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "InterestDetail.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "GenericAddModal.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "CraftDetail.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "LawsView.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "InterestsView.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "AffairsView.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "CraftsView.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "DomainModal.tsx",
+      "exists": true,
+      "status": "exact"
+    },
+    {
+      "file": "war-room-v2-app.tsx",
+      "exists": true,
+      "status": "exact"
+    }
+  ],
+  "copyChecks": [
+    {
+      "text": "Temporal Position",
+      "status": "exact"
+    },
+    {
+      "text": "Strategic Posture (8 Fronts)",
+      "status": "exact"
+    },
+    {
+      "text": "Fragility Mapping",
+      "status": "exact"
+    },
+    {
+      "text": "Surgical Kill Chain",
+      "status": "exact"
+    },
+    {
+      "text": "Affair Decision Chamber",
+      "status": "exact"
+    },
+    {
+      "text": "Surgical Execution",
+      "status": "exact"
+    },
+    {
+      "text": "Decision Chamber: New Scenario",
+      "status": "exact"
+    },
+    {
+      "text": "War Gaming Chamber",
+      "status": "exact"
+    },
+    {
+      "text": "Macro Domains",
+      "status": "exact"
+    },
+    {
+      "text": "Laws of Volatility",
+      "status": "exact"
+    },
+    {
+      "text": "Long-term Interests",
+      "status": "exact"
+    },
+    {
+      "text": "Active Affairs",
+      "status": "exact"
+    },
+    {
+      "text": "Crafts Library",
+      "status": "exact"
+    }
+  ],
+  "noPatternChecks": [
+    {
+      "pattern": "Math.random(",
+      "status": "exact"
+    },
+    {
+      "pattern": "const mockData",
+      "status": "exact"
+    }
+  ]
+}

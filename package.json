@@ -14,6 +14,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --check .",
+    "parity:report": "node scripts/war-room-parity-report.mjs",
+    "conformance": "npm run typecheck && npm run build && npm run parity:report",
     "db:init": "tsx scripts/bootstrap-sqlite.ts",
     "db:export:json": "tsx scripts/export-sqlite-json.ts",
     "db:export:csv": "tsx scripts/export-sqlite-csv.ts"

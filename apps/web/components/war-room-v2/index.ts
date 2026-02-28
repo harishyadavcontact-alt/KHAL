@@ -15,3 +15,8 @@ export { LawDetail } from './LawDetail';
 export { InterestDetail } from './InterestDetail';
 export { GenericAddModal } from './GenericAddModal';
 export { CraftDetail } from './CraftDetail';
+export { LawsView } from './LawsView';
+export { InterestsView } from './InterestsView';
+export { AffairsView } from './AffairsView';
+export { CraftsView } from './CraftsView';
+export { DomainModal } from './DomainModal';
