@@ -111,6 +111,18 @@ export const TaskCard = ({ task, onUpdateTask, onClick }: { task: Task, onUpdate
             <span className="uppercase text-zinc-300">{task.type}</span>
           </div>
           <div className="flex justify-between">
+            <span>Source:</span>
+            <span className="text-zinc-300">{task.sourceType ?? '-'} / {task.sourceId ?? '-'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Due:</span>
+            <span className="text-zinc-300">{task.dueDate ? new Date(task.dueDate).toLocaleString() : 'Unscheduled'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Horizon:</span>
+            <span className="uppercase text-zinc-300">{task.horizon ?? 'WEEK'}</span>
+          </div>
+          <div className="flex justify-between">
             <span>Convexity:</span>
             <span className="text-emerald-400">+{task.convexity || 0.0}</span>
           </div>

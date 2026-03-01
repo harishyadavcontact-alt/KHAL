@@ -1,6 +1,23 @@
 import { statSync } from "node:fs";
 import Database from "better-sqlite3";
-import { rankDoNow, taskCanBeDone, type Affair, type Craft, type DashboardDoNowItem, type Interest, type KhalState, type Law, type Task } from "@khal/domain";
+import {
+  rankDoNow,
+  taskCanBeDone,
+  type Affair,
+  type Craft,
+  type DashboardDoNowItem,
+  type Interest,
+  type KhalState,
+  type Law,
+  type Task,
+  type VolatilitySource,
+  type LineageNode,
+  type LineageEntity,
+  type LineageRisk,
+  type DoctrineRulebook,
+  type DoctrineRule,
+  type DomainPnLLadderLevel
+} from "@khal/domain";
 import { initDatabase, resolveDbPath } from "@khal/sqlite-core";
 
 export interface SyncStatus {
@@ -21,6 +38,15 @@ export interface LoadedState {
 }
 
 type AnyRow = Record<string, unknown>;
+
+function parseJsonOrDefault<T>(value: unknown, fallback: T): T {
+  if (typeof value !== "string" || !value.trim()) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
 
 function computeRobustnessProgress(affairs: Affair[]): number {
   if (!affairs.length) return 0;
@@ -151,6 +177,264 @@ function loadLaws(db: Database.Database): Law[] {
   }));
 }
 
+function loadVolatilitySourceById(db: Database.Database): Map<string, { id: string; name: string; code: string; sortOrder: number }> {
+  const rows = db
+    .prepare("SELECT id, code, name, sort_order FROM volatility_sources ORDER BY sort_order, name")
+    .all() as Array<{ id: string; code: string; name: string; sort_order: number }>;
+  return new Map(rows.map((row) => [row.id, { id: row.id, code: row.code, name: row.name, sortOrder: Number(row.sort_order ?? 0) }]));
+}
+
+function loadDomainStrategyDetailsByDomainId(db: Database.Database): Map<string, Record<string, string | undefined>> {
+  const rows = db.prepare("SELECT * FROM domain_strategy_details").all() as AnyRow[];
+  return new Map(
+    rows.map((row) => [
+      String(row.domain_id),
+      {
+        stakesText: row.stakes_text ? String(row.stakes_text) : undefined,
+        risksText: row.risks_text ? String(row.risks_text) : undefined,
+        fragilityText: row.fragility_text ? String(row.fragility_text) : undefined,
+        vulnerabilitiesText: row.vulnerabilities_text ? String(row.vulnerabilities_text) : undefined,
+        hedge: row.hedge_text ? String(row.hedge_text) : undefined,
+        edge: row.edge_text ? String(row.edge_text) : undefined,
+        heuristics: row.heuristics_text ? String(row.heuristics_text) : undefined,
+        tactics: row.tactics_text ? String(row.tactics_text) : undefined,
+        interestsText: row.interests_text ? String(row.interests_text) : undefined,
+        affairsText: row.affairs_text ? String(row.affairs_text) : undefined
+      }
+    ])
+  );
+}
+
+function loadDomainSourceLinkByDomainId(db: Database.Database): Map<string, string> {
+  const rows = db.prepare("SELECT domain_id, volatility_source_id FROM domain_volatility_source_links").all() as Array<{ domain_id: string; volatility_source_id: string }>;
+  return new Map(rows.map((row) => [row.domain_id, row.volatility_source_id]));
+}
+
+function loadPrimarySourceByDomainId(db: Database.Database): Map<string, string> {
+  const rows = db
+    .prepare("SELECT domain_id, source_id FROM volatility_source_domain_links WHERE dependency_kind='PRIMARY'")
+    .all() as Array<{ domain_id: string; source_id: string }>;
+  return new Map(rows.map((row) => [row.domain_id, row.source_id]));
+}
+
+function loadSources(db: Database.Database): VolatilitySource[] {
+  const sources = db.prepare("SELECT id, code, name, sort_order FROM volatility_sources ORDER BY sort_order, name").all() as Array<{ id: string; code: string; name: string; sort_order: number }>;
+  const links = db
+    .prepare("SELECT id, source_id, domain_id, dependency_kind, path_weight FROM volatility_source_domain_links ORDER BY dependency_kind, path_weight DESC")
+    .all() as Array<{ id: string; source_id: string; domain_id: string; dependency_kind: string; path_weight: number }>;
+
+  return sources.map((source) => ({
+    id: source.id,
+    code: source.code,
+    name: source.name,
+    sortOrder: Number(source.sort_order ?? 0),
+    domains: links
+      .filter((link) => link.source_id === source.id)
+      .map((link) => ({
+        id: link.id,
+        sourceId: link.source_id,
+        domainId: link.domain_id,
+        dependencyKind: link.dependency_kind,
+        pathWeight: Number(link.path_weight ?? 1)
+      }))
+  }));
+}
+
+function loadLineages(db: Database.Database): { nodes: LineageNode[]; entities: LineageEntity[] } {
+  const nodes = db
+    .prepare("SELECT id, level, name, parent_id, sort_order FROM lineage_nodes ORDER BY sort_order, name")
+    .all() as Array<{ id: string; level: string; name: string; parent_id?: string; sort_order: number }>;
+  const entities = db
+    .prepare("SELECT id, lineage_node_id, actor_type, label, description FROM lineage_entities ORDER BY created_at")
+    .all() as Array<{ id: string; lineage_node_id: string; actor_type: string; label: string; description?: string }>;
+  return {
+    nodes: nodes.map((row) => ({
+      id: row.id,
+      level: row.level,
+      name: row.name,
+      parentId: row.parent_id ?? undefined,
+      sortOrder: Number(row.sort_order ?? 0)
+    })),
+    entities: entities.map((row) => ({
+      id: row.id,
+      lineageNodeId: row.lineage_node_id,
+      actorType: row.actor_type,
+      label: row.label,
+      description: row.description ?? undefined
+    }))
+  };
+}
+
+function loadLineageRisks(db: Database.Database): LineageRisk[] {
+  const rows = db
+    .prepare(
+      `SELECT id, source_id, domain_id, lineage_node_id, title, exposure, dependency, irreversibility, optionality, response_time, fragility_score, status, notes
+       FROM lineage_risk_register
+       ORDER BY updated_at DESC, created_at DESC`
+    )
+    .all() as Array<{
+      id: string;
+      source_id: string;
+      domain_id: string;
+      lineage_node_id: string;
+      title: string;
+      exposure: number;
+      dependency: number;
+      irreversibility: number;
+      optionality: number;
+      response_time: number;
+      fragility_score: number;
+      status: string;
+      notes?: string;
+    }>;
+  return rows.map((row) => ({
+    id: row.id,
+    sourceId: row.source_id,
+    domainId: row.domain_id,
+    lineageNodeId: row.lineage_node_id,
+    title: row.title,
+    exposure: Number(row.exposure ?? 5),
+    dependency: Number(row.dependency ?? 5),
+    irreversibility: Number(row.irreversibility ?? 5),
+    optionality: Number(row.optionality ?? 5),
+    responseTime: Number(row.response_time ?? 7),
+    fragilityScore: Number(row.fragility_score ?? 0),
+    status: row.status ?? "INCOMPLETE",
+    notes: row.notes ?? undefined
+  }));
+}
+
+function loadDoctrineRulebooks(db: Database.Database): DoctrineRulebook[] {
+  const rows = db
+    .prepare("SELECT id, scope_type, scope_ref, name, active FROM doctrine_rulebooks ORDER BY scope_type, scope_ref, name")
+    .all() as Array<{ id: string; scope_type: string; scope_ref: string; name: string; active: number }>;
+  return rows.map((row) => ({
+    id: row.id,
+    scopeType: row.scope_type as DoctrineRulebook["scopeType"],
+    scopeRef: row.scope_ref,
+    name: row.name,
+    active: Number(row.active ?? 1) === 1
+  }));
+}
+
+function loadDoctrineRules(db: Database.Database): DoctrineRule[] {
+  const rows = db
+    .prepare(
+      `SELECT id, rulebook_id, kind, code, statement, trigger_text, action_text, failure_cost_text, severity, stage, sort_order, active
+       FROM doctrine_rules
+       ORDER BY sort_order, created_at`
+    )
+    .all() as Array<{
+      id: string;
+      rulebook_id: string;
+      kind: string;
+      code: string;
+      statement: string;
+      trigger_text?: string;
+      action_text?: string;
+      failure_cost_text?: string;
+      severity: string;
+      stage?: string;
+      sort_order: number;
+      active: number;
+    }>;
+  return rows.map((row) => ({
+    id: row.id,
+    rulebookId: row.rulebook_id,
+    kind: row.kind as DoctrineRule["kind"],
+    code: row.code,
+    statement: row.statement,
+    triggerText: row.trigger_text ?? undefined,
+    actionText: row.action_text ?? undefined,
+    failureCostText: row.failure_cost_text ?? undefined,
+    severity: row.severity as DoctrineRule["severity"],
+    stage: row.stage as DoctrineRule["stage"],
+    sortOrder: Number(row.sort_order ?? 0),
+    active: Number(row.active ?? 1) === 1
+  }));
+}
+
+function loadDomainPnLLadders(db: Database.Database): DomainPnLLadderLevel[] {
+  const rows = db
+    .prepare(
+      `SELECT id, domain_id, level, level_name, threshold_json, status, evidence_json
+       FROM domain_pnl_ladders
+       ORDER BY domain_id, level`
+    )
+    .all() as Array<{
+      id: string;
+      domain_id: string;
+      level: number;
+      level_name: string;
+      threshold_json: string;
+      status: string;
+      evidence_json: string;
+    }>;
+  return rows.map((row) => ({
+    id: row.id,
+    domainId: row.domain_id,
+    level: Number(row.level ?? 1),
+    levelName: row.level_name,
+    threshold: parseJsonOrDefault<Record<string, unknown>>(row.threshold_json, {}),
+    status: row.status,
+    evidence: parseJsonOrDefault<Record<string, unknown>>(row.evidence_json, {})
+  }));
+}
+
+function loadMissionGraph(db: Database.Database): {
+  nodes: Array<{
+    id: string;
+    missionId: string;
+    refType: "MISSION" | "SOURCE" | "DOMAIN" | "END" | "AFFAIR" | "INTEREST" | "LINEAGE" | "TASK";
+    refId: string;
+    parentNodeId?: string;
+    sortOrder: number;
+  }>;
+  dependencies: Array<{ missionNodeId: string; dependsOnNodeId: string }>;
+} {
+  const nodeRows = db
+    .prepare("SELECT id, ref_type, ref_id, parent_node_id, sort_order FROM mission_nodes ORDER BY sort_order, created_at")
+    .all() as Array<{ id: string; ref_type: string; ref_id: string; parent_node_id?: string; sort_order: number }>;
+  const dependencyRows = db
+    .prepare("SELECT mission_node_id, depends_on_node_id FROM mission_dependencies ORDER BY created_at")
+    .all() as Array<{ mission_node_id: string; depends_on_node_id: string }>;
+
+  const byId = new Map(nodeRows.map((row) => [row.id, row]));
+  const missionMemo = new Map<string, string>();
+  const resolveMissionId = (nodeId: string): string => {
+    const cached = missionMemo.get(nodeId);
+    if (cached) return cached;
+    const node = byId.get(nodeId);
+    if (!node) return "mission-global";
+    if (node.ref_type === "MISSION") {
+      missionMemo.set(nodeId, node.ref_id);
+      return node.ref_id;
+    }
+    if (!node.parent_node_id) {
+      missionMemo.set(nodeId, "mission-global");
+      return "mission-global";
+    }
+    const missionId = resolveMissionId(node.parent_node_id);
+    missionMemo.set(nodeId, missionId);
+    return missionId;
+  };
+
+  return {
+    nodes: nodeRows.map((row) => ({
+      id: row.id,
+      missionId: resolveMissionId(row.id),
+      refType: row.ref_type as "MISSION" | "SOURCE" | "DOMAIN" | "END" | "AFFAIR" | "INTEREST" | "LINEAGE" | "TASK",
+      refId: row.ref_id,
+      parentNodeId: row.parent_node_id ?? undefined,
+      sortOrder: Number(row.sort_order ?? 0)
+    })),
+    dependencies: dependencyRows.map((row) => ({
+      missionNodeId: row.mission_node_id,
+      dependsOnNodeId: row.depends_on_node_id
+    }))
+  };
+}
+
 function loadCrafts(db: Database.Database): Craft[] {
   const crafts = db.prepare("SELECT * FROM crafts ORDER BY name").all() as AnyRow[];
   const heaps = db.prepare("SELECT * FROM craft_heaps ORDER BY sort_order, created_at").all() as AnyRow[];
@@ -258,6 +542,29 @@ function loadAffairMeans(db: Database.Database): Map<string, { craftId: string; 
   return result;
 }
 
+function loadAffairPlanDetails(
+  db: Database.Database
+): Map<string, { objectives: string[]; uncertainty?: string; timeHorizon?: string }> {
+  const rows = db.prepare("SELECT * FROM affair_plan_details").all() as AnyRow[];
+  const result = new Map<string, { objectives: string[]; uncertainty?: string; timeHorizon?: string }>();
+  for (const row of rows) {
+    const affairId = String(row.affair_id);
+    let objectives: string[] = [];
+    try {
+      const parsed = JSON.parse(String(row.objectives_json ?? "[]"));
+      if (Array.isArray(parsed)) objectives = parsed.map((item) => String(item));
+    } catch {
+      objectives = [];
+    }
+    result.set(affairId, {
+      objectives,
+      uncertainty: row.uncertainty ? String(row.uncertainty) : undefined,
+      timeHorizon: row.time_horizon ? String(row.time_horizon) : undefined
+    });
+  }
+  return result;
+}
+
 export function loadState(dbPathInput: string): LoadedState {
   const dbPath = resolveDbPath(dbPathInput);
   const db = openDb(dbPath);
@@ -276,18 +583,64 @@ export function loadState(dbPathInput: string): LoadedState {
       depsByTask.set(dep.task_id, list);
     }
 
-    const domains = domainRows.map((row) => ({
-      id: String(row.id),
-      name: String(row.name),
-      description: row.description ? String(row.description) : undefined,
-      createdAt: String(row.created_at),
-      updatedAt: String(row.updated_at)
-    }));
+    const volatilitySourceById = loadVolatilitySourceById(db);
+    const strategyDetailsByDomainId = loadDomainStrategyDetailsByDomainId(db);
+    const domainSourceByDomainId = loadDomainSourceLinkByDomainId(db);
+    const domainPrimarySourceByDomainId = loadPrimarySourceByDomainId(db);
+    const narrativeByDomainName = new Map(
+      ((loadWarRoomNarrative(db).blocks as Array<Record<string, unknown>>) ?? []).map((block) => [String((block.kv as AnyRow)?.domain ?? ""), block])
+    );
+    const domains = domainRows.map((row) => {
+      const domainId = String(row.id);
+      const domainName = String(row.name);
+      const volatilitySourceId = domainPrimarySourceByDomainId.get(domainId) ?? domainSourceByDomainId.get(domainId);
+      const source = volatilitySourceId ? volatilitySourceById.get(volatilitySourceId) : undefined;
+      const strategyDetails = strategyDetailsByDomainId.get(domainId) ?? {};
+      const narrative = narrativeByDomainName.get(domainName);
+      const kv = (narrative?.kv as AnyRow | undefined) ?? {};
+      const bullets = (narrative?.bullets as string[] | undefined) ?? [];
+
+      return {
+        id: domainId,
+        name: domainName,
+        description: row.description ? String(row.description) : undefined,
+        createdAt: String(row.created_at),
+        updatedAt: String(row.updated_at),
+        volatilitySourceId,
+        volatilitySourceName: source?.name,
+        lawId: volatilitySourceId,
+        stakesText: strategyDetails.stakesText ?? (kv.stakes ? String(kv.stakes) : undefined),
+        risksText: strategyDetails.risksText ?? (kv.risks ? String(kv.risks) : undefined),
+        fragilityText: strategyDetails.fragilityText ?? (kv.fragility ? String(kv.fragility) : undefined),
+        vulnerabilitiesText: strategyDetails.vulnerabilitiesText ?? (kv.vulnerabilities ? String(kv.vulnerabilities) : undefined),
+        hedge: strategyDetails.hedge ?? bullets[0],
+        edge: strategyDetails.edge ?? bullets[1],
+        heuristics: strategyDetails.heuristics ?? bullets[2],
+        tactics: strategyDetails.tactics ?? bullets[3],
+        interestsText: strategyDetails.interestsText ?? bullets[4],
+        affairsText: strategyDetails.affairsText ?? bullets[5]
+      };
+    });
     const laws = loadLaws(db);
+    const sources = loadSources(db);
+    const lineages = loadLineages(db);
+    const lineageRisks = loadLineageRisks(db);
+    const doctrine = {
+      rulebooks: loadDoctrineRulebooks(db),
+      rules: loadDoctrineRules(db),
+      domainPnLLadders: loadDomainPnLLadders(db)
+    };
+    const missionGraph = loadMissionGraph(db);
     const crafts = loadCrafts(db);
     const affairMeans = loadAffairMeans(db);
+    const affairPlanDetails = loadAffairPlanDetails(db);
     const affairs = mapAffairs(affairsRows).map((affair) => {
       const fragilityState = ((affair.fragilityScore ?? 0) > 50 ? "fragile" : "robust") as "fragile" | "robust";
+      const plan = affairPlanDetails.get(affair.id) ?? {
+        objectives: [],
+        uncertainty: "Unknown",
+        timeHorizon: "Unknown"
+      };
       return {
         ...affair,
         context: {
@@ -295,6 +648,7 @@ export function loadState(dbPathInput: string): LoadedState {
           volatilityExposure: affair.description ?? "Operational volatility"
         },
         means: affairMeans.get(affair.id) ?? (crafts[0] ? { craftId: crafts[0].id, selectedHeuristicIds: [] } : undefined),
+        plan,
         strategy: {
           posture: "defense",
           positioning: "conventional",
@@ -312,6 +666,22 @@ export function loadState(dbPathInput: string): LoadedState {
     });
     const interests = mapInterests(interestsRows);
     const tasks = mapTasks(taskRows, depsByTask);
+    const missionDepsByNode = new Map<string, string[]>();
+    for (const dependency of missionGraph.dependencies) {
+      const current = missionDepsByNode.get(dependency.missionNodeId) ?? [];
+      current.push(dependency.dependsOnNodeId);
+      missionDepsByNode.set(dependency.missionNodeId, current);
+    }
+    const missionNodes = missionGraph.nodes
+      .filter((node) => node.refType !== "MISSION")
+      .map((node) => ({
+        id: node.id,
+        refType: node.refType,
+        refId: node.refId,
+        parentNodeId: node.parentNodeId,
+        sortOrder: node.sortOrder,
+        dependencyIds: missionDepsByNode.get(node.id) ?? []
+      }));
 
     const doNow = rankDoNow(affairs, interests, tasks);
     const stats = statSync(dbPath);
@@ -326,8 +696,13 @@ export function loadState(dbPathInput: string): LoadedState {
         affairs,
         interests,
         tasks,
-        missionNodes: [],
-        warRoomNarrative: loadWarRoomNarrative(db)
+        missionNodes,
+        missionGraph,
+        warRoomNarrative: loadWarRoomNarrative(db),
+        sources,
+        lineages,
+        lineageRisks,
+        doctrine
       },
       dashboard: {
         doNow,
@@ -555,8 +930,10 @@ export function writeTask(dbPathInput: string, payload: Partial<Task> & Pick<Tas
     id: payload.id,
     sourceType: payload.sourceType,
     sourceId: payload.sourceId,
+    parentTaskId: payload.parentTaskId,
     dependencyIds: payload.dependencyIds ?? [],
     title: payload.title,
+    notes: payload.notes,
     horizon: payload.horizon ?? "WEEK",
     dueDate: payload.dueDate,
     status: (payload.status ?? "NOT_STARTED") as Task["status"],

@@ -113,11 +113,30 @@ export interface Task {
 
 export interface MissionNode {
   id: EntityId;
-  refType: "END" | "AFFAIR" | "INTEREST" | "TASK";
+  refType: "MISSION" | "SOURCE" | "DOMAIN" | "END" | "AFFAIR" | "INTEREST" | "LINEAGE" | "TASK";
   refId: EntityId;
   parentNodeId?: EntityId;
   sortOrder: number;
   dependencyIds: EntityId[];
+}
+
+export interface MissionGraphNode {
+  id: EntityId;
+  missionId: EntityId;
+  refType: "MISSION" | "SOURCE" | "DOMAIN" | "END" | "AFFAIR" | "INTEREST" | "LINEAGE" | "TASK";
+  refId: EntityId;
+  parentNodeId?: EntityId;
+  sortOrder: number;
+}
+
+export interface MissionGraphDependency {
+  missionNodeId: EntityId;
+  dependsOnNodeId: EntityId;
+}
+
+export interface MissionGraph {
+  nodes: MissionGraphNode[];
+  dependencies: MissionGraphDependency[];
 }
 
 export interface Law {
@@ -126,6 +145,92 @@ export interface Law {
   description?: string;
   volatilitySource?: string;
   associatedCrafts?: EntityId[];
+}
+
+export interface VolatilitySourceDomainLink {
+  id: EntityId;
+  sourceId: EntityId;
+  domainId: EntityId;
+  dependencyKind: "PRIMARY" | "SECONDARY" | "CASCADE" | string;
+  pathWeight: number;
+}
+
+export interface VolatilitySource {
+  id: EntityId;
+  code: string;
+  name: string;
+  sortOrder: number;
+  domains: VolatilitySourceDomainLink[];
+}
+
+export interface LineageNode {
+  id: EntityId;
+  level: "SELF" | "FAMILY" | "STATE" | "NATION" | "HUMANITY" | "NATURE" | string;
+  name: string;
+  parentId?: EntityId;
+  sortOrder: number;
+}
+
+export interface LineageEntity {
+  id: EntityId;
+  lineageNodeId: EntityId;
+  actorType: "personal" | "private" | "public" | string;
+  label: string;
+  description?: string;
+}
+
+export interface LineageRisk {
+  id: EntityId;
+  sourceId: EntityId;
+  domainId: EntityId;
+  lineageNodeId: EntityId;
+  title: string;
+  exposure: number;
+  dependency: number;
+  irreversibility: number;
+  optionality: number;
+  responseTime: number;
+  fragilityScore: number;
+  status: "OPEN" | "MITIGATING" | "RESOLVED" | "INCOMPLETE" | string;
+  notes?: string;
+}
+
+export type DoctrineScopeType = "GLOBAL" | "MODE" | "ENTITY";
+export type DoctrineRuleKind = "RULE" | "POLICY" | "OMISSION" | "TRIGGER" | "BARRIER" | "BET_RULE";
+export type DoctrineSeverity = "HARD_GATE" | "SOFT";
+export type DoctrineStage = "A" | "B" | "C" | "D" | "E";
+
+export interface DoctrineRulebook {
+  id: EntityId;
+  scopeType: DoctrineScopeType;
+  scopeRef: string;
+  name: string;
+  active: boolean;
+}
+
+export interface DoctrineRule {
+  id: EntityId;
+  rulebookId: EntityId;
+  kind: DoctrineRuleKind;
+  code: string;
+  statement: string;
+  triggerText?: string;
+  actionText?: string;
+  failureCostText?: string;
+  severity: DoctrineSeverity;
+  stage?: DoctrineStage;
+  sortOrder: number;
+  active: boolean;
+}
+
+export interface DomainPnLLadderLevel {
+  id: EntityId;
+  domainId: EntityId;
+  level: number;
+  levelName: string;
+  threshold: Record<string, unknown>;
+  status: "LOCKED" | "ACTIVE" | "PASSED" | string;
+  evidence: Record<string, unknown>;
 }
 
 export interface CraftHeap {
@@ -194,5 +299,17 @@ export interface KhalState {
   interests: Interest[];
   tasks: Task[];
   missionNodes: MissionNode[];
+  missionGraph?: MissionGraph;
   warRoomNarrative: Record<string, unknown>;
+  sources?: VolatilitySource[];
+  lineages?: {
+    nodes: LineageNode[];
+    entities: LineageEntity[];
+  };
+  lineageRisks?: LineageRisk[];
+  doctrine?: {
+    rulebooks: DoctrineRulebook[];
+    rules: DoctrineRule[];
+    domainPnLLadders: DomainPnLLadderLevel[];
+  };
 }

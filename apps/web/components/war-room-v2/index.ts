@@ -20,3 +20,5 @@ export { InterestsView } from './InterestsView';
 export { AffairsView } from './AffairsView';
 export { CraftsView } from './CraftsView';
 export { DomainModal } from './DomainModal';
+export { TimeHorizonView } from './TimeHorizonView';
+export { LineageMapView } from './LineageMapView';

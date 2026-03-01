@@ -67,7 +67,7 @@ export const LawDetail = ({ law, domains, crafts, onBack, onDomainClick, onCraft
         <div>
           <div className="flex items-center gap-2 text-xs text-zinc-500 uppercase tracking-widest font-mono mb-1">
             <Globe size={12} />
-            Laws of Volatility / {law.name}
+            Source of Volatility / {law.name}
           </div>
           <h1 className="text-3xl font-bold">{law.name}</h1>
         </div>

@@ -8,9 +8,16 @@ interface InterestsViewProps {
   selectedInterestId: string | null;
   onSelectInterest: (id: string | null) => void;
   onSelectAffair: (id: string) => void;
+  onCreateInterest: (payload: { title: string; domainId: string }) => Promise<void>;
+  onWarGame: (interestId: string) => void;
 }
 
-export function InterestsView({ data, selectedInterestId, onSelectInterest, onSelectAffair }: InterestsViewProps) {
+export function InterestsView({ data, selectedInterestId, onSelectInterest, onSelectAffair, onCreateInterest, onWarGame }: InterestsViewProps) {
+  const [open, setOpen] = React.useState(false);
+  const [title, setTitle] = React.useState('');
+  const [domainId, setDomainId] = React.useState(data.domains[0]?.id ?? 'general');
+  const [saving, setSaving] = React.useState(false);
+
   if (selectedInterestId) {
     return (
       <InterestDetail
@@ -29,10 +36,45 @@ export function InterestsView({ data, selectedInterestId, onSelectInterest, onSe
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold">Long-term Interests</h2>
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg text-sm font-bold text-white">
+        <button onClick={() => setOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg text-sm font-bold text-white">
           <Plus size={16} /> New Interest
         </button>
       </div>
+      {open && (
+        <div className="glass p-4 rounded-xl border border-white/10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input className="bg-zinc-900 border border-white/10 rounded px-3 py-2 text-sm" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Interest title" />
+            <select className="bg-zinc-900 border border-white/10 rounded px-3 py-2 text-sm" value={domainId} onChange={(e) => setDomainId(e.target.value)}>
+              {data.domains.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-2">
+              <button
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm font-semibold text-white disabled:bg-zinc-700"
+                disabled={!title.trim() || saving}
+                onClick={async () => {
+                  setSaving(true);
+                  try {
+                    await onCreateInterest({ title: title.trim(), domainId });
+                    setTitle('');
+                    setOpen(false);
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+              >
+                Save
+              </button>
+              <button className="px-3 py-2 bg-zinc-700 hover:bg-zinc-600 rounded text-sm font-semibold text-white" onClick={() => setOpen(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {data.interests.map((interest) => (
           <div
@@ -55,6 +97,17 @@ export function InterestsView({ data, selectedInterestId, onSelectInterest, onSe
                   {o}
                 </div>
               ))}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onWarGame(interest.id);
+                }}
+                className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-[10px] font-bold uppercase tracking-widest text-white"
+              >
+                WarGame
+              </button>
             </div>
           </div>
         ))}
