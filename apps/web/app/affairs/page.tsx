@@ -1,5 +1,7 @@
-import { redirect } from "next/navigation";
+import { AffairsClient } from "../../components/ops-pages/AffairsClient";
 
-export default function Page() {
-  redirect("/war-room?view=affairs");
+export default async function AffairsPage({ searchParams }: { searchParams: Promise<{ affairId?: string }> }) {
+  const resolved = await searchParams;
+  return <AffairsClient initialAffairId={resolved.affairId} />;
 }
+

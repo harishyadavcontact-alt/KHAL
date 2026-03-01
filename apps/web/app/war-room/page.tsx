@@ -1,12 +1,57 @@
 "use client";
 
-import { Suspense } from "react";
-import { WarRoomV2App } from "../../components/war-room-v2";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { KhalOpsShell } from "../../components/ops-shell/KhalOpsShell";
+import { DomainModal } from "../../components/war-room-v2/DomainModal";
+import { WarRoomView } from "../../components/war-room-v2/WarRoomView";
+import { Domain } from "../../components/war-room-v2/types";
+import { routeForView } from "../../lib/war-room/routes";
+import { updateDomainStrategy, upsertLineageRisk } from "../../lib/war-room/actions";
+import { useWarRoomData } from "../../lib/war-room/useWarRoomData";
 
 export default function WarRoomPage() {
+  const router = useRouter();
+  const { data, loading, error, refresh } = useWarRoomData();
+  const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
+
   return (
-    <Suspense fallback={<div className="min-h-screen bg-zinc-950 text-zinc-100 p-6">Loading War Room...</div>}>
-      <WarRoomV2App />
-    </Suspense>
+    <KhalOpsShell title="War Room" subtitle="Ontology">
+      {!data || loading ? (
+        <div className="max-w-7xl mx-auto p-5 text-zinc-400">Loading War Room...</div>
+      ) : error ? (
+        <div className="max-w-7xl mx-auto p-5 text-red-300">{error}</div>
+      ) : (
+        <>
+          <WarRoomView domains={data.domains} onDomainClick={setSelectedDomain} />
+          <DomainModal
+            selectedDomain={selectedDomain}
+            data={data}
+            onClose={() => setSelectedDomain(null)}
+            onOpenAffair={(id) => {
+              setSelectedDomain(null);
+              router.push(`/affairs?affairId=${encodeURIComponent(id)}`);
+            }}
+            onNavigate={(view) => {
+              setSelectedDomain(null);
+              router.push(routeForView(view));
+            }}
+            onWarGame={(domainId) => {
+              setSelectedDomain(null);
+              router.push(`/war-gaming/domain?target=${encodeURIComponent(domainId)}`);
+            }}
+            onSaveDomainStrategy={async (domainId, updates) => {
+              await updateDomainStrategy(domainId, updates);
+              await refresh();
+            }}
+            onUpsertLineageRisk={async (payload) => {
+              await upsertLineageRisk(payload);
+              await refresh();
+            }}
+          />
+        </>
+      )}
+    </KhalOpsShell>
   );
 }
+

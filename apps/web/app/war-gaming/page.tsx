@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
-export default function Page() {
-  redirect("/war-room?view=war-gaming");
+export default function WarGamingLandingPage() {
+  redirect("/war-gaming/affair");
 }
+

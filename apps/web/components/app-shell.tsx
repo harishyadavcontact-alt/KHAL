@@ -2,22 +2,24 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { KHAL_OPS_BYPASS_PREFIXES } from "./ops-shell/nav-config";
 
 const primaryTabs = [
-  { href: "/mission-command", label: "Mission Command" },
+  { href: "/home", label: "Home" },
+  { href: "/war-room", label: "War Room" },
   { href: "/war-gaming", label: "War Gaming" },
-  { href: "/surgical-execution", label: "Surgical Execution" }
+  { href: "/missionCommand", label: "Mission Command" },
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/brand", label: "Brand" }
 ] as const;
 
 const sideLinks = [
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/home", label: "Home" },
   { href: "/war-room", label: "War Room" },
-  { href: "/mission-command", label: "Mission Command" },
   { href: "/war-gaming", label: "War Gaming" },
-  { href: "/surgical-execution", label: "Surgical Execution" },
-  { href: "/affairs", label: "Affairs" },
-  { href: "/interests", label: "Interests" },
-  { href: "/settings", label: "Settings" }
+  { href: "/missionCommand", label: "Mission Command" },
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/brand", label: "Brand" }
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {
@@ -25,16 +27,16 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 function statusForPath(pathname: string): string {
-  if (pathname.startsWith("/war-gaming")) return "PLANNING LAYER";
-  if (pathname.startsWith("/surgical-execution")) return "EXECUTION LAYER";
-  if (pathname.startsWith("/mission-command")) return "COMMAND LAYER";
-  if (pathname.startsWith("/war-room")) return "ONTOLOGY LAYER";
-  return "ANTIFRAGILE";
+  if (pathname.startsWith("/war-room")) return "ONTOLOGY";
+  if (pathname.startsWith("/war-gaming")) return "PLANNING";
+  if (pathname.startsWith("/missionCommand") || pathname.startsWith("/mission-command")) return "MISSION";
+  if (pathname.startsWith("/dashboard")) return "OPS";
+  return "KHAL";
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  if (pathname.startsWith("/war-room")) {
+  if (KHAL_OPS_BYPASS_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return <>{children}</>;
   }
 
@@ -42,8 +44,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="app-shell">
       <nav className="mc2-topbar app-topbar">
         <div className="mc2-brand-wrap">
-          <Link href="/war-room" className="mc2-brand">
-            WAR ROOM
+          <Link href="/home" className="mc2-brand">
+            KHAL
           </Link>
           <div className="mc2-tabs">
             {primaryTabs.map((tab) => (

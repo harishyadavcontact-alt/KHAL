@@ -22,6 +22,33 @@ npm run db:init
 npm --workspace @khal/web run dev
 ```
 
+## Local Runtime (Canonical)
+- Canonical web port: `3010`
+- Canonical UI surface:
+  - `/war-room`
+  - `/war-gaming`
+  - `/missionCommand`
+  - `/brand`
+  - `/khal/logo`
+  - `/khal/wordmark`
+  - `/home`
+  - `/dashboard`
+- `@khal/web` preflight automatically clears stale process on `3010` before `dev` and `start`.
+
+### 404 Recovery (When Code Exists but Route Fails)
+If a route exists in code but returns `404`, run a fresh server cycle:
+
+```bash
+npm --workspace @khal/web run build
+npm --workspace @khal/web run start
+```
+
+Then run route smoke:
+
+```bash
+npm --workspace @khal/web run smoke:routes
+```
+
 ## Validation
 ```bash
 npm test

@@ -4,12 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "predev": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/ensure-port-3010.ps1 -Port 3010",
+    "dev": "next dev -p 3010",
     "build": "next build",
-    "start": "next start",
+    "prestart": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/ensure-port-3010.ps1 -Port 3010",
+    "start": "next start -p 3010",
     "lint": "tsc --noEmit -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "smoke:routes": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/smoke-routes-3010.ps1 -BaseUrl http://localhost:3010"
   },
   "dependencies": {
     "@khal/domain": "file:../../packages/domain",

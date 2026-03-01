@@ -1,5 +1,16 @@
 export type Perspective = "macro" | "meso" | "micro" | "local" | string;
-export type WarRoomViewState = "mission" | "laws" | "interests" | "affairs" | "war-gaming" | "execution" | "crafts" | "time-horizon" | "lineages";
+export type WarRoomViewState =
+  | "dashboard"
+  | "war-room"
+  | "mission"
+  | "laws"
+  | "interests"
+  | "affairs"
+  | "war-gaming"
+  | "execution"
+  | "crafts"
+  | "time-horizon"
+  | "lineages";
 export type WarGameMode = "source" | "domain" | "affair" | "interest" | "mission" | "lineage";
 export type ParityStatus = "exact" | "functionally_equivalent" | "drifted" | "missing";
 export type DoctrineScopeType = "GLOBAL" | "MODE" | "ENTITY";

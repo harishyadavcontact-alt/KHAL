@@ -1,0 +1,57 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  Anchor,
+  Briefcase,
+  Clock3,
+  Compass,
+  Crosshair,
+  Database,
+  LayoutDashboard,
+  Map as MapIcon,
+  Network,
+  Sword,
+  Zap
+} from "lucide-react";
+
+export type KhalOpsNavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  matchPrefixes?: string[];
+};
+
+export const KHAL_OPS_NAV_ITEMS: KhalOpsNavItem[] = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/war-room", label: "War Room", icon: MapIcon },
+  { href: "/missionCommand", label: "Mission Command", icon: Compass, matchPrefixes: ["/mission-command"] },
+  { href: "/source-of-volatility", label: "Source of Volatility", icon: Sword, matchPrefixes: ["/laws"] },
+  { href: "/interests", label: "Interests", icon: Anchor },
+  { href: "/affairs", label: "Affairs", icon: Briefcase },
+  { href: "/war-gaming", label: "War Gaming", icon: Zap },
+  { href: "/surgical-execution", label: "Surgical Execution", icon: Crosshair },
+  { href: "/crafts-library", label: "Crafts Library", icon: Database, matchPrefixes: ["/crafts"] },
+  { href: "/time-horizon", label: "Time Horizon", icon: Clock3 },
+  { href: "/lineage-map", label: "Lineage Map", icon: Network, matchPrefixes: ["/lineages"] }
+];
+
+export const KHAL_OPS_BYPASS_PREFIXES = [
+  "/dashboard",
+  "/war-room",
+  "/missionCommand",
+  "/mission-command",
+  "/source-of-volatility",
+  "/laws",
+  "/interests",
+  "/affairs",
+  "/war-gaming",
+  "/surgical-execution",
+  "/crafts-library",
+  "/crafts",
+  "/time-horizon",
+  "/lineage-map",
+  "/lineages",
+  "/brand",
+  "/khal",
+  "/home"
+] as const;
+

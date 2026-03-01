@@ -3,27 +3,36 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { KhalOpsShell } from "../../components/ops-shell/KhalOpsShell";
-import { DashboardView } from "../../components/war-room-v2/DashboardView";
 import { DomainModal } from "../../components/war-room-v2/DomainModal";
 import { Domain } from "../../components/war-room-v2/types";
+import { LawsView } from "../../components/war-room-v2/LawsView";
 import { routeForView } from "../../lib/war-room/routes";
 import { updateDomainStrategy, upsertLineageRisk } from "../../lib/war-room/actions";
 import { useWarRoomData } from "../../lib/war-room/useWarRoomData";
 
-export default function DashboardPage() {
+export default function SourceOfVolatilityPage() {
   const router = useRouter();
   const { data, loading, error, refresh } = useWarRoomData();
+  const [selectedLawId, setSelectedLawId] = useState<string | null>(null);
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
 
   return (
-    <KhalOpsShell title="Dashboard" subtitle="Temporal + Fragility">
+    <KhalOpsShell title="Source of Volatility" subtitle="Volatility Mapping">
       {!data || loading ? (
-        <div className="max-w-7xl mx-auto p-5 text-zinc-400">Loading Dashboard...</div>
+        <div className="max-w-7xl mx-auto p-5 text-zinc-400">Loading Sources...</div>
       ) : error ? (
         <div className="max-w-7xl mx-auto p-5 text-red-300">{error}</div>
       ) : (
         <>
-          <DashboardView data={data} onSegmentClick={() => undefined} onOpenDomain={setSelectedDomain} />
+          <LawsView
+            data={data}
+            selectedLawId={selectedLawId}
+            onSelectLaw={setSelectedLawId}
+            onSelectDomain={setSelectedDomain}
+            onWarGameSource={(sourceId) => router.push(`/war-gaming/source?target=${encodeURIComponent(sourceId)}`)}
+            onOpenCraftFromLaw={(craftId) => router.push(`/crafts-library?craftId=${encodeURIComponent(craftId)}`)}
+          />
+
           <DomainModal
             selectedDomain={selectedDomain}
             data={data}

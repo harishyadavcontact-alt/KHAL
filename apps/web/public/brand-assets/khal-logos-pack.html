@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KHAL — 15 Icon Combinations</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #080808;
+    font-family: 'Space Mono', monospace;
+    padding: 50px 20px;
+    color: #fff;
+  }
+  h1 {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 6px;
+    color: #2a2a2a;
+    text-transform: uppercase;
+    margin-bottom: 50px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .card {
+    background: linear-gradient(135deg, #150800, #0d0d0d);
+    padding: 40px 16px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    min-height: 220px;
+    position: relative;
+    transition: background 0.3s;
+  }
+  .card:hover { background: linear-gradient(135deg, #1e0c00, #141414); }
+  .num {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    font-size: 7px;
+    letter-spacing: 2px;
+    color: #1e1e1e;
+  }
+  .label {
+    font-size: 6.5px;
+    letter-spacing: 2px;
+    color: rgba(255,140,0,0.3);
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.8;
+  }
+
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes spin-r { from{transform:rotate(360deg)} to{transform:rotate(0deg)} }
+  @keyframes pulse {
+    0%,100%{ filter: drop-shadow(0 0 8px rgba(255,140,0,0.5)); }
+    50%{ filter: drop-shadow(0 0 22px rgba(255,140,0,1)); }
+  }
+  @keyframes breathe {
+    0%,100%{ transform: scale(1); }
+    50%{ transform: scale(1.04); }
+  }
+
+  .s { animation: spin 20s linear infinite; transform-origin: 90px 90px; }
+  .sr { animation: spin-r 15s linear infinite; transform-origin: 90px 90px; }
+  .p { animation: pulse 3s ease-in-out infinite; }
+  .b { animation: breathe 4s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<h1>KHAL — 15 Icon Combinations · Bindu · Kalachakra · Reticle · Clock</h1>
+
+<div class="grid">
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 01 — Pure Reticle + Bindu pulse                   -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">01</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none" class="p">
+    <circle cx="90" cy="90" r="82" stroke="#ff8c00" stroke-width="2"/>
+    <circle cx="90" cy="90" r="60" stroke="#ff8c00" stroke-width="1" opacity="0.4"/>
+    <circle cx="90" cy="90" r="36" stroke="#ff8c00" stroke-width="1.5"/>
+    <!-- crosshairs -->
+    <line x1="90" y1="8"   x2="90" y2="54"  stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="126" x2="90" y2="172" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="8"  y1="90"  x2="54" y2="90"  stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="126" y1="90" x2="172" y2="90" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- bindu -->
+    <circle cx="90" cy="90" r="14" fill="rgba(255,140,0,0.1)" stroke="#ff8c00" stroke-width="1.5"/>
+    <circle cx="90" cy="90" r="6" fill="#ff8c00"/>
+    <circle cx="90" cy="90" r="2" fill="#080808"/>
+  </svg>
+  <div class="label">Reticle + Bindu<br/>Pure · Minimal</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 02 — Clock hands + Reticle ring + Bindu            -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">02</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none" class="p">
+    <circle cx="90" cy="90" r="82" stroke="#ff8c00" stroke-width="2"/>
+    <!-- 12 clock ticks -->
+    <g stroke="#ff8c00" stroke-linecap="round">
+      <line x1="90" y1="8"  x2="90" y2="20" stroke-width="2.5"/>
+      <line x1="90" y1="160" x2="90" y2="172" stroke-width="2.5"/>
+      <line x1="8" y1="90"  x2="20" y2="90" stroke-width="2.5"/>
+      <line x1="160" y1="90" x2="172" y2="90" stroke-width="2.5"/>
+      <line x1="31.3" y1="31.3" x2="39.8" y2="39.8" stroke-width="1.5"/>
+      <line x1="140.2" y1="140.2" x2="148.7" y2="148.7" stroke-width="1.5"/>
+      <line x1="148.7" y1="31.3" x2="140.2" y2="39.8" stroke-width="1.5"/>
+      <line x1="39.8" y1="140.2" x2="31.3" y2="148.7" stroke-width="1.5"/>
+      <line x1="49" y1="14.5" x2="53" y2="21.5" stroke-width="1" opacity="0.5"/>
+      <line x1="131" y1="158.5" x2="127" y2="165.5" stroke-width="1" opacity="0.5"/>
+      <line x1="165.5" y1="49" x2="158.5" y2="53" stroke-width="1" opacity="0.5"/>
+      <line x1="14.5" y1="131" x2="21.5" y2="127" stroke-width="1" opacity="0.5"/>
+      <line x1="14.5" y1="49"  x2="21.5" y2="53"  stroke-width="1" opacity="0.5"/>
+      <line x1="165.5" y1="131" x2="158.5" y2="127" stroke-width="1" opacity="0.5"/>
+      <line x1="131" y1="14.5" x2="127" y2="21.5" stroke-width="1" opacity="0.5"/>
+      <line x1="49" y1="158.5" x2="53" y2="165.5" stroke-width="1" opacity="0.5"/>
+    </g>
+    <!-- crosshairs -->
+    <line x1="90" y1="25" x2="90" y2="62" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="90" y1="118" x2="90" y2="155" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="25" y1="90" x2="62" y2="90" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="118" y1="90" x2="155" y2="90" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <!-- inner ring -->
+    <circle cx="90" cy="90" r="38" stroke="#ff8c00" stroke-width="1.5"/>
+    <!-- clock hands -->
+    <line x1="90" y1="90" x2="116" y2="64" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="90" x2="70"  y2="72" stroke="#ff8c00" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="90" y1="100" x2="90" y2="56" stroke="#ff8c00" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+    <!-- bindu -->
+    <circle cx="90" cy="90" r="6" fill="#ff8c00"/>
+    <circle cx="90" cy="90" r="2" fill="#080808"/>
+  </svg>
+  <div class="label">Clock + Reticle<br/>+ Bindu</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 03 — Spinning Kalachakra spokes + reticle + bindu  -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">03</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none">
+    <!-- static outer reticle -->
+    <circle cx="90" cy="90" r="82" stroke="#ff8c00" stroke-width="2"/>
+    <line x1="90" y1="8"   x2="90" y2="44"  stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="136" x2="90" y2="172" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="8"  y1="90"  x2="44" y2="90"  stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="136" y1="90" x2="172" y2="90" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- spinning kalachakra inner -->
+    <g class="s" style="transform-origin:90px 90px">
+      <circle cx="90" cy="90" r="60" stroke="#ff8c00" stroke-width="1" opacity="0.5"/>
+      <g stroke="#ff8c00" stroke-width="1.5" stroke-linecap="round" opacity="0.8">
+        <line x1="90" y1="30" x2="90" y2="62"/>
+        <line x1="90" y1="118" x2="90" y2="150"/>
+        <line x1="30" y1="90" x2="62" y2="90"/>
+        <line x1="118" y1="90" x2="150" y2="90"/>
+        <line x1="47.6" y1="47.6" x2="69.4" y2="69.4"/>
+        <line x1="110.6" y1="110.6" x2="132.4" y2="132.4"/>
+        <line x1="132.4" y1="47.6" x2="110.6" y2="69.4"/>
+        <line x1="69.4" y1="110.6" x2="47.6" y2="132.4"/>
+      </g>
+    </g>
+    <!-- bindu -->
+    <circle cx="90" cy="90" r="16" fill="rgba(255,140,0,0.08)" stroke="#ff8c00" stroke-width="1.5"/>
+    <circle cx="90" cy="90" r="6" fill="#ff8c00" style="filter:drop-shadow(0 0 6px #ff8c00)"/>
+    <circle cx="90" cy="90" r="2" fill="#080808"/>
+  </svg>
+  <div class="label">Spinning Chakra<br/>+ Static Reticle + Bindu</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 04 — Concentric rings (chakra) + clock + dot       -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">04</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none" class="p">
+    <circle cx="90" cy="90" r="82" stroke="#ff8c00" stroke-width="2"/>
+    <circle cx="90" cy="90" r="66" stroke="#ff8c00" stroke-width="1" opacity="0.5"/>
+    <circle cx="90" cy="90" r="50" stroke="#ff8c00" stroke-width="1.5" opacity="0.7"/>
+    <circle cx="90" cy="90" r="34" stroke="#ff8c00" stroke-width="1.5"/>
+    <!-- clock ticks on outermost -->
+    <g stroke="#ff8c00" stroke-linecap="round">
+      <line x1="90" y1="8"   x2="90" y2="18"  stroke-width="2.5"/>
+      <line x1="90" y1="162" x2="90" y2="172" stroke-width="2.5"/>
+      <line x1="8"  y1="90"  x2="18" y2="90"  stroke-width="2.5"/>
+      <line x1="162" y1="90" x2="172" y2="90" stroke-width="2.5"/>
+      <line x1="31.3" y1="31.3" x2="38" y2="38" stroke-width="1.5"/>
+      <line x1="142" y1="142" x2="148.7" y2="148.7" stroke-width="1.5"/>
+      <line x1="148.7" y1="31.3" x2="142" y2="38" stroke-width="1.5"/>
+      <line x1="38" y1="142" x2="31.3" y2="148.7" stroke-width="1.5"/>
+    </g>
+    <!-- crosshairs short -->
+    <line x1="90" y1="25" x2="90" y2="56" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="90" y1="124" x2="90" y2="155" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="25" y1="90" x2="56" y2="90" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="124" y1="90" x2="155" y2="90" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <!-- clock hands -->
+    <line x1="90" y1="90" x2="113" y2="67" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="90" y1="90" x2="68"  y2="74" stroke="#ff8c00" stroke-width="3" stroke-linecap="round"/>
+    <!-- bindu -->
+    <circle cx="90" cy="90" r="7" fill="#ff8c00"/>
+    <circle cx="90" cy="90" r="2.5" fill="#080808"/>
+  </svg>
+  <div class="label">Concentric Rings<br/>+ Clock + Bindu</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 05 — Corner brackets + chakra spokes + bindu       -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">05</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none" class="p">
+    <!-- corner brackets -->
+    <path d="M30 60 L30 30 L60 30" stroke="#ff8c00" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M150 60 L150 30 L120 30" stroke="#ff8c00" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M30 120 L30 150 L60 150" stroke="#ff8c00" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M150 120 L150 150 L120 150" stroke="#ff8c00" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- outer ring -->
+    <circle cx="90" cy="90" r="68" stroke="#ff8c00" stroke-width="1.5" opacity="0.6"/>
+    <!-- 8 spokes -->
+    <g stroke="#ff8c00" stroke-width="2" stroke-linecap="round" opacity="0.8">
+      <line x1="90" y1="22" x2="90" y2="66"/>
+      <line x1="90" y1="114" x2="90" y2="158"/>
+      <line x1="22" y1="90" x2="66" y2="90"/>
+      <line x1="114" y1="90" x2="158" y2="90"/>
+      <line x1="42" y1="42" x2="66" y2="66"/>
+      <line x1="114" y1="114" x2="138" y2="138"/>
+      <line x1="138" y1="42" x2="114" y2="66"/>
+      <line x1="66" y1="114" x2="42" y2="138"/>
+    </g>
+    <!-- inner ring -->
+    <circle cx="90" cy="90" r="30" stroke="#ff8c00" stroke-width="1.5"/>
+    <!-- bindu -->
+    <circle cx="90" cy="90" r="8" fill="#ff8c00" style="filter:drop-shadow(0 0 8px #ff8c00)"/>
+    <circle cx="90" cy="90" r="3" fill="#080808"/>
+  </svg>
+  <div class="label">Corner Brackets<br/>+ Chakra + Bindu</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 06 — Dual ring counter-spin + clock + bindu        -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">06</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none">
+    <!-- outer ring spins -->
+    <g class="s">
+      <circle cx="90" cy="90" r="80" stroke="#ff8c00" stroke-width="2"/>
+      <g fill="#ff8c00">
+        <rect x="88" y="8" width="4" height="10" rx="2" transform="rotate(0 90 90)"/>
+        <rect x="88" y="8" width="4" height="10" rx="2" transform="rotate(30 90 90)"/>
+        <rect x="88" y="8" width="4" height="10" rx="2" transform="rotate(60 90 90)"/>
+        <rect x="88" y="8" width="4" height="10" rx="2" transform="rotate(90 90 90)"/>
+        <rect x="88" y="8" width="4" height="10" rx="2" transform="rotate(120 90 90)"/>
+        <rect x="88" y="8" width="4" height="10" rx="2" transform="rotate(150 90 90)"/>
+        <rect x="88" y="8" width="4" height="10" rx="2" transform="rotate(180 90 90)"/>
+        <rect x="88" y="8" width="4" height="10" rx="2" transform="rotate(210 90 90)"/>
+        <rect x="88" y="8" width="4" height="10" rx="2" transform="rotate(240 90 90)"/>
+        <rect x="88" y="8" width="4" height="10" rx="2" transform="rotate(270 90 90)"/>
+        <rect x="88" y="8" width="4" height="10" rx="2" transform="rotate(300 90 90)"/>
+        <rect x="88" y="8" width="4" height="10" rx="2" transform="rotate(330 90 90)"/>
+      </g>
+    </g>
+    <!-- inner ring counter spins -->
+    <g class="sr">
+      <circle cx="90" cy="90" r="52" stroke="#ff8c00" stroke-width="1.5" opacity="0.7"/>
+      <g stroke="#ff8c00" stroke-width="1.5" stroke-linecap="round" opacity="0.6">
+        <line x1="90" y1="38" x2="90" y2="60"/>
+        <line x1="90" y1="120" x2="90" y2="142"/>
+        <line x1="38" y1="90" x2="60" y2="90"/>
+        <line x1="120" y1="90" x2="142" y2="90"/>
+      </g>
+    </g>
+    <!-- static clock hands -->
+    <line x1="90" y1="90" x2="114" y2="66" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="90" x2="70"  y2="74" stroke="#ff8c00" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- bindu -->
+    <circle cx="90" cy="90" r="16" fill="rgba(255,140,0,0.08)" stroke="#ff8c00" stroke-width="1.2"/>
+    <circle cx="90" cy="90" r="6" fill="#ff8c00"/>
+    <circle cx="90" cy="90" r="2" fill="#080808"/>
+  </svg>
+  <div class="label">Counter-Spin Rings<br/>+ Clock + Bindu</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 07 — Minimal: 1 ring + 4 tick marks + hands + dot  -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">07</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none" class="p">
+    <circle cx="90" cy="90" r="78" stroke="#ff8c00" stroke-width="2.5"/>
+    <!-- only 4 major ticks -->
+    <line x1="90" y1="12" x2="90" y2="28" stroke="#ff8c00" stroke-width="3" stroke-linecap="round"/>
+    <line x1="90" y1="152" x2="90" y2="168" stroke="#ff8c00" stroke-width="3" stroke-linecap="round"/>
+    <line x1="12" y1="90" x2="28" y2="90" stroke="#ff8c00" stroke-width="3" stroke-linecap="round"/>
+    <line x1="152" y1="90" x2="168" y2="90" stroke="#ff8c00" stroke-width="3" stroke-linecap="round"/>
+    <!-- crosshair lines full -->
+    <line x1="90" y1="28" x2="90" y2="72" stroke="#ff8c00" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <line x1="90" y1="108" x2="90" y2="152" stroke="#ff8c00" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <line x1="28" y1="90" x2="72" y2="90" stroke="#ff8c00" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <line x1="108" y1="90" x2="152" y2="90" stroke="#ff8c00" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <!-- hands -->
+    <line x1="90" y1="90" x2="118" y2="62" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="90" x2="66"  y2="74" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+    <line x1="90" y1="104" x2="90" y2="54" stroke="#ff8c00" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+    <!-- bindu -->
+    <circle cx="90" cy="90" r="7" fill="#ff8c00"/>
+    <circle cx="90" cy="90" r="2.5" fill="#080808"/>
+  </svg>
+  <div class="label">Ultra Minimal<br/>Clock + Bindu</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 08 — Thick chakra + reticle gap + glowing bindu    -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">08</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none">
+    <!-- bold outer -->
+    <circle cx="90" cy="90" r="80" stroke="#ff8c00" stroke-width="4"/>
+    <!-- reticle: thick short lines -->
+    <line x1="90" y1="10" x2="90" y2="40" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+    <line x1="90" y1="140" x2="90" y2="170" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+    <line x1="10" y1="90" x2="40" y2="90" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+    <line x1="140" y1="90" x2="170" y2="90" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+    <!-- 8 spoke chakra inside -->
+    <g stroke="#ff8c00" stroke-width="1.5" stroke-linecap="round" opacity="0.5">
+      <line x1="90" y1="44" x2="90" y2="66"/>
+      <line x1="90" y1="114" x2="90" y2="136"/>
+      <line x1="44" y1="90" x2="66" y2="90"/>
+      <line x1="114" y1="90" x2="136" y2="90"/>
+      <line x1="54.9" y1="54.9" x2="70.4" y2="70.4"/>
+      <line x1="109.6" y1="109.6" x2="125.1" y2="125.1"/>
+      <line x1="125.1" y1="54.9" x2="109.6" y2="70.4"/>
+      <line x1="70.4" y1="109.6" x2="54.9" y2="125.1"/>
+    </g>
+    <circle cx="90" cy="90" r="40" stroke="#ff8c00" stroke-width="2" opacity="0.6"/>
+    <circle cx="90" cy="90" r="20" stroke="#ff8c00" stroke-width="1.5"/>
+    <!-- glowing bindu -->
+    <circle cx="90" cy="90" r="8" fill="#ff8c00" style="filter:drop-shadow(0 0 10px #ff8c00) drop-shadow(0 0 20px rgba(255,140,0,0.6))"/>
+    <circle cx="90" cy="90" r="3" fill="#080808"/>
+  </svg>
+  <div class="label">Bold Reticle<br/>+ Chakra + Glow Bindu</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 09 — Dashed outer ring + solid inner + hands + dot -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">09</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none" class="p">
+    <!-- dashed outer -->
+    <circle cx="90" cy="90" r="82" stroke="#ff8c00" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <!-- solid middle -->
+    <circle cx="90" cy="90" r="64" stroke="#ff8c00" stroke-width="2"/>
+    <!-- crosshairs break through middle ring -->
+    <line x1="90" y1="8"  x2="90" y2="54"  stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="126" x2="90" y2="172" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="8"  y1="90" x2="54"  y2="90" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="126" y1="90" x2="172" y2="90" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- inner ring -->
+    <circle cx="90" cy="90" r="36" stroke="#ff8c00" stroke-width="1.5" opacity="0.7"/>
+    <!-- clock hands -->
+    <line x1="90" y1="90" x2="112" y2="68" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="90" y1="90" x2="70"  y2="76" stroke="#ff8c00" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- bindu -->
+    <circle cx="90" cy="90" r="6" fill="#ff8c00"/>
+    <circle cx="90" cy="90" r="2" fill="#080808"/>
+  </svg>
+  <div class="label">Dashed Orbit<br/>+ Clock + Bindu</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 10 — Chakra teeth + full clock + triple bindu      -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">10</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none">
+    <!-- teeth ring spins -->
+    <g class="s">
+      <circle cx="90" cy="90" r="80" stroke="#ff8c00" stroke-width="1.5"/>
+      <g fill="#ff8c00">
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(0 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(22.5 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(45 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(67.5 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(90 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(112.5 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(135 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(157.5 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(180 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(202.5 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(225 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(247.5 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(270 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(292.5 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(315 90 90)"/>
+        <rect x="88.5" y="8" width="3" height="9" rx="1.5" transform="rotate(337.5 90 90)"/>
+      </g>
+    </g>
+    <!-- static clock face -->
+    <circle cx="90" cy="90" r="56" stroke="#ff8c00" stroke-width="2"/>
+    <g stroke="#ff8c00" stroke-linecap="round">
+      <line x1="90" y1="34" x2="90" y2="44" stroke-width="2"/>
+      <line x1="90" y1="136" x2="90" y2="146" stroke-width="2"/>
+      <line x1="34" y1="90" x2="44" y2="90" stroke-width="2"/>
+      <line x1="136" y1="90" x2="146" y2="90" stroke-width="2"/>
+      <line x1="50.4" y1="50.4" x2="57.5" y2="57.5" stroke-width="1.5"/>
+      <line x1="122.5" y1="122.5" x2="129.6" y2="129.6" stroke-width="1.5"/>
+      <line x1="129.6" y1="50.4" x2="122.5" y2="57.5" stroke-width="1.5"/>
+      <line x1="57.5" y1="122.5" x2="50.4" y2="129.6" stroke-width="1.5"/>
+    </g>
+    <!-- crosshairs -->
+    <line x1="90" y1="44" x2="90" y2="68" stroke="#ff8c00" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <line x1="90" y1="112" x2="90" y2="136" stroke="#ff8c00" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <line x1="44" y1="90" x2="68" y2="90" stroke="#ff8c00" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <line x1="112" y1="90" x2="136" y2="90" stroke="#ff8c00" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <!-- clock hands -->
+    <line x1="90" y1="90" x2="112" y2="68" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="90" x2="70"  y2="76" stroke="#ff8c00" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- triple bindu -->
+    <circle cx="90" cy="90" r="14" stroke="#ff8c00" stroke-width="1" opacity="0.4"/>
+    <circle cx="90" cy="90" r="7" fill="#ff8c00"/>
+    <circle cx="90" cy="90" r="2.5" fill="#080808"/>
+  </svg>
+  <div class="label">Gear Ring + Full Clock<br/>+ Triple Bindu</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 11 — Asymmetric: reticle off-center feel + chakra  -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">11</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none" class="p">
+    <circle cx="90" cy="90" r="80" stroke="#ff8c00" stroke-width="2"/>
+    <!-- long crosshairs, one short one long for asymmetry -->
+    <line x1="90" y1="10" x2="90" y2="72" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="90" y1="108" x2="90" y2="170" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="10"  y1="90" x2="72" y2="90" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="108" y1="90" x2="170" y2="90" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <!-- diagonal faint -->
+    <line x1="33" y1="33" x2="66" y2="66" stroke="#ff8c00" stroke-width="1" opacity="0.3" stroke-linecap="round"/>
+    <line x1="114" y1="114" x2="147" y2="147" stroke="#ff8c00" stroke-width="1" opacity="0.3" stroke-linecap="round"/>
+    <line x1="147" y1="33" x2="114" y2="66" stroke="#ff8c00" stroke-width="1" opacity="0.3" stroke-linecap="round"/>
+    <line x1="66" y1="114" x2="33" y2="147" stroke="#ff8c00" stroke-width="1" opacity="0.3" stroke-linecap="round"/>
+    <!-- 2 inner rings -->
+    <circle cx="90" cy="90" r="50" stroke="#ff8c00" stroke-width="1" opacity="0.5"/>
+    <circle cx="90" cy="90" r="28" stroke="#ff8c00" stroke-width="1.5"/>
+    <!-- single clock hand (hour) -->
+    <line x1="90" y1="90" x2="68" y2="72" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+    <!-- second hand -->
+    <line x1="90" y1="100" x2="90" y2="50" stroke="#ff8c00" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+    <!-- bindu -->
+    <circle cx="90" cy="90" r="8" fill="#ff8c00"/>
+    <circle cx="90" cy="90" r="3" fill="#080808"/>
+  </svg>
+  <div class="label">Extended Cross<br/>+ Diagonal Chakra + Bindu</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 12 — Solid filled center disc + reticle cut out    -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">12</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none" class="p">
+    <!-- outer -->
+    <circle cx="90" cy="90" r="80" stroke="#ff8c00" stroke-width="2"/>
+    <!-- chakra ticks -->
+    <g stroke="#ff8c00" stroke-linecap="round" opacity="0.6">
+      <line x1="90" y1="10" x2="90" y2="22" stroke-width="2"/>
+      <line x1="90" y1="158" x2="90" y2="170" stroke-width="2"/>
+      <line x1="10" y1="90" x2="22" y2="90" stroke-width="2"/>
+      <line x1="158" y1="90" x2="170" y2="90" stroke-width="2"/>
+      <line x1="33.4" y1="33.4" x2="41.9" y2="41.9" stroke-width="1.5"/>
+      <line x1="138.1" y1="138.1" x2="146.6" y2="146.6" stroke-width="1.5"/>
+      <line x1="146.6" y1="33.4" x2="138.1" y2="41.9" stroke-width="1.5"/>
+      <line x1="41.9" y1="138.1" x2="33.4" y2="146.6" stroke-width="1.5"/>
+    </g>
+    <!-- reticle lines through middle -->
+    <line x1="22" y1="90" x2="56" y2="90" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="124" y1="90" x2="158" y2="90" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="90" y1="22" x2="90" y2="56" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <line x1="90" y1="124" x2="90" y2="158" stroke="#ff8c00" stroke-width="2" stroke-linecap="round"/>
+    <!-- solid filled disc -->
+    <circle cx="90" cy="90" r="36" fill="#ff8c00" opacity="0.12" stroke="#ff8c00" stroke-width="2"/>
+    <!-- clock hands cut through disc -->
+    <line x1="90" y1="90" x2="114" y2="66" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="90" x2="70"  y2="76" stroke="#ff8c00" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- bindu -->
+    <circle cx="90" cy="90" r="7" fill="#ff8c00"/>
+    <circle cx="90" cy="90" r="2.5" fill="#080808"/>
+  </svg>
+  <div class="label">Filled Disc<br/>+ Clock + Chakra Ticks</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 13 — Orbit dots (chakra dots) + reticle + clock    -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">13</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none" class="p">
+    <!-- reticle outer -->
+    <circle cx="90" cy="90" r="80" stroke="#ff8c00" stroke-width="2"/>
+    <line x1="90" y1="10"  x2="90" y2="50"  stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="130" x2="90" y2="170" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="10"  y1="90" x2="50" y2="90"  stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="130" y1="90" x2="170" y2="90" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- orbit dots — chakra positions -->
+    <g fill="#ff8c00" opacity="0.8">
+      <circle cx="90"  cy="28"  r="3.5"/>
+      <circle cx="90"  cy="152" r="3.5"/>
+      <circle cx="28"  cy="90"  r="3.5"/>
+      <circle cx="152" cy="90"  r="3.5"/>
+      <circle cx="43.4" cy="43.4" r="2.5"/>
+      <circle cx="136.6" cy="136.6" r="2.5"/>
+      <circle cx="136.6" cy="43.4" r="2.5"/>
+      <circle cx="43.4" cy="136.6" r="2.5"/>
+    </g>
+    <!-- inner ring -->
+    <circle cx="90" cy="90" r="46" stroke="#ff8c00" stroke-width="1.5" opacity="0.6"/>
+    <!-- clock hands -->
+    <line x1="90" y1="90" x2="114" y2="66" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="90" x2="70"  y2="76" stroke="#ff8c00" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="90" y1="100" x2="90" y2="52" stroke="#ff8c00" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+    <!-- bindu -->
+    <circle cx="90" cy="90" r="7" fill="#ff8c00"/>
+    <circle cx="90" cy="90" r="2.5" fill="#080808"/>
+  </svg>
+  <div class="label">Orbit Dots + Reticle<br/>+ Clock + Bindu</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 14 — No rings: pure crosshair + chakra spokes      -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card">
+  <div class="num">14</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none" class="p">
+    <!-- bold crosshairs only — no ring -->
+    <line x1="90" y1="10"  x2="90" y2="78"  stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="102" x2="90" y2="170" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="10"  y1="90" x2="78"  y2="90" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="102" y1="90" x2="170" y2="90" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- diagonal spokes -->
+    <line x1="33.4" y1="33.4" x2="67.4" y2="67.4" stroke="#ff8c00" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <line x1="112.6" y1="112.6" x2="146.6" y2="146.6" stroke="#ff8c00" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <line x1="146.6" y1="33.4" x2="112.6" y2="67.4" stroke="#ff8c00" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <line x1="67.4" y1="112.6" x2="33.4" y2="146.6" stroke="#ff8c00" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <!-- clock hands -->
+    <line x1="90" y1="90" x2="116" y2="64" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="90" x2="68"  y2="74" stroke="#ff8c00" stroke-width="4" stroke-linecap="round"/>
+    <!-- bindu with rings -->
+    <circle cx="90" cy="90" r="20" stroke="#ff8c00" stroke-width="1.5"/>
+    <circle cx="90" cy="90" r="10" fill="rgba(255,140,0,0.15)" stroke="#ff8c00" stroke-width="1.2"/>
+    <circle cx="90" cy="90" r="5" fill="#ff8c00"/>
+    <circle cx="90" cy="90" r="1.8" fill="#080808"/>
+  </svg>
+  <div class="label">Ringless Crosshair<br/>+ Clock + Bindu Focus</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- 15 — The Final Form: all elements balanced         -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card" style="background:linear-gradient(135deg,#1e0800,#0d0d0d);">
+  <div class="num" style="color:#ff8c00;opacity:0.4;">15</div>
+  <svg width="120" height="120" viewBox="0 0 180 180" fill="none" style="filter:drop-shadow(0 0 16px rgba(255,140,0,0.7))">
+    <!-- spinning outer teeth -->
+    <g class="s">
+      <circle cx="90" cy="90" r="82" stroke="#ff8c00" stroke-width="1.5"/>
+      <g fill="#ff8c00" opacity="0.9">
+        <rect x="88.5" y="6" width="3" height="10" rx="1.5" transform="rotate(0 90 90)"/>
+        <rect x="88.5" y="6" width="3" height="10" rx="1.5" transform="rotate(30 90 90)"/>
+        <rect x="88.5" y="6" width="3" height="10" rx="1.5" transform="rotate(60 90 90)"/>
+        <rect x="88.5" y="6" width="3" height="10" rx="1.5" transform="rotate(90 90 90)"/>
+        <rect x="88.5" y="6" width="3" height="10" rx="1.5" transform="rotate(120 90 90)"/>
+        <rect x="88.5" y="6" width="3" height="10" rx="1.5" transform="rotate(150 90 90)"/>
+        <rect x="88.5" y="6" width="3" height="10" rx="1.5" transform="rotate(180 90 90)"/>
+        <rect x="88.5" y="6" width="3" height="10" rx="1.5" transform="rotate(210 90 90)"/>
+        <rect x="88.5" y="6" width="3" height="10" rx="1.5" transform="rotate(240 90 90)"/>
+        <rect x="88.5" y="6" width="3" height="10" rx="1.5" transform="rotate(270 90 90)"/>
+        <rect x="88.5" y="6" width="3" height="10" rx="1.5" transform="rotate(300 90 90)"/>
+        <rect x="88.5" y="6" width="3" height="10" rx="1.5" transform="rotate(330 90 90)"/>
+      </g>
+    </g>
+    <!-- static crosshairs — break ring -->
+    <line x1="90" y1="16"  x2="90" y2="52"  stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="128" x2="90" y2="164" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="16"  y1="90" x2="52" y2="90"  stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="128" y1="90" x2="164" y2="90" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- clock face ring -->
+    <circle cx="90" cy="90" r="58" stroke="#ff8c00" stroke-width="2"/>
+    <!-- 12 clock ticks on face ring -->
+    <g stroke="#ff8c00" stroke-linecap="round">
+      <line x1="90" y1="32" x2="90" y2="42" stroke-width="2.5"/>
+      <line x1="90" y1="138" x2="90" y2="148" stroke-width="2.5"/>
+      <line x1="32" y1="90" x2="42" y2="90" stroke-width="2.5"/>
+      <line x1="138" y1="90" x2="148" y2="90" stroke-width="2.5"/>
+      <line x1="52" y1="52" x2="59" y2="59" stroke-width="1.5"/>
+      <line x1="121" y1="121" x2="128" y2="128" stroke-width="1.5"/>
+      <line x1="128" y1="52" x2="121" y2="59" stroke-width="1.5"/>
+      <line x1="59" y1="121" x2="52" y2="128" stroke-width="1.5"/>
+      <line x1="70.5" y1="33" x2="73.5" y2="39" stroke-width="1" opacity="0.5"/>
+      <line x1="106.5" y1="141" x2="109.5" y2="147" stroke-width="1" opacity="0.5"/>
+      <line x1="147" y1="70.5" x2="141" y2="73.5" stroke-width="1" opacity="0.5"/>
+      <line x1="39" y1="106.5" x2="33" y2="109.5" stroke-width="1" opacity="0.5"/>
+    </g>
+    <!-- counter-spin inner chakra -->
+    <g class="sr">
+      <circle cx="90" cy="90" r="38" stroke="#ff8c00" stroke-width="1" opacity="0.5"/>
+      <g fill="#ff8c00" opacity="0.7">
+        <polygon points="90,52 93,60 90,68 87,60"/>
+        <polygon points="90,52 93,60 90,68 87,60" transform="rotate(90 90 90)"/>
+        <polygon points="90,52 93,60 90,68 87,60" transform="rotate(180 90 90)"/>
+        <polygon points="90,52 93,60 90,68 87,60" transform="rotate(270 90 90)"/>
+      </g>
+    </g>
+    <!-- clock hands -->
+    <line x1="90" y1="90" x2="114" y2="66" stroke="#ff8c00" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="90" x2="70"  y2="76" stroke="#ff8c00" stroke-width="3.5" stroke-linecap="round"/>
+    <line x1="90" y1="102" x2="90" y2="55" stroke="#ff8c00" stroke-width="1" stroke-linecap="round" opacity="0.45"/>
+    <!-- bindu triple ring -->
+    <circle cx="90" cy="90" r="16" fill="rgba(255,140,0,0.07)" stroke="#ff8c00" stroke-width="1"/>
+    <circle cx="90" cy="90" r="7" fill="#ff8c00" style="filter:drop-shadow(0 0 8px #ff8c00)"/>
+    <circle cx="90" cy="90" r="2.5" fill="#080808"/>
+  </svg>
+  <div class="label" style="color:rgba(255,140,0,0.6)">★ THE FINAL FORM ★<br/>All Elements United</div>
+</div>
+
+</div>
+</body>
+</html>

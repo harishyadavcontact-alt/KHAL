@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 
 :root {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -9,6 +9,9 @@
   --color-antifragile: #10b981;
   --color-fragile: #ef4444;
   --color-robust: #3b82f6;
+  --khal-compact-font-size: 13px;
+  --khal-compact-radius: 6px;
+  --khal-compact-pad: 8px;
 }
 
 html, body {
@@ -21,6 +24,30 @@ html, body {
 
 * {
   box-sizing: border-box;
+}
+
+.khal-compact {
+  font-size: var(--khal-compact-font-size);
+}
+
+.khal-compact .card {
+  border-radius: var(--khal-compact-radius);
+  padding: var(--khal-compact-pad);
+}
+
+.khal-compact .mc2-domain-card,
+.khal-compact .mc2-row,
+.khal-compact .mc2-panelbox,
+.khal-compact .mc2-modal input,
+.khal-compact .mc2-modal select,
+.khal-compact .app-leftnav a {
+  border-radius: var(--khal-compact-radius);
+}
+
+.khal-compact .mc2-grid3,
+.khal-compact .mc2-grid2,
+.khal-compact .mc2-war-grid {
+  gap: 8px;
 }
 
 .glass {

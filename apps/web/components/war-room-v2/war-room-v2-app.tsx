@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Anchor, Briefcase, Clock, Crosshair, Database, Globe, LayoutDashboard, Maximize2, Minimize2, User, Zap } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Anchor, Briefcase, Clock, Crosshair, Database, Globe, LayoutDashboard, Map as MapIcon, Maximize2, Minimize2, User, Zap } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from './utils';
 import { AppData, Domain, Task, WarGameMode, WarRoomViewState } from './types';
@@ -15,6 +15,10 @@ import { CraftsView } from './CraftsView';
 import { DomainModal } from './DomainModal';
 import { TimeHorizonView } from './TimeHorizonView';
 import { LineageMapView } from './LineageMapView';
+import { KhalWordmark } from '../branding/KhalWordmark';
+import { KhalFinalMark } from '../branding/KhalFinalMark';
+import { DashboardView } from './DashboardView';
+import { WarRoomView } from './WarRoomView';
 
 const WAR_GAME_MODES: WarGameMode[] = ['source', 'domain', 'affair', 'interest', 'mission', 'lineage'];
 
@@ -46,8 +50,18 @@ const ensureTaskSourceType = (sourceType?: string): 'AFFAIR' | 'INTEREST' | 'PLA
   return 'PLAN';
 };
 
+const pathToView = (pathname: string): WarRoomViewState | null => {
+  if (pathname.startsWith('/dashboard')) return 'dashboard';
+  if (pathname.startsWith('/war-room')) return 'war-room';
+  if (pathname.startsWith('/war-gaming')) return 'war-gaming';
+  if (pathname.startsWith('/missionCommand') || pathname.startsWith('/mission-command')) return 'mission';
+  return null;
+};
+
 const App = () => {
-  const [activeView, setActiveView] = useState<WarRoomViewState>('mission');
+  const pathname = usePathname();
+  const router = useRouter();
+  const [activeView, setActiveView] = useState<WarRoomViewState>('dashboard');
   const searchParams = useSearchParams();
   const [data, setData] = useState<AppData | null>(null);
   const [selectedAffairId, setSelectedAffairId] = useState<string | null>(null);
@@ -77,6 +91,8 @@ const App = () => {
     const wgMode = searchParams.get('wgMode');
     const wgTarget = searchParams.get('wgTarget') ?? undefined;
     const map: Record<string, WarRoomViewState> = {
+      dashboard: 'dashboard',
+      'war-room': 'war-room',
       mission: 'mission',
       laws: 'laws',
       interests: 'interests',
@@ -95,6 +111,13 @@ const App = () => {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    const routeView = pathToView(pathname);
+    if (routeView) {
+      setActiveView(routeView);
+    }
+  }, [pathname]);
+
   if (!data) {
     return (
       <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
@@ -104,13 +127,15 @@ const App = () => {
             transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
             className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"
           />
-          <div className="text-sm font-mono text-zinc-500 uppercase tracking-widest">Initializing KHAL OS...</div>
+          <div className="text-sm font-mono text-zinc-500 uppercase tracking-widest">Initializing KHAL...</div>
         </div>
       </div>
     );
   }
 
   const navItems: Array<{ id: WarRoomViewState; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'war-room', label: 'War Room', icon: MapIcon },
     { id: 'mission', label: 'Mission Command', icon: LayoutDashboard },
     { id: 'laws', label: 'Source of Volatility', icon: Globe },
     { id: 'interests', label: 'Interests', icon: Anchor },
@@ -121,6 +146,26 @@ const App = () => {
     { id: 'time-horizon', label: 'Time Horizon', icon: Clock },
     { id: 'lineages', label: 'Lineage Map', icon: User }
   ];
+
+  const navigateView = (nextView: WarRoomViewState) => {
+    if (nextView === 'dashboard') {
+      router.push('/dashboard');
+      return;
+    }
+    if (nextView === 'war-room') {
+      router.push('/war-room');
+      return;
+    }
+    if (nextView === 'mission') {
+      router.push('/missionCommand');
+      return;
+    }
+    if (nextView === 'war-gaming') {
+      router.push('/war-gaming');
+      return;
+    }
+    setActiveView(nextView);
+  };
 
   const selectedAffair = data.affairs.find((a) => a.id === selectedAffairId);
 
@@ -552,14 +597,16 @@ const App = () => {
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-50 bg-zinc-900/50 backdrop-blur-xl border-r border-white/5 transition-all duration-300 flex flex-col',
-          sidebarOpen ? 'w-64' : 'w-20'
+          sidebarOpen ? 'w-56' : 'w-16'
         )}
       >
-        <div className="p-6 flex items-center gap-4">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black text-xl italic shrink-0">K</div>
+        <div className="p-4 flex items-center gap-3">
+          <div className="w-7 h-7 rounded-md flex items-center justify-center text-[#ff8c00] shrink-0">
+            <KhalFinalMark size={28} />
+          </div>
           {sidebarOpen && (
-            <div className="font-bold tracking-tighter text-xl">
-              KHAL <span className="text-zinc-500 font-normal">OS</span>
+            <div className="leading-none">
+              <KhalWordmark size={24} variant="muted" />
             </div>
           )}
         </div>
@@ -569,11 +616,12 @@ const App = () => {
             <button
               key={item.id}
               onClick={() => {
-                setActiveView(item.id);
+                navigateView(item.id);
                 resetSelections();
               }}
               className={cn(
-                'w-full flex items-center gap-4 px-3 py-3 rounded-xl transition-all group',
+                'w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all group',
+                'text-sm',
                 activeView === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
               )}
             >
@@ -590,8 +638,8 @@ const App = () => {
         </div>
       </aside>
 
-      <div className={cn('flex-1 transition-all duration-300', sidebarOpen ? 'ml-64' : 'ml-20')}>
-        <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 sticky top-0 bg-zinc-950/50 backdrop-blur-xl z-40">
+      <div className={cn('flex-1 transition-all duration-300', sidebarOpen ? 'ml-56' : 'ml-16')}>
+        <header className="h-12 border-b border-white/5 flex items-center justify-between px-5 sticky top-0 bg-zinc-950/50 backdrop-blur-xl z-40">
           <div className="flex items-center gap-4">
             <div className="text-xs font-mono text-zinc-500 uppercase tracking-widest">{navItems.find((n) => n.id === activeView)?.label}</div>
           </div>
@@ -620,7 +668,9 @@ const App = () => {
                 />
               </motion.div>
             ) : (
-              <motion.div key={activeView} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="p-8">
+              <motion.div key={activeView} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="p-5">
+                {activeView === 'dashboard' && <DashboardView data={data} onSegmentClick={() => undefined} onOpenDomain={setSelectedDomain} />}
+                {activeView === 'war-room' && <WarRoomView domains={data.domains} onDomainClick={setSelectedDomain} />}
                 {activeView === 'mission' && <MissionCommand data={data} onDomainClick={setSelectedDomain} onWarGame={openWarGame} />}
                 {activeView === 'laws' && (
                   <LawsView
