@@ -6,6 +6,7 @@ import {
   Compass,
   Crosshair,
   Database,
+  Home,
   LayoutDashboard,
   Map as MapIcon,
   Network,
@@ -21,6 +22,7 @@ export type KhalOpsNavItem = {
 };
 
 export const KHAL_OPS_NAV_ITEMS: KhalOpsNavItem[] = [
+  { href: "/home", label: "Home", icon: Home },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/war-room", label: "War Room", icon: MapIcon },
   { href: "/missionCommand", label: "Mission Command", icon: Compass, matchPrefixes: ["/mission-command"] },
@@ -54,4 +56,3 @@ export const KHAL_OPS_BYPASS_PREFIXES = [
   "/khal",
   "/home"
 ] as const;
-

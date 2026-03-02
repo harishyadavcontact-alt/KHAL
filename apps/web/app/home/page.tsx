@@ -1,118 +1,114 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Home } from "lucide-react";
+import { useEffect } from "react";
 import { KhalFinalMark } from "../../components/branding/KhalFinalMark";
 import { KhalWordmark } from "../../components/branding/KhalWordmark";
+import { KhalOpsShell } from "../../components/ops-shell/KhalOpsShell";
 import { KHAL_OPS_NAV_ITEMS } from "../../components/ops-shell/nav-config";
+import { prewarmWarRoomData } from "../../lib/war-room/useWarRoomData";
 
-const links = [
-  { href: "/home", action: "Home", alias: "leader+hm" },
-  ...KHAL_OPS_NAV_ITEMS.map((item, index) => ({
-    href: item.href,
-    action: item.label,
-    alias: `leader+${String(index + 1).padStart(2, "0")}`
-  })),
-  { href: "/brand", action: "Brand Assets", alias: "leader+br" }
+const MODULE_COPY: Record<string, string> = {
+  "/home": "Operational launch surface",
+  "/dashboard": "Temporal, posture, and fragility view",
+  "/war-room": "Macro domain command center",
+  "/missionCommand": "Mission hierarchy and chain of command",
+  "/source-of-volatility": "Six-law volatility mapping",
+  "/interests": "Optionality lane and convex upside",
+  "/affairs": "Obligation lane and fragility removal",
+  "/war-gaming": "Scenario simulation and planning",
+  "/surgical-execution": "Execution readiness and task chain",
+  "/crafts-library": "Means, models, frameworks, and heuristics",
+  "/time-horizon": "Temporal constraints and deadlines",
+  "/lineage-map": "Lineage exposure and links"
+};
+
+const PREFETCH_ROUTES = [
+  ...new Set([...KHAL_OPS_NAV_ITEMS.map((item) => item.href), "/brand", "/khal/logo", "/khal/wordmark"])
 ];
 
 export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    const maybeWindow =
+      typeof window !== "undefined"
+        ? (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number })
+        : null;
+    const idle = maybeWindow?.requestIdleCallback;
+
+    const prefetch = () => {
+      for (const route of PREFETCH_ROUTES) {
+        router.prefetch(route);
+      }
+      void prewarmWarRoomData();
+    };
+
+    if (idle) {
+      idle(prefetch, { timeout: 1200 });
+    } else {
+      timeout = setTimeout(prefetch, 120);
+    }
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [router]);
+
   return (
-    <main
-      className="khal-compact"
-      style={{
-        minHeight: "100vh",
-        background: "#0a0b14",
-        color: "#c9d1d9",
-        padding: "14px 16px 56px",
-        position: "relative",
-        fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace"
-      }}
-    >
-      <div style={{ maxWidth: 960, margin: "0 auto", border: "1px solid #1f2430", borderRadius: 6, overflow: "hidden" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            background: "#101625",
-            borderBottom: "1px solid #1f2430",
-            padding: "4px 8px",
-            fontSize: 10,
-            letterSpacing: "0.06em",
-            color: "#8b9ab3"
-          }}
-        >
-          <span>khal startup</span>
-          <span>public • ops-gateway • ready</span>
-        </div>
-
-        <div style={{ padding: "26px 20px 24px", background: "#0b1020", minHeight: 520 }}>
-          <div style={{ display: "grid", placeItems: "center", marginBottom: 20 }}>
-            <KhalWordmark size={78} />
-          </div>
-
-          <div style={{ maxWidth: 660, margin: "0 auto", border: "1px solid #232b3a", borderRadius: 4, overflow: "hidden" }}>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 130px",
-                gap: 10,
-                padding: "6px 10px",
-                background: "#0f162a",
-                borderBottom: "1px solid #232b3a",
-                fontSize: 10,
-                letterSpacing: "0.12em",
-                color: "#7787a1",
-                textTransform: "uppercase"
-              }}
-            >
-              <span>Command</span>
-              <span>Alias</span>
+    <KhalOpsShell title="Home" subtitle="Operational Gateway">
+      <div className="mx-auto w-full max-w-7xl px-3 py-5">
+        <section className="glass mb-4 rounded-lg border border-white/10 p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="inline-flex items-center gap-2 text-zinc-300">
+              <Home size={14} className="text-zinc-400" />
+              <span className="text-xs uppercase tracking-[0.16em]">Home</span>
             </div>
-            <div style={{ display: "grid" }}>
-              {links.map((item) => (
-                <Link
-                  key={item.href + item.action}
-                  href={item.href}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 130px",
-                    gap: 10,
-                    alignItems: "center",
-                    padding: "8px 10px",
-                    borderBottom: "1px solid #1b2130",
-                    background: "transparent",
-                    color: "#d8dee9",
-                    textDecoration: "none",
-                    fontSize: 13
-                  }}
-                >
-                  <span style={{ color: "#c9d1d9" }}>◈ {item.action}</span>
-                  <span style={{ color: "#8fa0bc", fontSize: 12 }}>{item.alias}</span>
-                </Link>
-              ))}
-            </div>
+            <span className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">Unified Ops Surface</span>
           </div>
-        </div>
+          <div className="grid place-items-center gap-2 border-t border-white/10 pt-4">
+            <KhalWordmark size={70} />
+            <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+              <KhalFinalMark size={16} />
+              Precision Runtime Ready
+            </span>
+          </div>
+        </section>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            background: "#101625",
-            borderTop: "1px solid #1f2430",
-            padding: "4px 8px",
-            fontSize: 10,
-            color: "#7c8ba3"
-          }}
-        >
-          <span>startup.khal</span>
-          <span>primary modules loaded</span>
-        </div>
-      </div>
+        <section className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {KHAL_OPS_NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                prefetch
+                onMouseEnter={() => router.prefetch(item.href)}
+                className="glass flex items-start justify-between rounded-lg border border-white/10 px-3 py-3 transition-colors hover:bg-zinc-900/75"
+              >
+                <div className="min-w-0">
+                  <div className="mb-1 inline-flex items-center gap-2 text-sm font-medium text-zinc-100">
+                    <Icon size={14} className="text-zinc-400" />
+                    {item.label}
+                  </div>
+                  <p className="text-xs text-zinc-400">{MODULE_COPY[item.href] ?? "Open module"}</p>
+                </div>
+                <span className="ml-3 text-[10px] uppercase tracking-[0.12em] text-zinc-500">Open</span>
+              </Link>
+            );
+          })}
+        </section>
 
-      <div style={{ position: "fixed", left: "50%", bottom: 12, transform: "translateX(-50%)", color: "#ff8c00", opacity: 0.24 }}>
-        <KhalFinalMark size={38} />
+        <section className="glass mt-4 rounded-lg border border-white/10 px-3 py-2">
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-zinc-500">
+            <span>Fast Path Cache</span>
+            <span>Route + Data Prefetch Enabled</span>
+          </div>
+        </section>
       </div>
-    </main>
+    </KhalOpsShell>
   );
 }

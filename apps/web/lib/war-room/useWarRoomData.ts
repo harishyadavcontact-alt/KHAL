@@ -4,22 +4,63 @@ import { useCallback, useEffect, useState } from "react";
 import type { AppData } from "../../components/war-room-v2/types";
 
 const CACHE_TTL_MS = 20_000;
+const SESSION_CACHE_KEY = "khal.warRoomData.cache.v1";
+const SESSION_CACHE_MAX_AGE_MS = CACHE_TTL_MS * 6;
 let cachedData: AppData | null = null;
 let cachedAt = 0;
 let inflightRequest: Promise<AppData> | null = null;
 
 const hasFreshCache = () => cachedData && Date.now() - cachedAt < CACHE_TTL_MS;
 
+type SessionCachePayload = {
+  at: number;
+  data: AppData;
+};
+
+function readSessionCache(): SessionCachePayload | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(SESSION_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SessionCachePayload;
+    if (!parsed?.at || !parsed?.data) return null;
+    if (Date.now() - parsed.at > SESSION_CACHE_MAX_AGE_MS) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionCache(payload: SessionCachePayload) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(payload));
+  } catch {
+    // Best effort cache persistence.
+  }
+}
+
+function hydrateModuleCacheFromSession() {
+  if (cachedData) return;
+  const sessionCache = readSessionCache();
+  if (!sessionCache) return;
+  cachedData = sessionCache.data;
+  cachedAt = sessionCache.at;
+}
+
 async function fetchWarRoomData(): Promise<AppData> {
+  hydrateModuleCacheFromSession();
   if (hasFreshCache()) return cachedData as AppData;
   if (inflightRequest) return inflightRequest;
 
   inflightRequest = (async () => {
-    const response = await fetch("/api/data");
+    const response = await fetch("/api/data", { method: "GET" });
     if (!response.ok) throw new Error(`Failed loading data (${response.status})`);
     const payload = (await response.json()) as AppData;
+    const now = Date.now();
     cachedData = payload;
-    cachedAt = Date.now();
+    cachedAt = now;
+    writeSessionCache({ at: now, data: payload });
     return payload;
   })();
 
@@ -30,7 +71,16 @@ async function fetchWarRoomData(): Promise<AppData> {
   }
 }
 
+export async function prewarmWarRoomData() {
+  try {
+    await fetchWarRoomData();
+  } catch {
+    // Prefetch should not impact UX flow.
+  }
+}
+
 export function useWarRoomData() {
+  hydrateModuleCacheFromSession();
   const [data, setData] = useState<AppData | null>(cachedData);
   const [loading, setLoading] = useState(!cachedData);
   const [error, setError] = useState<string | null>(null);

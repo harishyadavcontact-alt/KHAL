@@ -1,6 +1,7 @@
 {
   "name": "khal",
   "version": "0.1.0",
+  "description": "KHAL decision operating system monorepo (War Room ontology, war-gaming, mission command, execution).",
   "private": true,
   "workspaces": [
     "apps/*",

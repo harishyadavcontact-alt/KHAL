@@ -8,10 +8,16 @@ import { FragilityHierarchyView } from "./FragilityHierarchyView";
 
 export function DashboardView({
   data,
-  onOpenDomain
+  onOpenDomain,
+  onWarGameSource,
+  onWarGameDomain,
+  onWarGameLineage
 }: {
   data: AppData;
   onOpenDomain: (domain: Domain) => void;
+  onWarGameSource?: (sourceId: string) => void;
+  onWarGameDomain?: (domainId: string) => void;
+  onWarGameLineage?: (lineageNodeId: string) => void;
 }) {
   const [selectedSegment, setSelectedSegment] = React.useState<string>("Allies");
 
@@ -75,7 +81,13 @@ export function DashboardView({
         </div>
       </section>
 
-      <FragilityHierarchyView data={data} onOpenDomain={onOpenDomain} />
+      <FragilityHierarchyView
+        data={data}
+        onOpenDomain={onOpenDomain}
+        onWarGameSource={onWarGameSource}
+        onWarGameDomain={onWarGameDomain}
+        onWarGameLineage={onWarGameLineage}
+      />
     </div>
   );
 }

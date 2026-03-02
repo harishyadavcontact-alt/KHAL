@@ -1,6 +1,7 @@
 {
   "name": "@khal/web",
   "version": "0.1.0",
+  "description": "KHAL web app (Next.js) with canonical ops routes and local API surface.",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +12,8 @@
     "start": "next start -p 3010",
     "lint": "tsc --noEmit -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run --passWithNoTests --maxWorkers=1",
+    "test:decision-compat": "vitest run test/decision-compatibility.test.ts",
     "smoke:routes": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/smoke-routes-3010.ps1 -BaseUrl http://localhost:3010"
   },
   "dependencies": {

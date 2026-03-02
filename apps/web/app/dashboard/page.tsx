@@ -23,7 +23,13 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto p-5 text-red-300">{error}</div>
       ) : (
         <>
-          <DashboardView data={data} onOpenDomain={setSelectedDomain} />
+          <DashboardView
+            data={data}
+            onOpenDomain={setSelectedDomain}
+            onWarGameSource={(sourceId) => router.push(`/war-gaming/source?target=${encodeURIComponent(sourceId)}`)}
+            onWarGameDomain={(domainId) => router.push(`/war-gaming/domain?target=${encodeURIComponent(domainId)}`)}
+            onWarGameLineage={(lineageNodeId) => router.push(`/war-gaming/lineage?target=${encodeURIComponent(lineageNodeId)}`)}
+          />
           <DomainModal
             selectedDomain={selectedDomain}
             data={data}

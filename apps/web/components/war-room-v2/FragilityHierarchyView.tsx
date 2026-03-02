@@ -4,10 +4,16 @@ import { AppData, Domain } from "./types";
 
 export function FragilityHierarchyView({
   data,
-  onOpenDomain
+  onOpenDomain,
+  onWarGameSource,
+  onWarGameDomain,
+  onWarGameLineage
 }: {
   data: AppData;
   onOpenDomain: (domain: Domain) => void;
+  onWarGameSource?: (sourceId: string) => void;
+  onWarGameDomain?: (domainId: string) => void;
+  onWarGameLineage?: (lineageNodeId: string) => void;
 }) {
   const hierarchy = useMemo(() => {
     const risks = data.lineageRisks ?? [];
@@ -28,7 +34,9 @@ export function FragilityHierarchyView({
       .map(([id, values]) => ({
         id,
         score: avg(values),
-        name: data.sources?.find((source) => source.id === id)?.name ?? id
+        name: data.sources?.find((source) => source.id === id)?.name ?? id,
+        riskCount: values.length,
+        domainCount: new Set(risks.filter((risk) => risk.sourceId === id).map((risk) => risk.domainId)).size
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
@@ -37,12 +45,14 @@ export function FragilityHierarchyView({
       .map(([id, values]) => ({
         id,
         score: avg(values),
+        riskCount: values.length,
         domain: data.domains.find((domain) => domain.id === id)
       }))
       .filter((item) => Boolean(item.domain))
       .map((item) => ({
         id: item.id,
         score: item.score,
+        riskCount: item.riskCount,
         domain: item.domain as Domain
       }))
       .sort((a, b) => b.score - a.score)
@@ -52,7 +62,10 @@ export function FragilityHierarchyView({
       .map(([id, values]) => ({
         id,
         score: avg(values),
-        name: data.lineages?.nodes?.find((node) => node.id === id)?.name ?? id
+        name: data.lineages?.nodes?.find((node) => node.id === id)?.name ?? id,
+        riskCount: values.length,
+        sourceCount: new Set(risks.filter((risk) => risk.lineageNodeId === id).map((risk) => risk.sourceId)).size,
+        domainCount: new Set(risks.filter((risk) => risk.lineageNodeId === id).map((risk) => risk.domainId)).size
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
@@ -75,12 +88,24 @@ export function FragilityHierarchyView({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
         <div className="p-3 rounded-lg border border-white/10 bg-zinc-900/40">
           <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Volatility Sources</div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             {hierarchy.sources.map((item) => (
-              <div key={item.id} className="flex items-center justify-between text-xs">
-                <span className="truncate pr-3">{item.name}</span>
-                <span className="text-red-300 font-mono">{item.score}</span>
-              </div>
+              <button
+                key={item.id}
+                onClick={() => onWarGameSource?.(item.id)}
+                className="w-full text-left rounded-md border border-white/10 bg-zinc-950/60 p-2 hover:border-blue-500/50 disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={!onWarGameSource}
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <span className="truncate pr-3">{item.name}</span>
+                  <span className="text-red-300 font-mono">{item.score}</span>
+                </div>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-300">risks {item.riskCount}</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300">domains {item.domainCount}</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300">war-game source</span>
+                </div>
+              </button>
             ))}
             {hierarchy.sources.length === 0 && <div className="text-xs text-zinc-500">No source-linked risks yet.</div>}
           </div>
@@ -90,21 +115,28 @@ export function FragilityHierarchyView({
           <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Domains</div>
           <div className="space-y-2">
             {hierarchy.domains.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => onOpenDomain(item.domain)}
-                className="w-full text-left rounded-md border border-white/10 bg-zinc-950/60 p-2 hover:border-blue-500/50"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="truncate pr-3">{item.domain.name}</span>
-                  <span className="text-red-300 font-mono">{item.score}</span>
-                </div>
-                <div className="mt-1 flex flex-wrap gap-1">
+              <div key={item.id} className="rounded-md border border-white/10 bg-zinc-950/60 p-2">
+                <button onClick={() => onOpenDomain(item.domain)} className="w-full text-left rounded hover:bg-zinc-900/40 p-0.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="truncate pr-3">{item.domain.name}</span>
+                    <span className="text-red-300 font-mono">{item.score}</span>
+                  </div>
+                </button>
+                <div className="mt-1 flex flex-wrap items-center gap-1">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-300">risks {item.riskCount}</span>
                   {item.domain.stakesText && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300">stakes</span>}
                   {item.domain.fragilityText && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-300">fragility</span>}
                   {item.domain.vulnerabilitiesText && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300">vulnerabilities</span>}
+                  {onWarGameDomain && (
+                    <button
+                      onClick={() => onWarGameDomain(item.id)}
+                      className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
+                    >
+                      war-game domain
+                    </button>
+                  )}
                 </div>
-              </button>
+              </div>
             ))}
             {hierarchy.domains.length === 0 && <div className="text-xs text-zinc-500">No domain-linked risks yet.</div>}
           </div>
@@ -112,12 +144,25 @@ export function FragilityHierarchyView({
 
         <div className="p-3 rounded-lg border border-white/10 bg-zinc-900/40">
           <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Lineages</div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             {hierarchy.lineages.map((item) => (
-              <div key={item.id} className="flex items-center justify-between text-xs">
-                <span className="truncate pr-3">{item.name}</span>
-                <span className="text-red-300 font-mono">{item.score}</span>
-              </div>
+              <button
+                key={item.id}
+                onClick={() => onWarGameLineage?.(item.id)}
+                className="w-full text-left rounded-md border border-white/10 bg-zinc-950/60 p-2 hover:border-blue-500/50 disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={!onWarGameLineage}
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <span className="truncate pr-3">{item.name}</span>
+                  <span className="text-red-300 font-mono">{item.score}</span>
+                </div>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-300">risks {item.riskCount}</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300">sources {item.sourceCount}</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300">domains {item.domainCount}</span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300">war-game lineage</span>
+                </div>
+              </button>
             ))}
             {hierarchy.lineages.length === 0 && <div className="text-xs text-zinc-500">No lineage-linked risks yet.</div>}
           </div>
@@ -139,4 +184,3 @@ export function FragilityHierarchyView({
     </section>
   );
 }
-

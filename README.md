@@ -1,19 +1,23 @@
 # KHAL
 
-KHAL is a local-first decision operating system.
+KHAL is a local-first decision operating system for War Room ontology, mission sequencing, war-gaming, and surgical execution.
 
-## Runtime Direction
-- **Source of truth**: `data/KHAL.sqlite`
-- **UI**: Next.js app (`apps/web`)
-- **Excel**: optional import/export interoperability (not runtime authority)
+## Core Principles
+- Single runtime authority: SQLite (`data/KHAL.sqlite`)
+- War Room ontology is authoritative
+- Affairs = obligations (hedge / fragility removal)
+- Interests = optionality (edge / convex upside)
+- Decision clarity first; polish second
 
-## Monorepo
-- `apps/web`: UI + API routes
-- `packages/domain`: domain model + scoring logic
-- `packages/sqlite-core`: SQLite schema + bootstrap
-- `packages/excel-io`: legacy/interoperability adapters
-- `packages/sync-engine`: orchestration logic
-- `packages/ui`: shared React components
+## Repository Structure
+- `apps/web`: Next.js app UI + API routes
+- `packages/domain`: core domain logic and scoring
+- `packages/sqlite-core`: schema and DB bootstrap/migrations
+- `packages/sync-engine`: state orchestration and writes
+- `packages/excel-io`: Excel interoperability adapters
+- `packages/ui`: shared UI package
+- `scripts`: operational utilities (port preflight, smoke checks, parity reporting)
+- `docs/reports`: build reports, parity logs, compatibility specs
 
 ## Quickstart
 ```bash
@@ -22,45 +26,54 @@ npm run db:init
 npm --workspace @khal/web run dev
 ```
 
-## Local Runtime (Canonical)
-- Canonical web port: `3010`
-- Canonical UI surface:
-  - `/war-room`
-  - `/war-gaming`
-  - `/missionCommand`
-  - `/brand`
-  - `/khal/logo`
-  - `/khal/wordmark`
-  - `/home`
-  - `/dashboard`
-- `@khal/web` preflight automatically clears stale process on `3010` before `dev` and `start`.
+## Canonical Runtime
+- Web port: `3010`
+- `@khal/web` preflight clears stale listeners on `3010` for `dev` and `start`.
 
-### 404 Recovery (When Code Exists but Route Fails)
-If a route exists in code but returns `404`, run a fresh server cycle:
+## Canonical UI Surface
+- `/home`
+- `/dashboard`
+- `/war-room`
+- `/missionCommand`
+- `/source-of-volatility`
+- `/interests`
+- `/affairs`
+- `/war-gaming` (landing -> `/war-gaming/affair`)
+- `/surgical-execution`
+- `/crafts-library`
+- `/time-horizon`
+- `/lineage-map`
+- `/brand`
+- `/khal/logo`
+- `/khal/wordmark`
 
-```bash
-npm --workspace @khal/web run build
-npm --workspace @khal/web run start
-```
+## Compatibility Routes (intentional redirects)
+- `/mission-command` -> `/missionCommand`
+- `/laws` -> `/source-of-volatility`
+- `/crafts` -> `/crafts-library`
+- `/lineages` -> `/lineage-map`
+- `/settings` -> `/missionCommand`
 
-Then run route smoke:
-
-```bash
-npm --workspace @khal/web run smoke:routes
-```
-
-## Validation
+## Validation Commands
 ```bash
 npm test
 npm run typecheck
 npm run build
+npm --workspace @khal/web run smoke:routes
+npm --workspace @khal/web run test:decision-compat
 ```
 
-## Database
-- Default DB file: `data/KHAL.sqlite`
-- Schema migration: `packages/sqlite-core/migrations/0001_init.sql`
+## 404 Recovery (route exists in code but returns 404)
+```bash
+npm --workspace @khal/web run build
+npm --workspace @khal/web run start
+npm --workspace @khal/web run smoke:routes
+```
 
-## Notes
-- Local-first and offline operation are first-class.
-- SQLite keeps user data portable and owned.
-- Excel support remains possible as import/export surface.
+## Database and Schema
+- Default DB: `data/KHAL.sqlite`
+- Base migration: `packages/sqlite-core/migrations/0001_init.sql`
+
+## Additional References
+- Web app implementation notes: `apps/web/README.md`
+- Decision compatibility spec: `docs/reports/khal-decision-compatibility-test-cases.md`
