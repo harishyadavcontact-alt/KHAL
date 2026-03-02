@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { KhalFinalMark } from "../../components/branding/KhalFinalMark";
 import { KhalWordmark } from "../../components/branding/KhalWordmark";
+import { KHAL_OPS_NAV_ITEMS } from "../../components/ops-shell/nav-config";
 
 const links = [
-  { href: "/war-room", action: "Find War Room", alias: "leader+wr" },
-  { href: "/war-gaming", action: "Find War Gaming", alias: "leader+wg" },
-  { href: "/missionCommand", action: "Find Mission Command", alias: "leader+mc" },
-  { href: "/dashboard", action: "Find Dashboard", alias: "leader+db" },
-  { href: "/brand", action: "Find Brand", alias: "leader+br" },
-  { href: "/home", action: "Find Home", alias: "leader+hm" }
+  { href: "/home", action: "Home", alias: "leader+hm" },
+  ...KHAL_OPS_NAV_ITEMS.map((item, index) => ({
+    href: item.href,
+    action: item.label,
+    alias: `leader+${String(index + 1).padStart(2, "0")}`
+  })),
+  { href: "/brand", action: "Brand Assets", alias: "leader+br" }
 ];
 
 export default function HomePage() {
@@ -39,7 +41,7 @@ export default function HomePage() {
           }}
         >
           <span>khal startup</span>
-          <span>public • 39°F • Bridgeport, Connecticut</span>
+          <span>public • ops-gateway • ready</span>
         </div>
 
         <div style={{ padding: "26px 20px 24px", background: "#0b1020", minHeight: 520 }}>
@@ -47,7 +49,7 @@ export default function HomePage() {
             <KhalWordmark size={78} />
           </div>
 
-          <div style={{ maxWidth: 620, margin: "0 auto", border: "1px solid #232b3a", borderRadius: 4, overflow: "hidden" }}>
+          <div style={{ maxWidth: 660, margin: "0 auto", border: "1px solid #232b3a", borderRadius: 4, overflow: "hidden" }}>
             <div
               style={{
                 display: "grid",
@@ -104,7 +106,7 @@ export default function HomePage() {
           }}
         >
           <span>startup.khal</span>
-          <span>core 6 loaded</span>
+          <span>primary modules loaded</span>
         </div>
       </div>
 

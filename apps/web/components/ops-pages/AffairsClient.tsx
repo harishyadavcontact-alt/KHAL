@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { KhalOpsShell } from "../ops-shell/KhalOpsShell";
 import { AffairsView } from "../war-room-v2/AffairsView";
 import { DecisionChamber } from "../war-room-v2/DecisionChamber";
-import { createAffair, updateAffairMeans, updateAffairPlan } from "../../lib/war-room/actions";
+import { createAffair, createExecutionTask, updateAffairMeans, updateAffairPlan } from "../../lib/war-room/actions";
 import { useWarRoomData } from "../../lib/war-room/useWarRoomData";
 
 export function AffairsClient({ initialAffairId }: { initialAffairId?: string }) {
@@ -41,6 +41,10 @@ export function AffairsClient({ initialAffairId }: { initialAffairId?: string })
             await updateAffairMeans(affairId, payload);
             await refresh();
           }}
+          onCreateTask={async (payload) => {
+            await createExecutionTask(payload);
+            await refresh();
+          }}
         />
       ) : (
         <AffairsView
@@ -56,4 +60,3 @@ export function AffairsClient({ initialAffairId }: { initialAffairId?: string })
     </KhalOpsShell>
   );
 }
-

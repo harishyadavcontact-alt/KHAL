@@ -53,10 +53,14 @@ import { AppData, Law, Domain, Craft, Interest, Affair, Entity, Perspective, Tas
 import { TaskCard } from './TaskCard';
 export const SurgicalExecution = ({
   tasks,
+  affairs = [],
+  interests = [],
   onUpdateTask,
   onCreateTask
 }: {
   tasks: Task[];
+  affairs?: Affair[];
+  interests?: Interest[];
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
   onCreateTask: (task: {
     title: string;
@@ -80,6 +84,21 @@ export const SurgicalExecution = ({
   const activeTasks = tasks.filter((t) => t.status === 'in_progress').length;
   const velocityPerWeek = (doneTasks + activeTasks).toFixed(1);
   const efficiencyPct = tasks.length ? Math.round((doneTasks / tasks.length) * 100) : 0;
+  const readinessRows = useMemo(
+    () =>
+      affairs.slice(0, 6).map((affair) => {
+        const linkedInterest = interests.find((interest) => interest.id === affair.interestId);
+        return {
+          id: affair.id,
+          title: affair.title,
+          craftId: affair.means?.craftId || "unassigned",
+          posture: affair.strategy?.posture || "defense",
+          ends: (affair.plan?.objectives ?? []).join(" | ") || "No ends defined",
+          interest: linkedInterest?.title ?? "No linked interest"
+        };
+      }),
+    [affairs, interests]
+  );
   const childByParent = useMemo(() => {
     const map = new Map<string, Task[]>();
     for (const task of tasks) {
@@ -235,6 +254,26 @@ export const SurgicalExecution = ({
             <div className="text-[10px] text-zinc-500 uppercase">Efficiency</div>
             <div className="text-lg font-mono font-bold text-blue-400">{efficiencyPct}%</div>
           </div>
+        </div>
+      </div>
+
+      <div className="glass p-4 rounded-xl border border-white/10 mb-6">
+        <div className="text-[10px] uppercase text-zinc-500 tracking-widest mb-2">Execution Readiness Aggregate</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {readinessRows.map((row) => (
+            <div key={row.id} className="p-3 rounded-lg border border-white/10 bg-zinc-900/50">
+              <div className="text-sm font-semibold">{row.title}</div>
+              <div className="text-[10px] text-zinc-500 uppercase mt-1">Interest</div>
+              <div className="text-xs text-zinc-300">{row.interest}</div>
+              <div className="text-[10px] text-zinc-500 uppercase mt-1">Means / Strategy</div>
+              <div className="text-xs text-zinc-300">
+                Craft: {row.craftId} • Posture: {row.posture}
+              </div>
+              <div className="text-[10px] text-zinc-500 uppercase mt-1">Ends</div>
+              <div className="text-xs text-zinc-300">{row.ends}</div>
+            </div>
+          ))}
+          {!readinessRows.length && <div className="text-sm text-zinc-500">No execution readiness rows mapped yet.</div>}
         </div>
       </div>
 

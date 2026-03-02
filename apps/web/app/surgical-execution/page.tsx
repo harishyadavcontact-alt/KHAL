@@ -17,6 +17,8 @@ export default function SurgicalExecutionPage() {
       ) : (
         <SurgicalExecution
           tasks={data.tasks}
+          affairs={data.affairs}
+          interests={data.interests}
           onCreateTask={async (payload) => {
             await createExecutionTask(payload);
             await refresh();
@@ -30,4 +32,3 @@ export default function SurgicalExecutionPage() {
     </KhalOpsShell>
   );
 }
-

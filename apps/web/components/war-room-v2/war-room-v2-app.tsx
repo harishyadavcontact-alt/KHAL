@@ -665,11 +665,12 @@ const App = () => {
                   onBack={() => setSelectedAffairId(null)}
                   onSavePlan={updateAffairPlan}
                   onSaveMeans={updateAffairMeans}
+                  onCreateTask={createExecutionTask}
                 />
               </motion.div>
             ) : (
               <motion.div key={activeView} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="p-5">
-                {activeView === 'dashboard' && <DashboardView data={data} onSegmentClick={() => undefined} onOpenDomain={setSelectedDomain} />}
+                {activeView === 'dashboard' && <DashboardView data={data} onOpenDomain={setSelectedDomain} />}
                 {activeView === 'war-room' && <WarRoomView domains={data.domains} onDomainClick={setSelectedDomain} />}
                 {activeView === 'mission' && <MissionCommand data={data} onDomainClick={setSelectedDomain} onWarGame={openWarGame} />}
                 {activeView === 'laws' && (

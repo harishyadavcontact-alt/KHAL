@@ -12,7 +12,7 @@ export function LineageMapView({ data }: { data: AppData }) {
   const risks = data.lineageRisks ?? [];
   const sources = data.sources ?? [];
   const domainsById = new Map(data.domains.map((domain) => [domain.id, domain]));
-  const sourceById = new Map(sources.map((source) => [source.id, source]));
+  const sourcesById = new Map(sources.map((source) => [source.id, source]));
 
   const tree = useMemo(() => {
     const byParent = new Map<string | null, typeof nodes>();
@@ -31,9 +31,51 @@ export function LineageMapView({ data }: { data: AppData }) {
   const selectedNode = nodes.find((node) => node.id === activeNodeId) ?? null;
   const selectedEntities = entities.filter((entity) => entity.lineageNodeId === selectedNode?.id && (actorFilter === "all" || entity.actorType === actorFilter));
   const selectedRisks = risks.filter((risk) => risk.lineageNodeId === selectedNode?.id && (actorFilter === "all" || !risk.actorType || risk.actorType === actorFilter));
+
   const avgFragility = selectedRisks.length
     ? Number((selectedRisks.reduce((sum, risk) => sum + (Number(risk.fragilityScore) || 0), 0) / selectedRisks.length).toFixed(2))
     : 0;
+
+  const domainExposure = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const risk of selectedRisks) {
+      map.set(risk.domainId, (map.get(risk.domainId) ?? 0) + 1);
+    }
+    return Array.from(map.entries())
+      .map(([domainId, count]) => ({
+        domainId,
+        name: domainsById.get(domainId)?.name ?? domainId,
+        count
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [domainsById, selectedRisks]);
+
+  const volatilityExposure = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const risk of selectedRisks) {
+      map.set(risk.sourceId, (map.get(risk.sourceId) ?? 0) + 1);
+    }
+    return Array.from(map.entries())
+      .map(([sourceId, count]) => ({
+        sourceId,
+        name: sourcesById.get(sourceId)?.name ?? sourceId,
+        count
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [selectedRisks, sourcesById]);
+
+  const exposedDomainIds = useMemo(() => new Set(domainExposure.map((item) => item.domainId)), [domainExposure]);
+  const linkedInterests = useMemo(
+    () => data.interests.filter((interest) => exposedDomainIds.has(interest.domainId)),
+    [data.interests, exposedDomainIds]
+  );
+  const linkedAffairs = useMemo(
+    () =>
+      data.affairs.filter(
+        (affair) => exposedDomainIds.has(affair.domainId) || (affair.context?.associatedDomains ?? []).some((domainId) => exposedDomainIds.has(domainId))
+      ),
+    [data.affairs, exposedDomainIds]
+  );
 
   const renderBranch = (parentId: string | null, depth = 0): React.ReactNode => {
     const branch = tree.get(parentId) ?? [];
@@ -98,6 +140,62 @@ export function LineageMapView({ data }: { data: AppData }) {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="glass p-5 rounded-2xl border border-white/10">
+              <div className="text-sm font-bold mb-3">Domain Exposure</div>
+              <div className="space-y-2">
+                {!domainExposure.length && <div className="text-sm text-zinc-500">No domain exposure mapped yet.</div>}
+                {domainExposure.map((item) => (
+                  <div key={item.domainId} className="p-3 bg-zinc-900/50 rounded-lg border border-white/5 flex items-center justify-between">
+                    <span className="text-sm text-zinc-200">{item.name}</span>
+                    <span className="text-xs font-mono text-zinc-400">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="glass p-5 rounded-2xl border border-white/10">
+              <div className="text-sm font-bold mb-3">Volatility Exposure</div>
+              <div className="space-y-2">
+                {!volatilityExposure.length && <div className="text-sm text-zinc-500">No volatility exposure mapped yet.</div>}
+                {volatilityExposure.map((item) => (
+                  <div key={item.sourceId} className="p-3 bg-zinc-900/50 rounded-lg border border-white/5 flex items-center justify-between">
+                    <span className="text-sm text-zinc-200">{item.name}</span>
+                    <span className="text-xs font-mono text-zinc-400">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="glass p-5 rounded-2xl border border-white/10">
+              <div className="text-sm font-bold mb-3">Linked Interests</div>
+              <div className="space-y-2">
+                {!linkedInterests.length && <div className="text-sm text-zinc-500">No linked interests from current exposure.</div>}
+                {linkedInterests.map((interest) => (
+                  <div key={interest.id} className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+                    <div className="font-medium text-sm">{interest.title}</div>
+                    <div className="text-xs text-zinc-500">{domainsById.get(interest.domainId)?.name ?? interest.domainId}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="glass p-5 rounded-2xl border border-white/10">
+              <div className="text-sm font-bold mb-3">Linked Affairs</div>
+              <div className="space-y-2">
+                {!linkedAffairs.length && <div className="text-sm text-zinc-500">No linked affairs from current exposure.</div>}
+                {linkedAffairs.map((affair) => (
+                  <div key={affair.id} className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+                    <div className="font-medium text-sm">{affair.title}</div>
+                    <div className="text-xs text-zinc-500">{domainsById.get(affair.domainId)?.name ?? affair.domainId}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="glass p-5 rounded-2xl border border-white/10">
             <div className="text-sm font-bold mb-3">Entities</div>
             <div className="space-y-2">
@@ -123,7 +221,7 @@ export function LineageMapView({ data }: { data: AppData }) {
                     <div className="text-xs font-mono text-zinc-400">{risk.status}</div>
                   </div>
                   <div className="text-xs text-zinc-500 mt-1">
-                    Source: {sourceById.get(risk.sourceId)?.name ?? risk.sourceId} • Domain: {domainsById.get(risk.domainId)?.name ?? risk.domainId}
+                    Source: {sourcesById.get(risk.sourceId)?.name ?? risk.sourceId} • Domain: {domainsById.get(risk.domainId)?.name ?? risk.domainId}
                   </div>
                   <div className="grid grid-cols-5 gap-2 mt-2 text-[10px] text-zinc-400">
                     <span>E:{risk.exposure}</span>

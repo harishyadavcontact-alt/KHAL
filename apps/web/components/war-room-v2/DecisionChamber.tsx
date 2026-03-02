@@ -9,9 +9,10 @@ interface DecisionChamberProps {
   onBack: () => void;
   onSavePlan: (affairId: string, payload: { objectives: string[]; uncertainty?: string; timeHorizon?: string; lineageNodeId?: string; actorType?: "personal" | "private" | "public" }) => Promise<void>;
   onSaveMeans: (affairId: string, payload: { craftId: string; selectedHeuristicIds: string[] }) => Promise<void>;
+  onCreateTask: (payload: { title: string; sourceType: string; sourceId: string; notes?: string; horizon?: string }) => Promise<void>;
 }
 
-export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans }: DecisionChamberProps) {
+export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans, onCreateTask }: DecisionChamberProps) {
   const interest = data.interests.find((i) => i.id === affair.interestId);
   const associatedDomains = affair.context?.associatedDomains ?? [];
   const volatilityExposure = affair.context?.volatilityExposure ?? "Unknown";
@@ -36,6 +37,8 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans 
   const [objectiveInput, setObjectiveInput] = useState("");
   const [busy, setBusy] = useState<"plan" | "means" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [creatingTask, setCreatingTask] = useState(false);
 
   const craft = data.crafts.find((c) => c.id === meansDraft.craftId);
   const selectedHeuristics = useMemo(
@@ -45,6 +48,7 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans 
   const craftContext = useMemo(() => {
     if (!craft) {
       return {
+        heaps: [] as string[],
         models: [] as string[],
         frameworks: [] as string[],
         barbells: [] as string[],
@@ -56,6 +60,7 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans 
     const frameworkById = new Map(craft.frameworks.map((framework) => [framework.id, framework]));
     const barbellById = new Map(craft.barbellStrategies.map((barbell) => [barbell.id, barbell]));
     const traces = new Map<string, string[]>();
+    const touchedHeaps = new Set<string>();
     const touchedModels = new Set<string>();
     const touchedFrameworks = new Set<string>();
     const touchedBarbells = new Set<string>();
@@ -74,6 +79,7 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans 
             const model = modelById.get(modelId);
             if (model) {
               touchedModels.add(model.id);
+              for (const heapId of model.heapIds ?? []) touchedHeaps.add(heapId);
               chainLabels.push(`${model.title} -> ${framework.title} -> ${barbell.title}`);
             }
           }
@@ -85,6 +91,7 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans 
     }
 
     return {
+      heaps: Array.from(touchedHeaps).map((id) => craft.heaps.find((heap) => heap.id === id)?.title).filter(Boolean) as string[],
       models: Array.from(touchedModels).map((id) => modelById.get(id)?.title).filter(Boolean) as string[],
       frameworks: Array.from(touchedFrameworks).map((id) => frameworkById.get(id)?.title).filter(Boolean) as string[],
       barbells: Array.from(touchedBarbells).map((id) => barbellById.get(id)?.title).filter(Boolean) as string[],
@@ -113,6 +120,26 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans 
       setError(err instanceof Error ? err.message : "Failed to save means");
     } finally {
       setBusy(null);
+    }
+  };
+
+  const createAffairTask = async () => {
+    if (!taskTitle.trim()) return;
+    setCreatingTask(true);
+    setError(null);
+    try {
+      await onCreateTask({
+        title: taskTitle.trim(),
+        sourceType: "AFFAIR",
+        sourceId: affair.id,
+        notes: `Execution task for affair ${affair.title}`,
+        horizon: "WEEK"
+      });
+      setTaskTitle("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create execution task");
+    } finally {
+      setCreatingTask(false);
     }
   };
 
@@ -333,7 +360,13 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans 
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="p-3 bg-zinc-900/50 border border-white/5 rounded-xl">
+                  <div className="text-[10px] text-zinc-500 uppercase mb-2">Knowledge Heaps</div>
+                  <div className="text-xs text-zinc-300 space-y-1">
+                    {craftContext.heaps.length ? craftContext.heaps.slice(0, 4).map((name) => <div key={name}>{name}</div>) : <div className="text-zinc-500">No linked heaps</div>}
+                  </div>
+                </div>
                 <div className="p-3 bg-zinc-900/50 border border-white/5 rounded-xl">
                   <div className="text-[10px] text-zinc-500 uppercase mb-2">Models</div>
                   <div className="text-xs text-zinc-300 space-y-1">
@@ -404,6 +437,28 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans 
         </div>
 
         <div className="lg:col-span-3 space-y-6">
+          <section className="glass p-6 rounded-2xl border border-blue-500/20">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-3">Execution Readiness</h3>
+            <p className="text-xs text-zinc-400 mb-3">
+              Tasks created here auto-propagate to Surgical Execution.
+            </p>
+            <div className="space-y-2">
+              <input
+                className="w-full bg-zinc-900 border border-white/10 rounded px-3 py-2 text-sm"
+                placeholder="Create execution task from this affair"
+                value={taskTitle}
+                onChange={(e) => setTaskTitle(e.target.value)}
+              />
+              <button
+                disabled={!taskTitle.trim() || creatingTask}
+                onClick={createAffairTask}
+                className="w-full px-3 py-2 rounded bg-blue-600 hover:bg-blue-500 text-sm font-semibold text-white disabled:bg-zinc-700"
+              >
+                {creatingTask ? "Creating..." : "Create Task"}
+              </button>
+            </div>
+          </section>
+
           <section className="glass p-6 rounded-2xl">
             <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-4 flex items-center gap-2">
               <Shield size={16} /> Fragility Assessment

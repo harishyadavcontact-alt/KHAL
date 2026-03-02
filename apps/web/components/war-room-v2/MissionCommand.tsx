@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AppData, Domain, WarGameMode } from "./types";
 
 export const MissionCommand = ({
@@ -10,6 +10,9 @@ export const MissionCommand = ({
   onDomainClick: (d: Domain) => void;
   onWarGame: (mode: WarGameMode, targetId?: string) => void;
 }) => {
+  const tierRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [activeTierIndex, setActiveTierIndex] = useState(0);
+
   const missionState = useMemo(() => {
     const lineageRisks = data.lineageRisks ?? [];
     const openRisks = lineageRisks.filter((risk) => risk.status !== "RESOLVED");
@@ -58,6 +61,47 @@ export const MissionCommand = ({
     };
   }, [data.affairs, data.interests, data.lineageRisks]);
 
+  useEffect(() => {
+    setActiveTierIndex(0);
+  }, [missionState.missionTiers.length]);
+
+  useEffect(() => {
+    const isEditableTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false;
+      if (target.isContentEditable) return true;
+      const tag = target.tagName.toLowerCase();
+      return tag === "input" || tag === "textarea" || tag === "select";
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Enter") {
+        const active = document.activeElement as HTMLElement | null;
+        if (active?.dataset?.missionTierIndex) {
+          event.preventDefault();
+          const idx = Number(active.dataset.missionTierIndex);
+          const tier = missionState.missionTiers[idx];
+          if (tier) onWarGame("mission", `mission-${tier.risk.domainId}`);
+        }
+        return;
+      }
+
+      if (event.key !== "Tab" || event.ctrlKey || event.altKey || event.metaKey) return;
+      if (isEditableTarget(event.target)) return;
+
+      const items = tierRefs.current.filter(Boolean) as HTMLButtonElement[];
+      if (!items.length) return;
+      event.preventDefault();
+      const current = items.findIndex((item) => item === document.activeElement);
+      const direction = event.shiftKey ? -1 : 1;
+      const next = current === -1 ? (direction > 0 ? 0 : items.length - 1) : (current + direction + items.length) % items.length;
+      setActiveTierIndex(next);
+      items[next]?.focus();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [missionState.missionTiers, onWarGame]);
+
   return (
     <div className="max-w-7xl mx-auto px-3 py-5">
       <section className="glass p-4 rounded-xl border border-red-500/20 mb-5">
@@ -99,15 +143,30 @@ export const MissionCommand = ({
           <div className="p-3 rounded-xl bg-zinc-900/50 border border-white/5">
             <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Serial Lane</div>
             <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
-              {missionState.missionTiers.slice(0, 6).map((tier) => (
-                <div key={`${tier.risk.id}-serial`} className="p-2 rounded-lg bg-zinc-950/60 border border-white/5">
+              {missionState.missionTiers.slice(0, 6).map((tier, index) => (
+                <button
+                  key={`${tier.risk.id}-serial`}
+                  ref={(el) => {
+                    tierRefs.current[index] = el;
+                  }}
+                  data-mission-tier-index={index}
+                  onClick={() => {
+                    setActiveTierIndex(index);
+                    onWarGame("mission", `mission-${tier.risk.domainId}`);
+                  }}
+                  className={
+                    activeTierIndex === index
+                      ? "w-full text-left p-2 rounded-lg bg-blue-500/15 border border-blue-500/40"
+                      : "w-full text-left p-2 rounded-lg bg-zinc-950/60 border border-white/5 hover:border-blue-500/30"
+                  }
+                >
                   <div className="flex items-center justify-between">
                     <div className="text-xs font-semibold">Tier {tier.tier}: {tier.risk.title}</div>
                     <span className="text-[10px] font-mono text-red-300">F:{tier.risk.fragilityScore}</span>
                   </div>
                   <div className="text-[10px] uppercase text-zinc-500 mt-1">Obligations</div>
                   <div className="text-xs text-zinc-300">{tier.serialAffairs.join(" | ") || "No linked affairs yet"}</div>
-                </div>
+                </button>
               ))}
             </div>
           </div>

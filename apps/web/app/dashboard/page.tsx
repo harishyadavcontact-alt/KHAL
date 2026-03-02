@@ -23,7 +23,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto p-5 text-red-300">{error}</div>
       ) : (
         <>
-          <DashboardView data={data} onSegmentClick={() => undefined} onOpenDomain={setSelectedDomain} />
+          <DashboardView data={data} onOpenDomain={setSelectedDomain} />
           <DomainModal
             selectedDomain={selectedDomain}
             data={data}
@@ -54,4 +54,3 @@ export default function DashboardPage() {
     </KhalOpsShell>
   );
 }
-
