@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Activity, Plus, Shield, Sword, Zap } from "lucide-react";
+import { Plus, Zap } from "lucide-react";
 import { DecisionModal } from "./DecisionModal";
 import {
   Affair,
+  BalanceSegment,
   Domain,
   DoctrineRuleDto,
   DoctrineRulebookDto,
@@ -24,58 +25,11 @@ import { WarGameAffair } from "./wargame_affair";
 import { WarGameInterest } from "./wargame_interest";
 import { WarGameMission } from "./wargame_mission";
 import { WarGameLineage } from "./wargame_lineage";
-
-const EXECUTIVE_RISK_REVIEW = [
-  {
-    id: "imperative",
-    title: "1. Strategic Imperative: Survival First",
-    body: "Survival is the foundational metric of rationality. Without survival, long-term optimization is void.",
-    points: [
-      "Knowledge must stay grounded in reality.",
-      "Skin in the game over credential certainty.",
-      "Treat second-order interactions as first-class."
-    ]
-  },
-  {
-    id: "ergodicity",
-    title: "2. Ergodicity Gap: Ensemble vs Time",
-    body: "Do not apply ensemble averages to path-dependent actors with uncle points.",
-    points: ["Ensemble averages are not time-path survival.", "Sequence can terminate the game.", "Ruin breaks expected-value reasoning."]
-  },
-  {
-    id: "ruin",
-    title: "3. Ruin Asymmetry",
-    body: "Ruin is an absorbing barrier, not a normal downside variable.",
-    points: ["No-ruin gate before optimization.", "Tail-magnitude uncertainty dominates precision claims.", "Clip tails before forecasting upside."]
-  },
-  {
-    id: "agency",
-    title: "4. Agency Asymmetry",
-    body: "Hidden tail transfer creates institutional fragility and learning failure.",
-    points: ["Prevent heads-I-win/tails-system-pays behavior.", "Tie decisions to consequence-bearing accountability.", "Avoid metric gaming as strategy."]
-  },
-  {
-    id: "precaution",
-    title: "5. Layered Precaution",
-    body: "Manage risk across hierarchy layers from self to ecosystem.",
-    points: ["Layered survival dominates local optimization.", "Repeated small ruin probabilities compound.", "Courage and prudence align via layer protection."]
-  }
-] as const;
-
-const FOURTH_QUADRANT_MAP = [
-  { id: "q1", quadrant: "Q1", decision: "M0 binary", randomness: "Mediocristan", rule: "Classical stats generally valid." },
-  { id: "q2", quadrant: "Q2", decision: "M0 binary", randomness: "Extremistan", rule: "Tail awareness required." },
-  { id: "q3", quadrant: "Q3", decision: "M1+ impact", randomness: "Mediocristan", rule: "Conservative stats can work." },
-  { id: "q4", quadrant: "Q4", decision: "M1+ impact", randomness: "Extremistan", rule: "Do not optimize on model precision." }
-] as const;
-
-const PHRONETIC_RULES = [
-  "No-ruin first: absorbing barrier risk dominates expected value.",
-  "Prefer redundancy over optimization in fragile systems.",
-  "Avoid remote-payoff precision claims in fat tails.",
-  "Reject volatility-only stability narratives.",
-  "Separate affairs (hedge) and interests (edge) explicitly."
-] as const;
+import { computeAsymmetrySnapshot, computeBarbellGuardrail } from "../../lib/war-room/operational-metrics";
+import { HeatGrid } from "./charts/HeatGrid";
+import { FlowLanes } from "./charts/FlowLanes";
+import { StackedBalanceBar } from "./charts/StackedBalanceBar";
+import { buildWarGamingVisualSnapshot } from "../../lib/war-room/visual-encodings";
 
 function modeTargetOptions(mode: WarGameMode, data: {
   sources: VolatilitySourceDto[];
@@ -93,6 +47,29 @@ function modeTargetOptions(mode: WarGameMode, data: {
   const missionIds = new Set<string>(["mission-global"]);
   for (const node of data.missionGraph?.nodes ?? []) missionIds.add(node.missionId);
   return Array.from(missionIds).map((id) => ({ id, label: id }));
+}
+
+function readinessPenaltySegments(penalties: {
+  missingPredecessorPenalty: number;
+  orkPenalty: number;
+  kpiPenalty: number;
+  thresholdPenalty: number;
+  preparationPenalty: number;
+  hedgeEdgePenalty: number;
+  fragilityPenalty: number;
+  doctrinePenalty: number;
+}): BalanceSegment[] {
+  const segments: BalanceSegment[] = [
+    { id: "order", label: "Order", value: penalties.missingPredecessorPenalty, tone: "watch" },
+    { id: "ork", label: "ORK", value: penalties.orkPenalty, tone: "risk" },
+    { id: "kpi", label: "KPI", value: penalties.kpiPenalty, tone: "risk" },
+    { id: "threshold", label: "Threshold", value: penalties.thresholdPenalty, tone: "watch" },
+    { id: "prep", label: "Prep", value: penalties.preparationPenalty, tone: "watch" },
+    { id: "barbell", label: "Barbell", value: penalties.hedgeEdgePenalty, tone: "risk" },
+    { id: "fragility", label: "Fragility", value: penalties.fragilityPenalty, tone: "risk" },
+    { id: "doctrine", label: "Doctrine", value: penalties.doctrinePenalty, tone: "watch" }
+  ];
+  return segments.filter((segment) => segment.value > 0);
 }
 
 export const WarGaming = ({
@@ -223,6 +200,31 @@ export const WarGaming = ({
     });
   }, [affairs, domains, interests, mode, modeTargetId]);
 
+  const operationalSnapshot = useMemo(
+    () => computeBarbellGuardrail({ affairs, interests, tasks, lineageRisks, domains }),
+    [affairs, domains, interests, lineageRisks, tasks]
+  );
+  const asymmetrySnapshot = useMemo(
+    () => computeAsymmetrySnapshot({ affairs, interests, tasks, lineageRisks, domains }),
+    [affairs, domains, interests, lineageRisks, tasks]
+  );
+  const visualSnapshot = useMemo(() => {
+    const scopedSources = sourceFilter === "all" ? sources : sources.filter((source) => source.id === sourceFilter);
+    const scopedDomains = domainFilter === "all" ? domains : domains.filter((domain) => domain.id === domainFilter);
+    const scopedAffairs = domainFilter === "all" ? affairs : affairs.filter((affair) => affair.domainId === domainFilter);
+    const scopedInterests = domainFilter === "all" ? interests : interests.filter((interest) => interest.domainId === domainFilter);
+    const scopedTasks = domainFilter === "all" ? tasks : tasks.filter((task) => task.domainId === domainFilter);
+    return buildWarGamingVisualSnapshot({
+      sources: scopedSources,
+      domains: scopedDomains,
+      affairs: scopedAffairs,
+      interests: scopedInterests,
+      tasks: scopedTasks,
+      lineageRisks: filteredRisks
+    });
+  }, [affairs, domainFilter, domains, filteredRisks, interests, sourceFilter, sources, tasks]);
+  const penaltySegments = useMemo(() => readinessPenaltySegments(targetReadinessPreview.penalties), [targetReadinessPreview.penalties]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <DecisionModal
@@ -260,6 +262,34 @@ export const WarGaming = ({
             <p className="text-[10px] uppercase tracking-widest text-zinc-500 mt-2">Strategic Posture (8 Fronts)</p>
           </div>
           <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono">soft order + hard execute gates</div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 mb-4">
+          <div className="rounded-lg border border-white/10 bg-zinc-900/40 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500">Barbell split</div>
+            <div className="text-xs font-semibold text-zinc-200 mt-1">
+              hedge {operationalSnapshot.hedgePct}% | edge {operationalSnapshot.edgePct}%
+            </div>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-zinc-900/40 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500">Guardrail</div>
+            <div className="mt-1">
+              <span
+                className={
+                  operationalSnapshot.fragileMiddle
+                    ? "rounded-full border border-red-400/40 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-red-300"
+                    : "rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-emerald-300"
+                }
+              >
+                {operationalSnapshot.fragileMiddle ? "Fragile middle" : "Barbell polarized"}
+              </span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-zinc-900/40 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500">Asymmetry</div>
+            <div className="text-xs font-semibold text-zinc-200 mt-1">
+              band {asymmetrySnapshot.band} | balance {asymmetrySnapshot.balance}
+            </div>
+          </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div>
@@ -375,60 +405,37 @@ export const WarGaming = ({
         </div>
       </div>
 
-      <div className="glass p-6 rounded-xl border border-white/10 mb-8">
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div>
-            <h2 className="text-xl font-bold">Executive Risk Review</h2>
-            <p className="text-sm text-zinc-400 mt-1">Reference doctrine for in-decision rigor.</p>
-          </div>
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono">Survival is rationality</div>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {EXECUTIVE_RISK_REVIEW.map((section) => (
-            <section key={section.id} className="p-4 bg-zinc-900/50 rounded-lg border border-white/5">
-              <h3 className="text-sm font-bold text-zinc-100 mb-2">{section.title}</h3>
-              <p className="text-xs text-zinc-300 leading-relaxed mb-3">{section.body}</p>
-              <ul className="space-y-1">
-                {section.points.map((point) => (
-                  <li key={point} className="text-xs text-zinc-400">
-                    - {point}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
         <div className="glass p-6 rounded-xl border border-white/10">
-          <h3 className="text-lg font-bold mb-4">Fourth Quadrant Map</h3>
-          <div className="space-y-2">
-            {FOURTH_QUADRANT_MAP.map((row) => (
-              <div key={row.id} className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold">{row.quadrant}</span>
-                  <span className="text-[10px] uppercase text-zinc-500">{row.randomness}</span>
-                </div>
-                <div className="text-xs text-zinc-300">{row.decision}</div>
-                <div className="text-xs text-zinc-400 mt-1">{row.rule}</div>
-              </div>
-            ))}
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-lg font-bold">Quadrant HeatGrid</h3>
+              <p className="text-xs text-zinc-400 mt-1">Randomness x impact from open risks.</p>
+            </div>
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono">{filteredRisks.length} open risks</div>
           </div>
+          <HeatGrid
+            columns={visualSnapshot.quadrantColumns}
+            rows={visualSnapshot.quadrantRows}
+            cells={visualSnapshot.quadrantCells}
+            emptyText="No open risks to map."
+          />
         </div>
         <div className="glass p-6 rounded-xl border border-white/10">
-          <h3 className="text-lg font-bold mb-4">Mathematical Guardrails</h3>
-          <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5 mb-3">
-            <div className="text-[10px] uppercase text-zinc-500 mb-1">Ruin-first asymmetry</div>
-            <div className="text-xs text-zinc-300">No-ruin condition is mandatory before expected-value optimization.</div>
+          <div className="mb-4">
+            <h3 className="text-lg font-bold">Source Volatility Flow</h3>
+            <p className="text-xs text-zinc-400 mt-1">Current source lanes into CAVE vs CONVEX.</p>
           </div>
-          <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5 mb-3">
-            <div className="text-[10px] uppercase text-zinc-500 mb-1">Ergodicity test</div>
-            <div className="text-xs text-zinc-300">Do not use ensemble averages for path-dependent exposures with uncle points.</div>
-          </div>
-          <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
-            <div className="text-[10px] uppercase text-zinc-500 mb-1">Tail humility</div>
-            <div className="text-xs text-zinc-300">Inverse problem and pre-asymptotic error make remote precision claims fragile.</div>
+          <FlowLanes
+            nodes={visualSnapshot.sourceNodes}
+            lanes={visualSnapshot.sourceLanes}
+            links={visualSnapshot.sourceLinks}
+            height={230}
+            emptyText="No source flow available."
+          />
+          <div className="mt-4">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Readiness Penalty Profile</div>
+            <StackedBalanceBar segments={penaltySegments.length ? penaltySegments : visualSnapshot.penaltySegments} />
           </div>
         </div>
       </div>
@@ -437,33 +444,33 @@ export const WarGaming = ({
         <FragilityRadar domains={filteredDomains.length ? filteredDomains : domains} affairs={filteredAffairs.length ? filteredAffairs : affairs} />
         <TaskKillChain tasks={filteredTasks.length ? filteredTasks : tasks} />
         <div className="glass p-6 rounded-xl border border-white/10">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <Shield className="text-blue-400" />
-            Risk Logic Continuum
-          </h3>
-          <div className="space-y-3 text-sm">
-            <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-              <div className="text-[10px] uppercase text-zinc-500 mb-1">Affairs = Obligations (Hedge)</div>
-              <div className="font-semibold">{hedgeCount} active obligations driving fragility {"->"} robustness</div>
-            </div>
-            <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-              <div className="text-[10px] uppercase text-zinc-500 mb-1">Interests = Options (Edge)</div>
-              <div className="font-semibold">{edgeCount} options driving robustness {"->"} antifragility</div>
-            </div>
+          <h3 className="text-lg font-bold mb-4">Risk Logic Continuum</h3>
+          <div className="space-y-4 text-sm">
+            <StackedBalanceBar
+              segments={[
+                { id: "hedge", label: `Obligations ${hedgeCount}`, value: hedgeCount, tone: "hedge" },
+                { id: "edge", label: `Options ${edgeCount}`, value: edgeCount, tone: "edge" }
+              ]}
+            />
             <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
               <div className="text-[10px] uppercase text-zinc-500 mb-1">Convexity Bias</div>
               <div className="font-semibold">Antifragile potential {antifragilePotential}</div>
-              <div className="text-xs text-zinc-400 mt-1">Goal: positive convexity across domains, lineages, and sources.</div>
+              <div className="text-xs text-zinc-400 mt-1">
+                {operationalSnapshot.fragileMiddle ? "Reduce middle concentration." : "Barbell posture is polarized."}
+              </div>
+            </div>
+            <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+              <div className="text-[10px] uppercase text-zinc-500 mb-1">Asymmetry</div>
+              <div className="font-semibold">
+                {asymmetrySnapshot.band} | balance {asymmetrySnapshot.balance}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <div className="glass p-6 rounded-xl border border-white/10 mb-8">
-        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-          <Sword className="text-emerald-400" />
-          Source of Volatility Register
-        </h3>
+        <h3 className="text-lg font-bold mb-4">Source of Volatility Register</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {sourceRows.map((source) => (
             <button
@@ -484,34 +491,6 @@ export const WarGaming = ({
                   .join(", ") || "No linked domains"}
               </div>
             </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="glass p-6 rounded-xl">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Activity className="text-blue-400" />
-            Jensen's Inequality in Deployment
-          </h3>
-          <p className="text-sm text-zinc-300">Affairs remove fragility and secure survivability; interests add convex options. Volatility should improve upside without violating no-ruin constraints.</p>
-        </div>
-        <div className="glass p-6 rounded-xl">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Zap className="text-amber-400" />
-            Short Vol vs Long Vol
-          </h3>
-          <p className="text-sm text-zinc-300">Hedge obligations absorb short-vol shocks. Edge options harvest long-vol asymmetry. Keep the barbell explicit in each protocol run.</p>
-        </div>
-      </div>
-
-      <div className="glass p-6 rounded-xl border border-white/10 mt-8">
-        <h3 className="text-lg font-bold mb-4">Phronetic Rules (Decision Ops)</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {PHRONETIC_RULES.map((rule) => (
-            <div key={rule} className="text-xs text-zinc-300 p-2 bg-zinc-900/40 rounded border border-white/5">
-              {rule}
-            </div>
           ))}
         </div>
       </div>

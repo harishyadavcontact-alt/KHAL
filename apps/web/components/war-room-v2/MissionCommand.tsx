@@ -1,5 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AppData, Domain, WarGameMode } from "./types";
+import { HeatGrid } from "./charts/HeatGrid";
+import { FlowLanes } from "./charts/FlowLanes";
+import { StackedBalanceBar } from "./charts/StackedBalanceBar";
+import { buildMissionVisualSnapshot } from "../../lib/war-room/visual-encodings";
 
 export const MissionCommand = ({
   data,
@@ -20,7 +24,6 @@ export const MissionCommand = ({
     const absorbingBarriers = sortedOpenRisks.filter((risk) => (risk.fragilityScore ?? 0) >= 120 || risk.status === "OPEN");
 
     const affairs = data.affairs ?? [];
-    const interests = data.interests ?? [];
 
     const unresolvedAffairs = affairs.filter((affair) => {
       const hasObjectives = (affair.plan?.objectives ?? []).length > 0;
@@ -29,41 +32,19 @@ export const MissionCommand = ({
       return !(hasObjectives && hasCraft && hasDomain);
     });
 
-    const missionTiers = sortedOpenRisks.slice(0, 12).map((risk, index) => {
-      const linkedAffairs = affairs.filter((affair) => affair.domainId === risk.domainId || affair.context?.associatedDomains?.includes(risk.domainId));
-      const linkedInterests = interests.filter((interest) => interest.domainId === risk.domainId);
-      const serialAffairs = linkedAffairs
-        .filter((affair) => (affair.status ?? "").toLowerCase() !== "done")
-        .slice(0, 3)
-        .map((affair) => affair.title);
-      const parallelInterests = linkedInterests.slice(0, 3).map((interest) => interest.title);
-      return {
-        tier: index + 1,
-        risk,
-        serialAffairs,
-        parallelInterests,
-        stream: linkedAffairs.length >= linkedInterests.length ? ("hedge" as const) : ("edge" as const)
-      };
-    });
-
-    const hedgeCount = affairs.length;
-    const edgeCount = interests.length;
-    const convexityBalance = Number((edgeCount / Math.max(1, hedgeCount + edgeCount)).toFixed(2));
-
     return {
       openRisks,
       absorbingBarriers,
-      unresolvedAffairs,
-      missionTiers,
-      hedgeCount,
-      edgeCount,
-      convexityBalance
+      unresolvedAffairs
     };
   }, [data.affairs, data.interests, data.lineageRisks]);
 
+  const missionSnapshot = useMemo(() => buildMissionVisualSnapshot(data), [data]);
+  const activeTier = missionSnapshot.rows[activeTierIndex] ?? null;
+
   useEffect(() => {
     setActiveTierIndex(0);
-  }, [missionState.missionTiers.length]);
+  }, [missionSnapshot.rows.length]);
 
   useEffect(() => {
     const isEditableTarget = (target: EventTarget | null) => {
@@ -79,8 +60,8 @@ export const MissionCommand = ({
         if (active?.dataset?.missionTierIndex) {
           event.preventDefault();
           const idx = Number(active.dataset.missionTierIndex);
-          const tier = missionState.missionTiers[idx];
-          if (tier) onWarGame("mission", `mission-${tier.risk.domainId}`);
+          const tier = missionSnapshot.rows[idx];
+          if (tier) onWarGame("mission", `mission-${tier.domainId}`);
         }
         return;
       }
@@ -100,7 +81,13 @@ export const MissionCommand = ({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [missionState.missionTiers, onWarGame]);
+  }, [missionSnapshot.rows, onWarGame]);
+
+  const rowIndexById = useMemo(() => {
+    const map = new Map<string, number>();
+    missionSnapshot.rows.forEach((row, index) => map.set(row.id, index));
+    return map;
+  }, [missionSnapshot.rows]);
 
   return (
     <div className="max-w-7xl mx-auto px-3 py-5">
@@ -109,9 +96,7 @@ export const MissionCommand = ({
           <div>
             <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Mission Doctrine</div>
             <h2 className="text-lg font-bold text-red-300">Mission removes fragility first.</h2>
-            <p className="text-xs text-zinc-300 mt-1">
-              Mission Command prioritizes absorbing barriers and serial obligations before optionality expansion.
-            </p>
+            <p className="text-xs text-zinc-300 mt-1">Absorbing barriers first, then expand optionality.</p>
           </div>
           <div className="grid grid-cols-2 gap-2 min-w-[240px]">
             <div className="p-2 rounded-lg bg-zinc-900/60 border border-white/5">
@@ -124,11 +109,11 @@ export const MissionCommand = ({
             </div>
             <div className="p-2 rounded-lg bg-zinc-900/60 border border-white/5">
               <div className="text-[10px] uppercase text-zinc-500">Affairs (Hedge)</div>
-              <div className="text-base font-bold text-blue-300">{missionState.hedgeCount}</div>
+              <div className="text-base font-bold text-blue-300">{data.affairs.length}</div>
             </div>
             <div className="p-2 rounded-lg bg-zinc-900/60 border border-white/5">
               <div className="text-[10px] uppercase text-zinc-500">Interests (Edge)</div>
-              <div className="text-base font-bold text-emerald-300">{missionState.edgeCount}</div>
+              <div className="text-base font-bold text-emerald-300">{data.interests.length}</div>
             </div>
           </div>
         </div>
@@ -139,20 +124,53 @@ export const MissionCommand = ({
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <div className="p-3 rounded-xl bg-zinc-900/50 border border-white/5">
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Serial Lane</div>
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Top Mission Risk HeatGrid</div>
+            <HeatGrid
+              columns={missionSnapshot.heatColumns}
+              rows={missionSnapshot.heatRows}
+              cells={missionSnapshot.heatCells}
+              activeRowId={activeTier?.id}
+              onRowClick={(rowId) => {
+                const index = rowIndexById.get(rowId);
+                if (index === undefined) return;
+                setActiveTierIndex(index);
+              }}
+              emptyText="No open mission tiers."
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-3 mt-3">
+          <div className="p-3 rounded-xl bg-zinc-900/50 border border-white/5">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Serial vs Parallel Flows</div>
+            <FlowLanes
+              nodes={missionSnapshot.flowNodes}
+              lanes={missionSnapshot.flowLanes}
+              links={missionSnapshot.flowLinks}
+              activeNodeId={activeTier?.id}
+              onNodeClick={(nodeId) => {
+                const index = rowIndexById.get(nodeId);
+                if (index === undefined) return;
+                setActiveTierIndex(index);
+              }}
+              emptyText="No tier flows to render."
+            />
+          </div>
+          <div className="p-3 rounded-xl bg-zinc-900/50 border border-white/5">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Tier Focus</div>
             <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
-              {missionState.missionTiers.slice(0, 6).map((tier, index) => (
+              {missionSnapshot.rows.slice(0, 12).map((tier, index) => (
                 <button
-                  key={`${tier.risk.id}-serial`}
+                  key={tier.id}
                   ref={(el) => {
                     tierRefs.current[index] = el;
                   }}
                   data-mission-tier-index={index}
                   onClick={() => {
                     setActiveTierIndex(index);
-                    onWarGame("mission", `mission-${tier.risk.domainId}`);
+                    onWarGame("mission", `mission-${tier.domainId}`);
                   }}
                   className={
                     activeTierIndex === index
@@ -161,37 +179,24 @@ export const MissionCommand = ({
                   }
                 >
                   <div className="flex items-center justify-between">
-                    <div className="text-xs font-semibold">Tier {tier.tier}: {tier.risk.title}</div>
-                    <span className="text-[10px] font-mono text-red-300">F:{tier.risk.fragilityScore}</span>
+                    <div className="text-xs font-semibold">Tier {tier.tier}: {tier.title}</div>
+                    <span className="text-[10px] font-mono text-red-300">F:{tier.fragility}</span>
                   </div>
-                  <div className="text-[10px] uppercase text-zinc-500 mt-1">Obligations</div>
+                  <div className="text-[10px] uppercase text-zinc-500 mt-1">Serial</div>
                   <div className="text-xs text-zinc-300">{tier.serialAffairs.join(" | ") || "No linked affairs yet"}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="p-3 rounded-xl bg-zinc-900/50 border border-white/5">
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Parallel Lane</div>
-            <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
-              {missionState.missionTiers.slice(0, 6).map((tier) => (
-                <div key={`${tier.risk.id}-parallel`} className="p-2 rounded-lg bg-zinc-950/60 border border-white/5">
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-semibold">Tier {tier.tier}: {tier.risk.title}</div>
-                    <span className={tier.stream === "hedge" ? "text-[10px] font-mono text-blue-300" : "text-[10px] font-mono text-emerald-300"}>
-                      {tier.stream.toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="text-[10px] uppercase text-zinc-500 mt-1">Options</div>
+                  <div className="text-[10px] uppercase text-zinc-500 mt-1">Parallel</div>
                   <div className="text-xs text-zinc-300">{tier.parallelInterests.join(" | ") || "No linked interests yet"}</div>
-                </div>
+                </button>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="mt-3 text-xs text-zinc-400">
-          Convexity balance (edge share): <span className="text-zinc-200 font-semibold">{missionState.convexityBalance}</span>
+        <div className="mt-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Convexity Balance</div>
+          <StackedBalanceBar segments={missionSnapshot.balanceSegments} />
         </div>
+
         <div className="mt-3">
           <button
             onClick={() => onWarGame("mission", "mission-global")}

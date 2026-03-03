@@ -14,6 +14,13 @@ npm --workspace @khal/web run dev
 
 The app is pinned to port `3010`. Preflight scripts clear stale listeners before `dev` and `start`.
 
+## Frontend-only Mode (temporary)
+To bypass backend API calls and use local mock data while building UI features:
+
+```bash
+$env:NEXT_PUBLIC_FRONTEND_ONLY="1"; npm --workspace @khal/web run dev
+```
+
 ## Canonical Routes
 - `/home`
 - `/dashboard`

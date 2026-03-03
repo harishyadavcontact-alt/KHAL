@@ -46,7 +46,7 @@ export function TimeHorizonView({ user }: TimeHorizonViewProps) {
         }
         setDeadlines(Array.isArray(data?.deadlines) ? data.deadlines : []);
       });
-    fetch("/api/data")
+    fetch("/api/war-room-data")
       .then((res) => res.json())
       .then((data) => {
         setTasks(Array.isArray(data?.tasks) ? data.tasks : []);

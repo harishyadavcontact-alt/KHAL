@@ -81,7 +81,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    fetch('/api/data')
+    fetch('/api/war-room-data')
       .then((res) => res.json())
       .then(setData);
   }, []);
@@ -219,7 +219,7 @@ const App = () => {
   };
 
   const refreshAppData = async () => {
-    const res = await fetch('/api/data');
+    const res = await fetch('/api/war-room-data');
     const payload = await res.json();
     setData(payload);
   };

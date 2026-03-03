@@ -11,6 +11,7 @@ $routes = @(
   "/war-room",
   "/missionCommand",
   "/source-of-volatility",
+  "/maya",
   "/interests",
   "/affairs",
   "/war-gaming/affair",

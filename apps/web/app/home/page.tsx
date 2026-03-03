@@ -16,6 +16,7 @@ const MODULE_COPY: Record<string, string> = {
   "/war-room": "Macro domain command center",
   "/missionCommand": "Mission hierarchy and chain of command",
   "/source-of-volatility": "Six-law volatility mapping",
+  "/maya": "Causal opacity flow and cave/convex split",
   "/interests": "Optionality lane and convex upside",
   "/affairs": "Obligation lane and fragility removal",
   "/war-gaming": "Scenario simulation and planning",

@@ -4,22 +4,25 @@ import { AppData, Domain } from "./types";
 import { LawCard } from "./LawCard";
 import { LawDetail } from "./LawDetail";
 import { resolveMetric } from "./utils";
+import { canonicalSlotFromLabel, lawAliasForSlot, type CanonicalLawSlot } from "../../lib/war-room/law-aliases";
 
 type LawSlot = {
   id: string;
-  label: string;
-  key: "universe" | "nature" | "nurture" | "land" | "time" | "law6";
+  canonicalLabel: string;
+  key: CanonicalLawSlot;
 };
 type SourceItem = NonNullable<AppData["sources"]>[number];
 
 const LAW_SLOTS: LawSlot[] = [
-  { id: "law-universe", label: "Law of Universe", key: "universe" },
-  { id: "law-nature", label: "Law of Nature", key: "nature" },
-  { id: "law-nurture", label: "Law of Nurture", key: "nurture" },
-  { id: "law-land", label: "Law of Land", key: "land" },
-  { id: "law-time", label: "Law of Time", key: "time" },
-  { id: "law-6", label: "Law 6 (TBD)", key: "law6" }
+  { id: "law-universe", canonicalLabel: "Law of Universe", key: "universe" },
+  { id: "law-nature", canonicalLabel: "Law of Nature", key: "nature" },
+  { id: "law-nurture", canonicalLabel: "Law of Nurture", key: "nurture" },
+  { id: "law-land", canonicalLabel: "Law of Land", key: "land" },
+  { id: "law-time", canonicalLabel: "Law of Time", key: "time" },
+  { id: "law-6", canonicalLabel: "Law 6 (TBD)", key: "law6" }
 ];
+
+const HARD_LAW_KEYS = new Set<LawSlot["key"]>(["universe", "nature", "time"]);
 
 function resolveDomainSource(domain: Domain, laws: AppData["laws"]): string {
   if (domain.volatilitySourceName) return domain.volatilitySourceName;
@@ -32,15 +35,16 @@ function resolveDomainSource(domain: Domain, laws: AppData["laws"]): string {
 }
 
 function sourceToSlotKey(sourceName: string): LawSlot["key"] {
-  const normalized = sourceName.toLowerCase();
-  if (normalized.includes("universe")) return "universe";
-  if (normalized.includes("nature")) return "nature";
-  if (normalized.includes("nurture")) return "nurture";
-  if (normalized.includes("land")) return "land";
-  if (normalized.includes("time")) return "time";
-  if (normalized.includes("jungle")) return "law6";
-  if (normalized.includes("law 6") || normalized.includes("tbd")) return "law6";
-  return "law6";
+  return canonicalSlotFromLabel(sourceName) ?? "law6";
+}
+
+function slotDoctrineClass(slot: LawSlot): "hard" | "human" {
+  return HARD_LAW_KEYS.has(slot.key) ? "hard" : "human";
+}
+
+function doctrineChipClass(kind: "hard" | "human"): string {
+  if (kind === "hard") return "rounded-full border border-red-400/40 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-red-300";
+  return "rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-emerald-300";
 }
 
 interface LawsViewProps {
@@ -106,19 +110,26 @@ export function LawsView({ data, selectedLawId, onSelectLaw, onSelectDomain, onW
   const activeDomains = domainsBySlot.get(activeSlot.id) ?? [];
   const activeSource = sourceMap.get(activeSlot.key);
   const warGameTarget = activeSource?.id ?? activeSlot.id;
+  const activeSlotClass = slotDoctrineClass(activeSlot);
+  const hardLawCount = LAW_SLOTS.filter((slot) => slotDoctrineClass(slot) === "hard").length;
+  const humanLawCount = LAW_SLOTS.length - hardLawCount;
 
   return (
     <div className="space-y-8">
       <section>
         <div className="flex items-center justify-between gap-4 mb-4">
           <h2 className="text-3xl font-bold">Source of Volatility</h2>
-          <span className="text-[10px] uppercase tracking-widest font-mono text-zinc-500">6 fixed law slots</span>
+          <div className="flex items-center gap-2">
+            <span className={doctrineChipClass("hard")}>Hard laws {hardLawCount}</span>
+            <span className={doctrineChipClass("human")}>Human laws {humanLawCount}</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-5">
           {LAW_SLOTS.map((slot) => {
             const selected = slot.id === activeSlot.id;
             const linkedDomains = domainsBySlot.get(slot.id)?.length ?? 0;
+            const doctrineClass = slotDoctrineClass(slot);
             return (
               <button
                 key={slot.id}
@@ -130,7 +141,12 @@ export function LawsView({ data, selectedLawId, onSelectLaw, onSelectDomain, onW
                 }
               >
                 <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Volatility Law</div>
-                <div className="text-sm font-bold">{slot.label}</div>
+                <div className="text-sm font-bold">{lawAliasForSlot(slot.key) ?? slot.canonicalLabel}</div>
+                <div className="mt-2">
+                  <span className={doctrineChipClass(doctrineClass)}>
+                    {doctrineClass === "hard" ? "Hard law" : "Human law"}
+                  </span>
+                </div>
                 <div className="text-[11px] text-zinc-400 mt-2">Linked domains: {linkedDomains}</div>
                 <div className="text-[10px] uppercase tracking-widest text-zinc-500 mt-2">Click to open narrative + analytics</div>
               </button>
@@ -139,7 +155,7 @@ export function LawsView({ data, selectedLawId, onSelectLaw, onSelectDomain, onW
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-5 glass p-5 rounded-xl border border-white/10">
+          <div className="lg:col-span-5 p-5 rounded-xl border glass border-white/10">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-400">Source Narrative</h3>
               <button
@@ -164,10 +180,19 @@ export function LawsView({ data, selectedLawId, onSelectLaw, onSelectDomain, onW
                 <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Strategies / State of Affairs</div>
                 <p className="text-zinc-300">Linked strategic state is available through domain cards and law detail drill-down.</p>
               </div>
+              <div className="pt-2 border-t border-white/10">
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Doctrine Split</div>
+                <div className="flex items-center gap-2">
+                  <span className={doctrineChipClass(activeSlotClass)}>
+                    Active slot: {activeSlotClass === "hard" ? "Hard law" : "Human law"}
+                  </span>
+                  <span className="text-[11px] text-zinc-500">Segmentation cue only, no schema change.</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="lg:col-span-4 glass p-5 rounded-xl border border-white/10">
+          <div className="lg:col-span-4 p-5 rounded-xl border glass border-white/10">
             <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-3">Linked Domains</h3>
             <div className="space-y-2 max-h-[260px] overflow-y-auto custom-scrollbar pr-1">
               {activeDomains.map((domain) => (
@@ -184,10 +209,12 @@ export function LawsView({ data, selectedLawId, onSelectLaw, onSelectDomain, onW
             </div>
           </div>
 
-          <div className="lg:col-span-3 glass p-5 rounded-xl border border-white/10">
+          <div className="lg:col-span-3 p-5 rounded-xl border glass border-white/10">
             <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-3">Analytical Data</h3>
             <div className="space-y-2">
-              <div className="p-2 rounded bg-zinc-900/60 border border-white/10 text-xs text-zinc-300">Law Slot: {activeSlot.label}</div>
+              <div className="p-2 rounded bg-zinc-900/60 border border-white/10 text-xs text-zinc-300">
+                Law Slot: {lawAliasForSlot(activeSlot.key) ?? activeSlot.canonicalLabel}
+              </div>
               <div className="p-2 rounded bg-zinc-900/60 border border-white/10 text-xs text-zinc-300">
                 Source ID: {activeSource?.id ?? "TBD slot"}
               </div>

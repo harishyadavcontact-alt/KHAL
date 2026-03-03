@@ -130,6 +130,7 @@ describe.sequential("khal decision compatibility (directional gate)", () => {
     expect(routes).toContain("/dashboard");
     expect(routes).toContain("/missionCommand");
     expect(routes).toContain("/source-of-volatility");
+    expect(routes).toContain("/maya");
   });
 
   it("round-trips mission hierarchy while preserving parent/dependency integrity", async () => {

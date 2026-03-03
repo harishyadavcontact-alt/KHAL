@@ -126,7 +126,10 @@ export interface Interest {
   title: string;
   domainId: string;
   perspective?: Perspective;
-  stakes?: string;
+  stakes?: string | number;
+  risk?: number;
+  convexity?: number;
+  status?: string;
   objectives?: string[];
 }
 
@@ -137,6 +140,8 @@ export interface Affair {
   interestId?: string;
   perspective?: Perspective;
   status?: string;
+  stakes?: number;
+  risk?: number;
   context: {
     associatedDomains: string[];
     volatilityExposure?: string;
@@ -174,6 +179,195 @@ export interface Task {
   progress?: number;
   status?: "not_started" | "in_progress" | "done" | string;
   convexity?: number;
+}
+
+export interface OperationalNowItem {
+  refType: "AFFAIR" | "INTEREST" | "TASK";
+  refId: string;
+  title: string;
+  score: number;
+  why: string;
+  route: string;
+}
+
+export interface StakeTriadMetrics {
+  lifeScore: number;
+  timeScore: number;
+  soulScore: number;
+  openLineageRiskCount: number;
+  overdueTaskCount: number;
+  nearTermTaskCount: number;
+  unscheduledTaskCount: number;
+  schedulabilityCoverage: number;
+  actionabilityCoverage: number;
+}
+
+export interface BarbellGuardrailMetrics {
+  hedgeMass: number;
+  edgeMass: number;
+  hedgePct: number;
+  edgePct: number;
+  fragileMiddle: boolean;
+  status: "hedge-heavy" | "fragile-middle" | "edge-heavy";
+  activeObligationCount: number;
+  activeOptionCount: number;
+}
+
+export interface AsymmetrySnapshot {
+  markerX: number;
+  markerY: number;
+  balance: number;
+  band: "fragile" | "neutral" | "antifragile";
+  convexityMass: number;
+  fragilityMass: number;
+}
+
+export type MayaLane = "CAVE" | "CONVEX";
+
+export interface MayaSourceSignal {
+  sourceId: string;
+  sourceName: string;
+  sourceCode?: string;
+  domainIds: string[];
+  mappedDomainCount: number;
+  harmSignal: number;
+  disorderPressure: number;
+  caveScore: number;
+  convexPotential: number;
+  convexScore: number;
+  inputVolatility: number;
+  lane: MayaLane;
+  conviction: number;
+}
+
+export interface MayaFlowSnapshot {
+  sources: MayaSourceSignal[];
+  convexSharePct: number;
+  caveSharePct: number;
+  heuristicMeansCoveragePct: number;
+}
+
+export type NoRuinState = "CONTROLLED" | "AT_RISK";
+
+export interface IntentMirrorLevel {
+  levelKey: "SELF" | "FAMILY" | "FRIENDS" | "COMMUNITY" | "STATE" | "NATION" | "HUMANITY" | "NATURE";
+  label: string;
+  nodeIds: string[];
+  score: number | null;
+  band: "critical" | "watch" | "stable" | "unmapped";
+}
+
+export interface IntentMirrorSnapshot {
+  condition: "Causal Opacity: Active";
+  signal: "Harm";
+  principalLadder: IntentMirrorLevel[];
+  noRuinState: NoRuinState;
+  barbellState: "hedge-heavy" | "fragile-middle" | "edge-heavy";
+  directive: string;
+  convexSharePct: number;
+  caveSharePct: number;
+}
+
+export type RiskBand = "critical" | "watch" | "stable";
+
+export interface HeatCell {
+  rowId: string;
+  columnId: string;
+  value: number;
+  band: RiskBand;
+  hint?: string;
+}
+
+export interface HeatColumn {
+  id: string;
+  label: string;
+}
+
+export interface HeatRow {
+  id: string;
+  label: string;
+  meta?: string;
+}
+
+export interface FlowNode {
+  id: string;
+  label: string;
+  value: number;
+  meta?: string;
+}
+
+export interface FlowLane {
+  id: string;
+  label: string;
+}
+
+export interface FlowLink {
+  id: string;
+  sourceId: string;
+  laneId: string;
+  weight: number;
+  lane: "CAVE" | "CONVEX" | "SERIAL" | "PARALLEL";
+  label?: string;
+}
+
+export interface BalanceSegment {
+  id: string;
+  label: string;
+  value: number;
+  tone: "hedge" | "edge" | "risk" | "safe" | "watch";
+}
+
+export interface MissionTierVisual {
+  id: string;
+  riskId: string;
+  domainId: string;
+  tier: number;
+  title: string;
+  fragility: number;
+  serialLoad: number;
+  parallelLoad: number;
+  conviction: number;
+  flowWeight: number;
+  stream: "hedge" | "edge";
+  serialAffairs: string[];
+  parallelInterests: string[];
+}
+
+export interface MissionVisualSnapshot {
+  rows: MissionTierVisual[];
+  heatColumns: HeatColumn[];
+  heatRows: HeatRow[];
+  heatCells: HeatCell[];
+  flowNodes: FlowNode[];
+  flowLanes: FlowLane[];
+  flowLinks: FlowLink[];
+  balanceSegments: BalanceSegment[];
+}
+
+export interface WarGamingVisualSnapshot {
+  quadrantColumns: HeatColumn[];
+  quadrantRows: HeatRow[];
+  quadrantCells: HeatCell[];
+  sourceNodes: FlowNode[];
+  sourceLanes: FlowLane[];
+  sourceLinks: FlowLink[];
+  penaltySegments: BalanceSegment[];
+}
+
+export interface DomainPostureMetric {
+  id: "stakes" | "risk" | "fragility";
+  label: string;
+  value: number;
+}
+
+export interface DomainVisualSnapshot {
+  posture: DomainPostureMetric[];
+  barbellSegments: BalanceSegment[];
+  meansCoveragePct: number;
+  riskRows: HeatRow[];
+  riskColumns: HeatColumn[];
+  riskCells: HeatCell[];
+  riskTrend: number[];
 }
 
 export interface AppData {

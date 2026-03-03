@@ -1,7 +1,11 @@
 import React, { useMemo, useState } from "react";
-import { Plus, Shield, TrendingUp } from "lucide-react";
+import { Plus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { AppData, Domain, DomainStrategyDetailDto, WarRoomViewState } from "./types";
+import { HeatGrid } from "./charts/HeatGrid";
+import { StackedBalanceBar } from "./charts/StackedBalanceBar";
+import { MiniTrend } from "./charts/MiniTrend";
+import { buildDomainVisualSnapshot } from "../../lib/war-room/visual-encodings";
 
 interface DomainModalProps {
   selectedDomain: Domain | null;
@@ -52,6 +56,10 @@ export function DomainModal({ selectedDomain, data, onClose, onOpenAffair, onNav
   const sourceLabel = selectedDomain?.volatilitySourceName ?? selectedDomain?.volatility ?? selectedDomain?.volatilitySource;
   const activeSource = (data.sources ?? []).find((source) => source.name === sourceLabel) ?? (data.sources ?? [])[0];
   const lineageRisksForDomain = (data.lineageRisks ?? []).filter((risk) => risk.domainId === selectedDomain?.id);
+  const domainVisual = useMemo(() => {
+    if (!selectedDomain) return null;
+    return buildDomainVisualSnapshot({ domainId: selectedDomain.id, data });
+  }, [data, selectedDomain]);
 
   const sectionFields = useMemo(() => {
     if (!selectedDomain) return { title: "", fields: [] as Array<{ key: string; label: string; value: string }> };
@@ -192,80 +200,78 @@ export function DomainModal({ selectedDomain, data, onClose, onOpenAffair, onNav
             </div>
 
             <div className="flex-1 overflow-y-auto p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-                <div className="space-y-6">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-xs font-mono uppercase text-zinc-500 tracking-widest">Philosopher&apos;s Stone</h4>
-                      <button onClick={() => openEditor("philosopher")} className="text-[10px] uppercase font-mono text-blue-400 hover:text-blue-300">
-                        Edit
-                      </button>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="p-4 bg-zinc-800/50 rounded-xl border border-white/5">
-                        <div className="text-[10px] text-zinc-500 mb-1 uppercase">Stakes</div>
-                        <div className="text-sm font-medium text-zinc-200">{selectedDomain.stakesText ?? "Undefined"}</div>
-                      </div>
-                      <div className="p-4 bg-zinc-800/50 rounded-xl border border-white/5">
-                        <div className="text-[10px] text-zinc-500 mb-1 uppercase">Risk</div>
-                        <div className="text-sm font-medium text-zinc-200">{selectedDomain.risksText ?? "Undefined"}</div>
-                      </div>
-                      <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                        <div className="text-[10px] text-red-400 mb-1 uppercase">Fragility</div>
-                        <div className="text-sm font-medium text-red-400">{selectedDomain.fragilityText ?? "Undefined"}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-2">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-xs font-mono uppercase text-zinc-500 tracking-widest">Barbell Strategy (Ends)</h4>
-                    <button onClick={() => openEditor("barbell")} className="text-[10px] uppercase font-mono text-blue-400 hover:text-blue-300">
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+                <div className="p-4 bg-zinc-800/50 rounded-xl border border-white/5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs font-mono uppercase text-zinc-500 tracking-widest">Domain Posture</h4>
+                    <button onClick={() => openEditor("philosopher")} className="text-[10px] uppercase font-mono text-blue-400 hover:text-blue-300">
                       Edit
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Shield className="w-4 h-4 text-blue-400" />
-                        <span className="text-sm font-bold text-blue-400">HEDGE (90%)</span>
+                  <div className="space-y-3">
+                    {(domainVisual?.posture ?? []).map((metric) => (
+                      <div key={metric.id}>
+                        <div className="flex justify-between text-[11px]">
+                          <span className="text-zinc-400 uppercase tracking-widest">{metric.label}</span>
+                          <span className="font-mono text-zinc-200">{metric.value}</span>
+                        </div>
+                        <div className="h-2 mt-1 rounded-full bg-zinc-900/80 overflow-hidden">
+                          <div
+                            className={
+                              metric.id === "fragility"
+                                ? "h-full bg-red-500"
+                                : metric.id === "risk"
+                                  ? "h-full bg-amber-500"
+                                  : "h-full bg-blue-500"
+                            }
+                            style={{ width: `${metric.value}%` }}
+                          />
+                        </div>
                       </div>
-                      <p className="text-xs text-zinc-300 leading-relaxed">{selectedDomain.hedge ?? "Define hedge"}</p>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="xl:col-span-2 p-4 bg-zinc-800/50 rounded-xl border border-white/5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-xs font-mono uppercase text-zinc-500 tracking-widest">Barbell + Means Coverage</h4>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => openEditor("barbell")} className="text-[10px] uppercase font-mono text-blue-400 hover:text-blue-300">
+                        Barbell
+                      </button>
+                      <button onClick={() => openEditor("means")} className="text-[10px] uppercase font-mono text-blue-400 hover:text-blue-300">
+                        Means
+                      </button>
                     </div>
-                    <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                      <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp className="w-4 h-4 text-emerald-400" />
-                        <span className="text-sm font-bold text-emerald-400">EDGE (10%)</span>
+                  </div>
+                  <StackedBalanceBar segments={domainVisual?.barbellSegments ?? []} emptyText="No hedge/edge mass." />
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
+                      <div className="text-[10px] uppercase tracking-widest text-zinc-500">Means Coverage</div>
+                      <div className="text-xl font-bold mt-1">{domainVisual?.meansCoveragePct ?? 0}%</div>
+                      <div className="h-2 mt-2 rounded-full bg-zinc-900 overflow-hidden">
+                        <div className="h-full bg-teal-500" style={{ width: `${domainVisual?.meansCoveragePct ?? 0}%` }} />
                       </div>
-                      <p className="text-xs text-zinc-300 leading-relaxed">{selectedDomain.edge ?? "Define edge"}</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
+                      <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Fragility Trend</div>
+                      <MiniTrend values={domainVisual?.riskTrend ?? []} tone="risk" />
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-xs font-mono uppercase text-zinc-500 tracking-widest">Means (Heuristics)</h4>
-                    <button onClick={() => openEditor("means")} className="text-[10px] uppercase font-mono text-blue-400 hover:text-blue-300">
-                      Edit
-                    </button>
-                  </div>
-                  <div className="p-4 bg-zinc-800/50 rounded-xl border border-white/5 space-y-4">
-                    <div>
-                      <div className="text-[10px] text-blue-400 uppercase mb-1">Heuristics</div>
-                      <p className="text-xs text-zinc-300 leading-relaxed">{selectedDomain.heuristics ?? "None defined"}</p>
-                    </div>
-                    {selectedDomain.tactics && (
-                      <div>
-                        <div className="text-[10px] text-blue-400 uppercase mb-1">Tactics</div>
-                        <p className="text-xs text-zinc-300 leading-relaxed">{selectedDomain.tactics}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div className="p-4 bg-zinc-800/50 rounded-xl border border-white/5 mb-8">
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">Lineage Risk HeatGrid</div>
+                <HeatGrid
+                  columns={domainVisual?.riskColumns ?? []}
+                  rows={domainVisual?.riskRows ?? []}
+                  cells={domainVisual?.riskCells ?? []}
+                  emptyText="No domain lineage risks mapped."
+                />
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-xs font-mono uppercase text-zinc-500 tracking-widest">State of Affairs</h4>
@@ -386,19 +392,28 @@ export function DomainModal({ selectedDomain, data, onClose, onOpenAffair, onNav
                   placeholder="Notes"
                 />
 
-                <div className="space-y-2">
-                  {lineageRisksForDomain.length === 0 && <div className="text-xs text-zinc-500">No lineage risks recorded yet.</div>}
-                  {lineageRisksForDomain.map((risk) => (
-                    <div key={risk.id} className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                      <div className="flex justify-between items-center">
-                        <div className="font-semibold text-sm">{risk.title}</div>
-                        <div className="text-[10px] font-mono text-zinc-400">{risk.status}</div>
+                <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-4">
+                  <div className="space-y-2">
+                    {lineageRisksForDomain.length === 0 && <div className="text-xs text-zinc-500">No lineage risks recorded yet.</div>}
+                    {lineageRisksForDomain.map((risk) => (
+                      <div key={risk.id} className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+                        <div className="flex justify-between items-center">
+                          <div className="font-semibold text-sm">{risk.title}</div>
+                          <div className="text-[10px] font-mono text-zinc-400">{risk.status}</div>
+                        </div>
+                        <div className="text-[10px] text-zinc-500 mt-1">
+                          E:{risk.exposure} D:{risk.dependency} I:{risk.irreversibility} O:{risk.optionality} R:{risk.responseTime} F:{risk.fragilityScore}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-zinc-500 mt-1">
-                        E:{risk.exposure} D:{risk.dependency} I:{risk.irreversibility} O:{risk.optionality} R:{risk.responseTime} F:{risk.fragilityScore}
-                      </div>
+                    ))}
+                  </div>
+                  <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+                    <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Live Risk Trend</div>
+                    <MiniTrend values={domainVisual?.riskTrend ?? []} tone="risk" width={150} height={50} />
+                    <div className="mt-3">
+                      <StackedBalanceBar segments={domainVisual?.barbellSegments ?? []} showLegend={false} emptyText="No mass data." />
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
             </div>
