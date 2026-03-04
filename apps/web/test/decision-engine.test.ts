@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { KhalState } from "@khal/domain";
-import { buildDraftMutations, evaluateDecision, getDecisionSpec } from "../lib/decision-spec";
+import { buildDeterministicTriage, buildDraftMutations, evaluateDecision, getDecisionSpec } from "../lib/decision-spec";
 
 function baseState(): KhalState {
   return {
@@ -102,5 +102,20 @@ describe("decision-spec engine", () => {
     expect(mutations.some((m) => m.kind === "CREATE_TASK")).toBe(true);
     expect(state.interests.length).toBe(0);
     expect(state.tasks.length).toBe(0);
+  });
+
+  it("builds deterministic triage suggestions from block reasons", () => {
+    const state = baseState();
+    state.domains.push({
+      id: "d1",
+      name: "Complex Domain",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      description: "complex nonlinear thick-tail domain"
+    });
+    const first = buildDeterministicTriage({ mode: "domain", targetId: "d1", state, role: "MISSIONARY", noRuinGate: true });
+    const second = buildDeterministicTriage({ mode: "domain", targetId: "d1", state, role: "MISSIONARY", noRuinGate: true });
+    expect(first).toEqual(second);
+    expect(first.some((item) => item.actionKind === "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE")).toBe(true);
   });
 });

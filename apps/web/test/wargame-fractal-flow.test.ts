@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { evaluateWarGameMode } from "../components/war-room-v2/war-game-protocol";
+import { buildDeterministicTriage } from "../lib/decision-spec";
+import type { KhalState } from "@khal/domain";
 
 describe("wargame fractal flow", () => {
   it("flags missing grammar fields deterministically", () => {
@@ -25,5 +27,35 @@ describe("wargame fractal flow", () => {
     expect(result.dependency.missingModes).toEqual([]);
     expect(result.blockedActions).toBe(false);
   });
-});
 
+  it("triage returns exact missing items for blocked domain grammar", () => {
+    const state: KhalState = {
+      domains: [
+        {
+          id: "d1",
+          name: "D1",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ],
+      laws: [],
+      crafts: [],
+      ends: [],
+      fragilities: [],
+      affairs: [],
+      interests: [],
+      tasks: [],
+      missionNodes: [],
+      missionGraph: { nodes: [], dependencies: [] },
+      warRoomNarrative: {},
+      sources: [],
+      lineages: { nodes: [], entities: [] },
+      lineageRisks: [],
+      doctrine: { rulebooks: [], rules: [], domainPnLLadders: [] }
+    };
+    const triage = buildDeterministicTriage({ mode: "domain", targetId: "d1", state, role: "MISSIONARY", noRuinGate: true });
+    const grammar = triage.find((item) => item.title === "GRAMMAR_INCOMPLETE");
+    expect(grammar?.missingItems).toContain("stakes");
+    expect(grammar?.missingItems).toContain("risk_map");
+  });
+});

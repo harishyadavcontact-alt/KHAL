@@ -8,6 +8,8 @@ import { POST as dryRunPost } from "../app/api/agent/wargame/dry-run/route";
 import { POST as commitPost } from "../app/api/agent/wargame/commit/route";
 import { POST as evaluatePost } from "../app/api/decision/evaluate/route";
 import { POST as overridePost } from "../app/api/decision/override/route";
+import { POST as triagePost } from "../app/api/decision/triage/route";
+import { POST as quickActionPost } from "../app/api/decision/quick-action/route";
 
 const SETTINGS_PATH = path.resolve(process.cwd(), "..", "..", ".khal.local.json");
 
@@ -170,5 +172,40 @@ describe("tri-readable api contracts", () => {
     } finally {
       db.close();
     }
+  });
+
+  it("returns deterministic triage snapshot for same input", async () => {
+    const request = {
+      mode: "domain" as const,
+      targetId: "domain-economic-power",
+      role: "MISSIONARY" as const,
+      noRuinGate: true
+    };
+    const first = await triagePost(postJson("http://localhost/api/decision/triage", request));
+    const second = await triagePost(postJson("http://localhost/api/decision/triage", request));
+    const firstJson = await first.json();
+    const secondJson = await second.json();
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(firstJson.suggestions).toEqual(secondJson.suggestions);
+  });
+
+  it("applies whitelisted quick action and returns fresh evaluation", async () => {
+    const actionResponse = await quickActionPost(
+      postJson("http://localhost/api/decision/quick-action", {
+        kind: "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE",
+        targetRef: { mode: "domain", targetId: "domain-economic-power" },
+        payload: {
+          hedgeText: "Protect downside via robust baseline.",
+          edgeText: "Expose to asymmetric upside via capped bets."
+        },
+        role: "MISSIONARY",
+        noRuinGate: true
+      })
+    );
+    const actionJson = await actionResponse.json();
+    expect(actionResponse.status).toBe(200);
+    expect(actionJson.applied).toBe(true);
+    expect(actionJson.evaluation).toBeTruthy();
   });
 });
