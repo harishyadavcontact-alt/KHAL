@@ -6,6 +6,7 @@ import {
   BlastRadiusSnapshot,
   Craft,
   DecisionEvaluationResult,
+  TriageEvaluationSnapshot,
   DoctrineViolationEvent,
   HedgeCoverageCell,
   OptionalityBudgetState,
@@ -37,8 +38,10 @@ import { WarGameLineage } from "./wargame_lineage";
 import {
   computeAsymmetrySnapshot,
   computeBarbellGuardrail,
+  computeBlackSwanReadiness,
   computeFragilistaWatchlist,
   computeInterestProtocolChecks,
+  computeViaNegativaQueue,
   isInterestProtocolReady
 } from "../../lib/war-room/operational-metrics";
 import { HeatGrid } from "./charts/HeatGrid";
@@ -49,16 +52,22 @@ import { DualPathScenario } from "./types";
 import { DualPathComparator } from "./DualPathComparator";
 import { FragilistaWatchlistPanel } from "./maya/FragilistaWatchlistPanel";
 import {
+  BlackSwanReadinessPanel,
   ConfidenceEvidenceStrip,
   CorrelationRiskCard,
   DependencyBlastRadiusPanel,
   DoctrineViolationFeedPanel,
   HedgeCoverageMatrixPanel,
-  OptionalityBudgetPanel
+  OptionalityBudgetPanel,
+  ViaNegativaPanel
 } from "./panels/RobustnessPanels";
 import { v03Flags } from "../../lib/war-room/feature-flags";
 import { FractalFlowRail } from "./FractalFlowRail";
 import { DependencyWarningsCard } from "./DependencyWarningsCard";
+import { HudStatusStrip } from "./hud/HudStatusStrip";
+import { SystemAnatomyMiniMap } from "./hud/SystemAnatomyMiniMap";
+import { TriageActionPanel } from "./panels/TriageActionPanel";
+import { DoctrineFixButtons } from "./panels/DoctrineFixButtons";
 
 function modeTargetOptions(mode: WarGameMode, data: {
   sources: VolatilitySourceDto[];
@@ -209,6 +218,8 @@ export const WarGaming = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [role, setRole] = useState<WarGameRole>("MISSIONARY");
   const [decisionEval, setDecisionEval] = useState<DecisionEvaluationResult | null>(null);
+  const [triageEval, setTriageEval] = useState<TriageEvaluationSnapshot | null>(null);
+  const [actionNotice, setActionNotice] = useState<string>("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [domainFilter, setDomainFilter] = useState<string>("all");
   const [lineageFilter, setLineageFilter] = useState<string>("all");
@@ -264,24 +275,33 @@ export const WarGaming = ({
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/decision/evaluate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mode,
-        targetId: modeTargetId || "global",
-        role,
-        noRuinGate: (protocolState ?? "NOMINAL") !== "CRITICAL"
-      })
-    })
-      .then((res) => res.json())
-      .then((payload) => {
+    const requestBody = {
+      mode,
+      targetId: modeTargetId || "global",
+      role,
+      noRuinGate: (protocolState ?? "NOMINAL") !== "CRITICAL"
+    };
+    Promise.all([
+      fetch("/api/decision/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody)
+      }).then((res) => res.json()),
+      fetch("/api/decision/triage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody)
+      }).then((res) => res.json())
+    ])
+      .then(([evalPayload, triagePayload]) => {
         if (cancelled) return;
-        setDecisionEval(payload as DecisionEvaluationResult);
+        setDecisionEval(evalPayload as DecisionEvaluationResult);
+        setTriageEval(triagePayload as TriageEvaluationSnapshot);
       })
       .catch(() => {
         if (cancelled) return;
         setDecisionEval(null);
+        setTriageEval(null);
       });
     return () => {
       cancelled = true;
@@ -558,6 +578,95 @@ export const WarGaming = ({
       }),
     [completedModes, currentFilledFieldKeys, mode, role, targetReadinessPreview.score]
   );
+  const normalizedProtocolState = useMemo<"NOMINAL" | "WATCH" | "CRITICAL">(() => {
+    if (protocolState === "CRITICAL") return "CRITICAL";
+    if (protocolState === "WATCH") return "WATCH";
+    return "NOMINAL";
+  }, [protocolState]);
+  const hudData = useMemo(
+    () => ({
+      user,
+      strategyMatrix: {
+        allies: 0,
+        enemies: 0,
+        overt: 0,
+        covert: 0,
+        offense: 0,
+        defense: 0,
+        conventional: 0,
+        unconventional: 0
+      },
+      laws: [],
+      domains,
+      crafts,
+      interests,
+      affairs,
+      tasks,
+      sources,
+      missionGraph: missionGraph ?? { nodes: [], dependencies: [] },
+      lineages: { nodes: lineages, entities: [] },
+      lineageRisks,
+      doctrine: { rulebooks: [], rules: [], domainPnLLadders: [] },
+      decisionAccelerationMeta: {
+        computedAtIso: new Date().toISOString(),
+        dataQuality: "MEDIUM" as const,
+        invariantViolations: decisionEval?.blockReasons.map((reason) => reason.code) ?? [],
+        fallbackUsed: false,
+        protocolState: normalizedProtocolState
+      },
+      tripwire: {
+        state: normalizedProtocolState === "CRITICAL" ? ("BLOCK" as const) : normalizedProtocolState === "WATCH" ? ("WATCH" as const) : ("NOMINAL" as const),
+        reason: normalizedProtocolState === "CRITICAL" ? "Protocol state is critical." : "Protocol state is operable.",
+        recoveryAction: "Resolve high fragility and doctrine violations first.",
+        riskyActionBlocked: normalizedProtocolState === "CRITICAL"
+      },
+      violationFeed: mergedViolationFeed,
+      blastRadius
+    }),
+    [affairs, blastRadius, crafts, decisionEval?.blockReasons, domains, interests, lineages, lineageRisks, mergedViolationFeed, missionGraph, normalizedProtocolState, sources, tasks, user]
+  );
+  const viaNegativaQueue = useMemo(() => computeViaNegativaQueue(hudData, 5), [hudData]);
+  const blackSwanReadiness = useMemo(() => computeBlackSwanReadiness(hudData), [hudData]);
+
+  const handleApplyTriageSuggestion = async (suggestionId: string) => {
+    const suggestion = triageEval?.suggestions.find((item) => item.id === suggestionId);
+    if (!suggestion?.actionKind) return;
+    try {
+      const response = await fetch("/api/decision/quick-action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: suggestion.actionKind,
+          targetRef: { mode: suggestion.mode, targetId: suggestion.targetId },
+          payload: suggestion.actionPayload ?? {},
+          role,
+          noRuinGate: (protocolState ?? "NOMINAL") !== "CRITICAL"
+        })
+      });
+      const payload = await response.json();
+      if (!response.ok || payload?.error) {
+        setActionNotice(String(payload?.error ?? "Quick action failed."));
+        return;
+      }
+      const nextEval = await fetch("/api/decision/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode,
+          targetId: modeTargetId || "global",
+          role,
+          noRuinGate: (protocolState ?? "NOMINAL") !== "CRITICAL"
+        })
+      }).then((res) => res.json());
+      setDecisionEval(nextEval as DecisionEvaluationResult);
+      if (payload?.evaluation) {
+        setTriageEval(payload.evaluation as TriageEvaluationSnapshot);
+      }
+      setActionNotice(`Applied: ${suggestion.title}`);
+    } catch {
+      setActionNotice("Quick action failed.");
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -610,6 +719,9 @@ export const WarGaming = ({
           Execution actions blocked for current role/gates. Resolve dependencies or required grammar fields.
         </div>
       )}
+      {actionNotice ? <div className="mb-3 text-xs text-blue-300">{actionNotice}</div> : null}
+      {v03Flags.hud && <HudStatusStrip data={hudData} compact />}
+      <TriageActionPanel triage={triageEval} onApplyAction={handleApplyTriageSuggestion} />
       <FractalFlowRail
         mode={mode}
         role={role}
@@ -643,6 +755,7 @@ export const WarGaming = ({
           ) : (
             <div className="text-xs text-emerald-300">No doctrine blocks in current context.</div>
           )}
+          <DoctrineFixButtons suggestions={triageEval?.suggestions ?? []} onApply={handleApplyTriageSuggestion} />
         </div>
       ) : null}
       <div className="rounded-xl border border-white/10 bg-zinc-900/30 p-3 mb-4">
@@ -783,6 +896,22 @@ export const WarGaming = ({
       <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4 mb-8">
         <DualPathComparator scenario={dualPath} />
         <FragilistaWatchlistPanel items={fragilistaItems} />
+      </div>
+      {v03Flags.hud && (
+        <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4 mb-8">
+          <section className="glass p-4 rounded-xl border border-white/10">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Decision Surface</div>
+            <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-100 mb-2">Operational Filters</h3>
+            <p className="text-xs text-zinc-400">
+              Use source, domain, and lineage filters to constrain war-game blast context and execution priority.
+            </p>
+          </section>
+          <SystemAnatomyMiniMap data={hudData} />
+        </div>
+      )}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-8">
+        <ViaNegativaPanel items={viaNegativaQueue} />
+        <BlackSwanReadinessPanel snapshot={blackSwanReadiness} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-8">
