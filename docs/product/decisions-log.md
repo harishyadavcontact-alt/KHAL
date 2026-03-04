@@ -11,5 +11,7 @@
 - Fractal War Gaming doctrine (v0.4.2): each war-gaming mode has mode-specific grammar (`source`, `domain`, `affair`, `interest`, `craft`, `lineage`, `mission`) under one macro hierarchy.
 - Hybrid role flow (v0.4.2): Missionary (dependency-first stricter gating) and Visionary (jump allowed with deterministic warnings).
 - Visual doctrine: prioritize sub-second clarity with operational visuals over dashboard bloat.
+- Triage doctrine (v0.4.5-R1): blocked states must produce deterministic, exact block-to-fix suggestions; no model dependence.
+- Quick action doctrine (v0.4.5-R1): one-click fixes are whitelisted, minimal, idempotent where possible, and never bypass no-ruin.
 - API style: REST
 - Testing baseline: unit + parser + API-level coverage

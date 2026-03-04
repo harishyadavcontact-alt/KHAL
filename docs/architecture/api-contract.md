@@ -76,3 +76,42 @@ Entity mutation routes (`/api/affairs`, `/api/interests`, `/api/tasks`, and rela
 - `CRAFT`
 - `LINEAGE`
 - `MISSION`
+
+## Decision Triage (v0.4.5-R1)
+
+### `POST /api/decision/triage`
+Input:
+- `mode`
+- `targetId`
+- optional `role`
+- optional `noRuinGate`
+- optional `overrides[]`
+
+Output (`TriageEvaluationSnapshot`):
+- `mode`
+- `targetId`
+- `blocked`
+- `readinessScore`
+- `nextAction`
+- `suggestions[]` (deterministic sorted)
+- `generatedAtIso`
+
+### `POST /api/decision/quick-action`
+Input:
+- `kind`
+- `targetRef` (`mode`, `targetId`)
+- optional `payload`
+- optional `role`
+- optional `noRuinGate`
+- optional `overrides[]`
+
+Output:
+- `applied`
+- `action`
+- `targetRef`
+- `evaluation` (fresh triage snapshot)
+
+Safety:
+- whitelist-only field writes
+- no automatic doctrine override creation
+- no no-ruin bypass actions

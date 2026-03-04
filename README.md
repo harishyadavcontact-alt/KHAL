@@ -98,6 +98,15 @@ node scripts/qa-report.mjs
 - Canonical decision tree artifact:
   - `docs/decision-tree/war-room-fractal-decision-tree.md`
 
+## Decision Triage + Doctrine Controls (v0.4.5-R1)
+- Deterministic triage API:
+  - `POST /api/decision/triage`
+- Whitelisted quick-fix API:
+  - `POST /api/decision/quick-action`
+- UI surfaces:
+  - War Gaming `TriageActionPanel` + `DoctrineFixButtons`
+  - Dashboard `NextActionStrip`
+
 ## References
 - Web implementation notes: `apps/web/README.md`
 - Decision compatibility spec: `docs/reports/khal-decision-compatibility-test-cases.md`
