@@ -14,7 +14,7 @@
   - security baseline
   - performance budgets
   - release runbook
-- Hardened typecheck determinism by removing direct dependence on generated `.next/types` in web `tsconfig`.
+- Hardened typecheck determinism by generating Next route types (`next typegen`) before `tsc` in web lint/typecheck scripts.
 
 ## v0.3.4 - Learning Loop + Operating Memory (2026-03-04)
 - Added Decision Replay, Outcome Attribution, Assumption Register, and Recovery Playbooks panels in Decision Chamber.

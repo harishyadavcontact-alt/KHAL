@@ -1,23 +1,35 @@
 NEXT_STEPS.md
 
-Current Phase: v0.4.2 Fractal War Gaming (mode-specific grammar + hybrid role flow)
+Current Phase: v0.4.3 Released (tri-readable decision engine + quality/release hardening)
 
-Immediate build slice:
-- Add `craft` as first-class war-gaming mode (`/war-gaming/craft`).
-- Enforce mode-specific grammar registry across `source/domain/affair/interest/craft/lineage/mission`.
-- Introduce hybrid role flow:
-  - `Missionary` dependency-first gating.
-  - `Visionary` jump with deterministic warnings.
-- Keep Lab as semantic aggregator for interest experiments.
-- Keep API contracts additive and route-compatible.
+Release closure checklist (completed):
+- `main` updated with release commits and tags:
+  - `v0.4.3-rc1`
+  - `v0.4.3`
+- CI migrated to deterministic npm-only split jobs:
+  - `verify`
+  - `build`
+  - `smoke`
+  - `uat-report`
+  - `security-audit`
+- Release automation added:
+  - `.github/workflows/release.yml`
+- Security automation added:
+  - `.github/workflows/security.yml`
+  - `.github/dependabot.yml`
+- Quality harness added:
+  - `scripts/quality-gate.ps1`
+  - `scripts/smoke-routes.mjs`
+  - `scripts/perf-smoke.mjs`
+  - `scripts/qa-report.mjs`
+  - `scripts/uat-capture.ps1`
+- UAT/security/perf/release docs added under `docs/`.
 
-Validation gates:
-- `npm run typecheck`
-- `npm run build`
-- `npm --workspace @khal/web run test`
-- `npm --workspace @khal/web run smoke:routes`
+Operational release gate:
+- `npm run quality:gate`
+- `npm audit --omit=dev`
 
-Cleanup policy:
-- conservative prune only
-- preserve compatibility redirects
-- keep `Genesis.xlsx` as archival reference
+Defaults preserved:
+- SQLite remains runtime authority.
+- Excel (`Genesis.xlsx`) remains archival reference.
+- Compatibility redirects remain preserved.
