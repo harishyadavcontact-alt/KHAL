@@ -27,6 +27,12 @@ export function WarGamingModeClient({ mode, targetId }: { mode: WarGameRouteMode
           lineageRisks={data.lineageRisks ?? []}
           missionGraph={data.missionGraph}
           doctrine={data.doctrine}
+          confidence={data.confidence}
+          protocolState={data.decisionAccelerationMeta?.protocolState}
+          blastRadius={data.blastRadius}
+          hedgeCoverage={data.hedgeCoverage}
+          violationFeed={data.violationFeed}
+          optionalityBudget={data.optionalityBudget}
           initialMode={mode}
           initialTargetId={targetId}
           onAddTask={async (payload) => {

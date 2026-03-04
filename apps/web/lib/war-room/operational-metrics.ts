@@ -9,6 +9,9 @@ import type {
   AppData,
   AsymmetrySnapshot,
   BarbellGuardrailMetrics,
+  ExecutionSplitMetrics,
+  FragilistaWatchItem,
+  HarmSignalSnapshot,
   OperationalNowItem,
   StakeTriadMetrics
 } from "../../components/war-room-v2/types";
@@ -34,6 +37,11 @@ function clamp(value: number, min: number, max: number): number {
 
 function round1(value: number): number {
   return Math.round(value * 10) / 10;
+}
+
+function average(values: number[]): number {
+  if (!values.length) return 0;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
 function isActiveStatus(status?: string): boolean {
@@ -290,5 +298,194 @@ export function computeAsymmetrySnapshot(input: OperationalInput): AsymmetrySnap
     band,
     convexityMass,
     fragilityMass
+  };
+}
+
+export function computeHarmSignalSnapshot(input: AppData): HarmSignalSnapshot {
+  const openRisks = (input.lineageRisks ?? []).filter((risk) => isOpenRiskStatus(risk.status));
+  const sortedByFragility = [...openRisks].sort((left, right) => asNumber(right.fragilityScore, 0) - asNumber(left.fragilityScore, 0));
+  const activeAffairs = input.affairs.filter((affair) => isActiveStatus(affair.status));
+  const activeTasks = input.tasks.filter((task) => isActiveStatus(task.status));
+
+  const harmFromRisks = average(sortedByFragility.map((risk) => clamp(asNumber(risk.fragilityScore, 0), 0, 100)));
+  const harmFromAffairs = average(activeAffairs.map((affair) => affairFragilityMass(affair.stakes, affair.risk)));
+  const harmLevel = round1(clamp(harmFromRisks > 0 ? harmFromRisks : harmFromAffairs, 0, 100));
+
+  const now = Date.now();
+  const weekFromNow = now + 7 * 24 * 60 * 60 * 1000;
+  let overdue = 0;
+  let nearTerm = 0;
+  let unscheduled = 0;
+  for (const task of activeTasks) {
+    const dueAt = safeDateTs(task.dueDate);
+    if (dueAt === null) {
+      unscheduled += 1;
+      continue;
+    }
+    if (dueAt < now) overdue += 1;
+    else if (dueAt <= weekFromNow) nearTerm += 1;
+  }
+  const disorderPressure = round1(
+    clamp(
+      activeTasks.length ? ((overdue * 3 + nearTerm * 2 + unscheduled) / (activeTasks.length * 3)) * 100 : harmLevel * 0.6,
+      0,
+      100
+    )
+  );
+
+  const openCriticalCount = sortedByFragility.filter((risk) => asNumber(risk.fragilityScore, 0) >= 70).length;
+  const signalBand: HarmSignalSnapshot["signalBand"] =
+    harmLevel >= 70 || disorderPressure >= 70 || openCriticalCount >= 3
+      ? "critical"
+      : harmLevel >= 45 || disorderPressure >= 45 || openCriticalCount > 0
+        ? "watch"
+        : "stable";
+
+  const series = (() => {
+    if (sortedByFragility.length) {
+      return sortedByFragility.slice(0, 8).map((risk, index) => {
+        const value = round1(clamp(asNumber(risk.fragilityScore, 0), 0, 100));
+        return {
+          id: risk.id,
+          label: `R${index + 1}`,
+          value,
+          spike: value >= 70
+        };
+      });
+    }
+
+    const domainProxy = domainFragilityProxy({
+      affairs: input.affairs,
+      interests: input.interests,
+      tasks: input.tasks,
+      lineageRisks: input.lineageRisks,
+      domains: input.domains
+    });
+    return Array.from({ length: 8 }, (_, index) => {
+      const value = round1(clamp(domainProxy * (0.55 + index * 0.05) + disorderPressure * 0.2 - index * 2, 0, 100));
+      return {
+        id: `fallback-${index}`,
+        label: `T${index + 1}`,
+        value,
+        spike: value >= 70
+      };
+    });
+  })();
+
+  return {
+    harmLevel,
+    disorderPressure,
+    openCriticalCount,
+    signalBand,
+    series
+  };
+}
+
+export function computeFragilistaWatchlist(input: AppData, limit = 5): FragilistaWatchItem[] {
+  const domainById = new Map(input.domains.map((domain) => [domain.id, domain]));
+  const sourceById = new Map((input.sources ?? []).map((source) => [source.id, source]));
+
+  const actorLabel = (actorType?: string) => {
+    const normalized = (actorType ?? "").trim().toLowerCase();
+    if (normalized === "personal") return "Personal Actor";
+    if (normalized === "private") return "Private Actor";
+    if (normalized === "public") return "Public Actor";
+    return "Unknown Actor";
+  };
+
+  const toItem = (risk: NonNullable<AppData["lineageRisks"]>[number]): FragilistaWatchItem => {
+    const exposure = clamp(asNumber(risk.exposure, 5), 0, 10);
+    const dependency = clamp(asNumber(risk.dependency, 5), 0, 10);
+    const irreversibility = clamp(asNumber(risk.irreversibility, 5), 0, 10);
+    const optionality = clamp(asNumber(risk.optionality, 5), 0, 10);
+    const responseTime = clamp(asNumber(risk.responseTime, 7), 0, 30);
+
+    const score = round1(
+      clamp(
+        exposure * 10 * 0.25 +
+          dependency * 10 * 0.2 +
+          irreversibility * 10 * 0.25 +
+          (10 - optionality) * 10 * 0.15 +
+          (responseTime / 30) * 100 * 0.15,
+        0,
+        100
+      )
+    );
+
+    const sitgBand: FragilistaWatchItem["sitgBand"] = score >= 70 ? "LOW" : score >= 45 ? "MEDIUM" : "HIGH";
+    const domainLabel = domainById.get(risk.domainId)?.name ?? risk.domainId;
+    const sourceLabel = sourceById.get(risk.sourceId)?.name ?? risk.sourceId;
+    const reason =
+      sitgBand === "LOW"
+        ? "High exposure with weak downside accountability."
+        : sitgBand === "MEDIUM"
+          ? "Moderate fragility pressure; tighten response commitments."
+          : "Accountability posture is stronger than baseline.";
+
+    return {
+      id: risk.id,
+      title: risk.title,
+      entityLabel: actorLabel(risk.actorType),
+      domainLabel,
+      sourceLabel,
+      score,
+      sitgBand,
+      reason
+    };
+  };
+
+  return (input.lineageRisks ?? [])
+    .filter((risk) => isOpenRiskStatus(risk.status))
+    .map(toItem)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, limit);
+}
+
+export function computeExecutionSplit(input: AppData): ExecutionSplitMetrics {
+  const activeAffairs = input.affairs.filter((affair) => isActiveStatus(affair.status));
+  const closedAffairs = input.affairs.filter((affair) => !isActiveStatus(affair.status));
+  const activeInterests = input.interests.filter((interest) => isActiveStatus(interest.status));
+
+  const openFragilityMass = activeAffairs.reduce((sum, affair) => sum + affairFragilityMass(affair.stakes, affair.risk), 0);
+  const closedFragilityMass = closedAffairs.reduce((sum, affair) => sum + affairFragilityMass(affair.stakes, affair.risk), 0);
+  const totalFragilityMass = openFragilityMass + closedFragilityMass;
+
+  const affairsCompletionPct = round1(input.affairs.length ? (closedAffairs.length / input.affairs.length) * 100 : 0);
+  const fragilityReductionProxy = round1(totalFragilityMass ? (closedFragilityMass / totalFragilityMass) * 100 : 0);
+
+  const interestTasks = input.tasks.filter((task) => normalizeSourceType(task.sourceType) === "INTEREST");
+  const interestTasksDone = interestTasks.filter((task) => normalizeStatus(task.status) === "DONE").length;
+  const interestTasksInProgress = interestTasks.filter((task) => normalizeStatus(task.status) === "IN_PROGRESS").length;
+  const interestsExecutionPct = round1(
+    interestTasks.length ? ((interestTasksDone + interestTasksInProgress * 0.5) / interestTasks.length) * 100 : 0
+  );
+
+  const convexityMass = round1(
+    activeInterests.reduce((sum, interest) => sum + interestConvexityMass(interest.convexity, interest.stakes), 0)
+  );
+
+  const affairsScore = round1(clamp(fragilityReductionProxy * 0.6 + affairsCompletionPct * 0.4, 0, 100));
+  const interestsScore = round1(clamp(clamp(convexityMass, 0, 100) * 0.55 + interestsExecutionPct * 0.45, 0, 100));
+
+  const diff = interestsScore - affairsScore;
+  const imbalanceBand: ExecutionSplitMetrics["imbalanceBand"] =
+    affairsScore >= 35 && interestsScore >= 35 && affairsScore <= 65 && interestsScore <= 65
+      ? "fragile-middle"
+      : diff > 20
+        ? "interests-heavy"
+        : diff < -20
+          ? "affairs-heavy"
+          : "balanced";
+
+  return {
+    affairsScore,
+    interestsScore,
+    affairsCompletionPct,
+    interestsExecutionPct,
+    fragilityReductionProxy,
+    convexityMass,
+    affairsOpenCount: activeAffairs.length,
+    interestsActiveCount: activeInterests.length,
+    imbalanceBand
   };
 }

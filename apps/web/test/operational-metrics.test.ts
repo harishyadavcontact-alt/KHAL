@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { Affair, AppData, Interest, Task } from "../components/war-room-v2/types";
+import type { Affair, AppData, Interest, LineageRiskDto, Task } from "../components/war-room-v2/types";
 import {
   buildDoNowItems,
   computeAsymmetrySnapshot,
   computeBarbellGuardrail,
+  computeExecutionSplit,
+  computeFragilistaWatchlist,
+  computeHarmSignalSnapshot,
   computeStakeTriad
 } from "../lib/war-room/operational-metrics";
 
@@ -67,6 +70,26 @@ function makeTask(id: string, domainId: string, horizon: Task["horizon"], dueDat
     priority: 50,
     status: "not_started",
     dueDate
+  };
+}
+
+function makeLineageRisk(id: string, domainId: string, sourceId: string, overrides?: Partial<LineageRiskDto>): LineageRiskDto {
+  return {
+    id,
+    sourceId,
+    domainId,
+    lineageNodeId: "self",
+    actorType: "public",
+    title: id,
+    exposure: 8,
+    dependency: 8,
+    irreversibility: 7,
+    optionality: 2,
+    responseTime: 20,
+    fragilityScore: 82,
+    status: "OPEN",
+    notes: "",
+    ...overrides
   };
 }
 
@@ -137,5 +160,68 @@ describe("operational metrics", () => {
     neutral.affairs = [makeAffair("affair-1", "domain-1", 7, 7)];
     neutral.interests = [makeInterest("interest-1", "domain-1", 7, 7)];
     expect(computeAsymmetrySnapshot(neutral).band).toBe("neutral");
+  });
+
+  it("builds deterministic harm snapshot and bounds metrics", () => {
+    const data = makeBaseData();
+    data.lineageRisks = [
+      makeLineageRisk("risk-1", "domain-1", "source-1", { fragilityScore: 80 }),
+      makeLineageRisk("risk-2", "domain-1", "source-1", { fragilityScore: 60, status: "MITIGATING" })
+    ];
+    data.tasks = [makeTask("task-1", "domain-1", "WEEK", "2001-01-01T00:00:00.000Z")];
+
+    const first = computeHarmSignalSnapshot(data);
+    const second = computeHarmSignalSnapshot({
+      ...data,
+      lineageRisks: [...(data.lineageRisks ?? [])],
+      tasks: [...data.tasks]
+    });
+
+    expect(first).toEqual(second);
+    expect(first.harmLevel).toBeGreaterThanOrEqual(0);
+    expect(first.harmLevel).toBeLessThanOrEqual(100);
+    expect(first.disorderPressure).toBeGreaterThanOrEqual(0);
+    expect(first.disorderPressure).toBeLessThanOrEqual(100);
+  });
+
+  it("ranks fragilista watchlist by accountability pressure", () => {
+    const data = makeBaseData();
+    data.sources = [{ id: "source-1", code: "S1", name: "Source 1", sortOrder: 1, domainCount: 1, domains: [] }];
+    data.lineageRisks = [
+      makeLineageRisk("risk-low-sitg", "domain-1", "source-1", {
+        title: "Low SITG",
+        exposure: 10,
+        dependency: 10,
+        irreversibility: 10,
+        optionality: 1,
+        responseTime: 30
+      }),
+      makeLineageRisk("risk-high-sitg", "domain-1", "source-1", {
+        title: "High SITG",
+        exposure: 3,
+        dependency: 2,
+        irreversibility: 2,
+        optionality: 9,
+        responseTime: 2
+      })
+    ];
+
+    const items = computeFragilistaWatchlist(data, 5);
+    expect(items[0]?.title).toBe("Low SITG");
+    expect(items[0]?.sitgBand).toBe("LOW");
+  });
+
+  it("flags execution split imbalance when one lane dominates", () => {
+    const data = makeBaseData();
+    data.affairs = [makeAffair("affair-1", "domain-1", 10, 10, "in_progress")];
+    data.interests = [makeInterest("interest-1", "domain-1", 10, 10, "done")];
+    data.tasks = [makeTask("task-interest", "domain-1", "WEEK"), makeTask("task-interest-2", "domain-1", "WEEK")].map((task) => ({
+      ...task,
+      sourceType: "INTEREST",
+      status: "done"
+    }));
+
+    const split = computeExecutionSplit(data);
+    expect(["interests-heavy", "fragile-middle"]).toContain(split.imbalanceBand);
   });
 });

@@ -713,6 +713,12 @@ const App = () => {
                     lineageRisks={data.lineageRisks ?? []}
                     missionGraph={data.missionGraph}
                     doctrine={data.doctrine}
+                    confidence={data.confidence}
+                    protocolState={data.decisionAccelerationMeta?.protocolState}
+                    blastRadius={data.blastRadius}
+                    hedgeCoverage={data.hedgeCoverage}
+                    violationFeed={data.violationFeed}
+                    optionalityBudget={data.optionalityBudget}
                     initialMode={warGameContext.mode}
                     initialTargetId={warGameContext.targetId}
                     onContextChange={handleWarGameContextChange}
@@ -722,6 +728,11 @@ const App = () => {
                 {activeView === 'execution' && (
                   <SurgicalExecution
                     tasks={data.tasks}
+                    affairs={data.affairs}
+                    interests={data.interests}
+                    tripwire={data.tripwire}
+                    latency={data.latency}
+                    convexityPipeline={data.convexityPipeline}
                     onCreateTask={createExecutionTask}
                     onUpdateTask={(id: string, updates: Partial<Task>) => {
                       const payload: Record<string, unknown> = { ...updates };
