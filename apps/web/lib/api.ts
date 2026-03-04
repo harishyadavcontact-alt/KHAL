@@ -212,7 +212,29 @@ function toMonolithAppData(payload: ReturnType<typeof loadState>) {
     missionGraph: state.missionGraph ?? { nodes: [], dependencies: [] },
     lineages: state.lineages ?? { nodes: [], entities: [] },
     lineageRisks: state.lineageRisks ?? [],
-    doctrine: state.doctrine ?? { rulebooks: [], rules: [], domainPnLLadders: [] }
+    doctrine: state.doctrine ?? { rulebooks: [], rules: [], domainPnLLadders: [] },
+    decisionAcceleration: {
+      virtueSpiral: payload.dashboard.virtueSpiral,
+      pathComparator: payload.dashboard.pathComparator,
+      copilot: payload.dashboard.copilot
+    },
+    decisionAccelerationMeta: payload.dashboard.decisionAccelerationMeta,
+    tripwire: payload.dashboard.tripwire,
+    ruinLedger: payload.dashboard.ruinLedger,
+    violationFeed: payload.dashboard.violationFeed,
+    latency: payload.dashboard.latency,
+    counterfactual: payload.dashboard.counterfactual,
+    confidence: payload.dashboard.confidence,
+    optionalityBudget: payload.dashboard.optionalityBudget,
+    fragilityTimeline: payload.dashboard.fragilityTimeline,
+    decisionReplay: payload.dashboard.decisionReplay,
+    blastRadius: payload.dashboard.blastRadius,
+    missionBottlenecks: payload.dashboard.missionBottlenecks,
+    hedgeCoverage: payload.dashboard.hedgeCoverage,
+    convexityPipeline: payload.dashboard.convexityPipeline,
+    outcomeAttribution: payload.dashboard.outcomeAttribution,
+    assumptions: payload.dashboard.assumptions,
+    recoveryPlaybooks: payload.dashboard.recoveryPlaybooks
   };
 }
 

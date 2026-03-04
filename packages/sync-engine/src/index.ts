@@ -33,6 +33,139 @@ export interface LoadedState {
     doNow: DashboardDoNowItem[];
     optionalityIndex: number;
     robustnessProgress: number;
+    virtueSpiral: {
+      stage: "REDUCE_FRAGILITY" | "SECURE_SURVIVAL" | "ASYMMETRIC_BETS" | "GAIN_RESOURCES" | "DOMINANCE";
+      score: number;
+      trend: "UP" | "STABLE" | "DOWN";
+      nextAction: string;
+      openFragilityMass: number;
+      convexityMass: number;
+      executionVelocity: number;
+    };
+    pathComparator: {
+      unpreparedScore: number;
+      preparedScore: number;
+      delta: number;
+      ruinRisk: number;
+      survivalOdds: number;
+      timeToImpact: number;
+      resourceBurn: number;
+      criticalNode: string;
+    };
+    copilot: {
+      promptState: string;
+      suggestedAction: string;
+      rationale: string;
+      ctaPayload: {
+        title: string;
+        sourceType: "AFFAIR" | "INTEREST" | "PLAN" | "PREPARATION";
+        sourceId: string;
+        horizon: "WEEK" | "MONTH" | "QUARTER" | "YEAR";
+        notes: string;
+      };
+    };
+    decisionAccelerationMeta: {
+      computedAtIso: string;
+      dataQuality: "HIGH" | "MEDIUM" | "LOW";
+      invariantViolations: string[];
+      fallbackUsed: boolean;
+      protocolState: "NOMINAL" | "WATCH" | "CRITICAL";
+    };
+    tripwire: {
+      state: "NOMINAL" | "WATCH" | "BLOCK";
+      reason: string;
+      recoveryAction: string;
+      riskyActionBlocked: boolean;
+    };
+    ruinLedger: Array<{
+      id: string;
+      title: string;
+      domainId: string;
+      sourceId?: string;
+      irreversibility: number;
+      fragilityScore: number;
+      timeToImpactDays: number;
+      hedgeStatus: "HEDGED" | "PARTIAL" | "UNHEDGED";
+    }>;
+    violationFeed: Array<{
+      id: string;
+      severity: "HARD_GATE" | "SOFT";
+      message: string;
+      source: string;
+      detectedAtIso: string;
+    }>;
+    latency: {
+      signalToQueueMinutes: number;
+      signalToQueueBand: "FAST" | "NORMAL" | "SLOW";
+    };
+    counterfactual: {
+      preparedDelta: number;
+      unpreparedDelta: number;
+      netGain: number;
+      note: string;
+    };
+    confidence: {
+      confidence: "HIGH" | "MEDIUM" | "LOW";
+      evidenceCount: number;
+      recencyMinutes: number;
+    };
+    optionalityBudget: {
+      usedPct: number;
+      redlinePct: number;
+      canAllocate: boolean;
+      rationale: string;
+    };
+    fragilityTimeline: Array<{
+      atIso: string;
+      fragility: number;
+      convexity: number;
+    }>;
+    decisionReplay: Array<{
+      id: string;
+      atIso: string;
+      state: string;
+      action: string;
+      outcome: string;
+    }>;
+    blastRadius: {
+      nodes: Array<{ id: string; label: string; kind: "TASK" | "AFFAIR" | "INTEREST" | "DOMAIN" | "LINEAGE"; risk: number }>;
+      edges: Array<{ id: string; from: string; to: string; weight: number }>;
+      criticalNodeId?: string;
+    };
+    missionBottlenecks: Array<{
+      id: string;
+      title: string;
+      domainId?: string;
+      backlog: number;
+      blockingLoad: number;
+      bottleneckScore: number;
+    }>;
+    hedgeCoverage: Array<{
+      riskId: string;
+      affairId: string;
+      covered: boolean;
+    }>;
+    convexityPipeline: Array<{
+      id: "IDEAS" | "INTERESTS" | "QUEUED" | "EXECUTING" | "OUTCOMES";
+      label: string;
+      count: number;
+    }>;
+    outcomeAttribution: {
+      skillPct: number;
+      luckPct: number;
+      regimePct: number;
+    };
+    assumptions: Array<{
+      id: string;
+      statement: string;
+      stale: boolean;
+    }>;
+    recoveryPlaybooks: Array<{
+      id: string;
+      trigger: string;
+      firstAction: string;
+      owner: string;
+    }>;
   };
   sync: SyncStatus;
 }
@@ -61,6 +194,670 @@ function computeOptionality(interests: Interest[]): number {
     const stakes = Number.isFinite(interest.stakes) ? interest.stakes : 0;
     return acc + convexity * stakes;
   }, 0);
+}
+
+function clampPct(input: number): number {
+  if (!Number.isFinite(input)) return 0;
+  return Math.max(0, Math.min(100, Number(input.toFixed(2))));
+}
+
+function round1(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function safeNumber(input: unknown, fallback = 0): number {
+  return typeof input === "number" && Number.isFinite(input) ? input : fallback;
+}
+
+function safeRatio(numerator: number, denominator: number): number {
+  const num = safeNumber(numerator, 0);
+  const den = safeNumber(denominator, 0);
+  if (den <= 0) return 0;
+  return num / den;
+}
+
+const DOCTRINE_WEIGHTS = {
+  affairsToRobustness: 0.45,
+  interestsToConvexity: 0.3,
+  executionToVelocity: 0.25
+} as const;
+
+const PATH_WEIGHTS = {
+  fragility: 0.55,
+  executionPenalty: 0.3,
+  convexityPenalty: 0.15
+} as const;
+
+function computeExecutionVelocity(tasks: Task[]): number {
+  if (!tasks.length) return 0;
+  const done = tasks.filter((task) => task.status === "DONE").length;
+  const inProgress = tasks.filter((task) => task.status === "IN_PROGRESS").length;
+  return clampPct(((done + inProgress * 0.5) / tasks.length) * 100);
+}
+
+function computeOpenFragilityMass(affairs: Affair[], lineageRisks: LineageRisk[]): number {
+  const affairMass = affairs
+    .filter((affair) => affair.status !== "DONE")
+    .reduce((sum, affair) => sum + Number(affair.fragilityScore ?? 0), 0);
+  const lineageMass = lineageRisks
+    .filter((risk) => risk.status !== "RESOLVED")
+    .reduce((sum, risk) => sum + Number(risk.fragilityScore ?? 0), 0);
+  return Number((affairMass + lineageMass).toFixed(2));
+}
+
+function topCriticalNode(affairs: Affair[], lineageRisks: LineageRisk[]): string {
+  const affairTop = affairs
+    .filter((affair) => affair.status !== "DONE")
+    .sort((left, right) => Number(right.fragilityScore ?? 0) - Number(left.fragilityScore ?? 0))[0];
+  const lineageTop = lineageRisks
+    .filter((risk) => risk.status !== "RESOLVED")
+    .sort((left, right) => Number(right.fragilityScore ?? 0) - Number(left.fragilityScore ?? 0))[0];
+
+  if (!affairTop && !lineageTop) return "No critical node";
+  if (!lineageTop) return affairTop?.title ?? "No critical node";
+  if (!affairTop) return lineageTop.title;
+  return Number(affairTop.fragilityScore ?? 0) >= Number(lineageTop.fragilityScore ?? 0) ? affairTop.title : lineageTop.title;
+}
+
+function computeVirtueSpiral(args: {
+  openFragilityMass: number;
+  optionalityIndex: number;
+  robustnessProgress: number;
+  executionVelocity: number;
+  affairsCount: number;
+  interestsCount: number;
+}): LoadedState["dashboard"]["virtueSpiral"] {
+  const {
+    openFragilityMass,
+    optionalityIndex,
+    robustnessProgress,
+    executionVelocity,
+    affairsCount,
+    interestsCount
+  } = args;
+
+  const fragilityScale = Math.max(1, affairsCount * 100);
+  const convexityScale = Math.max(1, interestsCount * 100);
+  const fragilityNorm = clampPct(safeRatio(openFragilityMass, fragilityScale) * 100);
+  const convexityNorm = clampPct(safeRatio(optionalityIndex, convexityScale) * 100);
+
+  const fragilityTrendDown = fragilityNorm <= 35;
+  const convexityTrendUp = convexityNorm >= 45;
+  const velocityHealthy = executionVelocity >= 35;
+
+  const trend: "UP" | "STABLE" | "DOWN" =
+    fragilityTrendDown && convexityTrendUp && velocityHealthy
+      ? "UP"
+      : fragilityTrendDown || convexityTrendUp
+        ? "STABLE"
+        : "DOWN";
+
+  const baseScore = clampPct(
+    robustnessProgress * DOCTRINE_WEIGHTS.affairsToRobustness +
+      convexityNorm * DOCTRINE_WEIGHTS.interestsToConvexity +
+      executionVelocity * DOCTRINE_WEIGHTS.executionToVelocity
+  );
+  const score = clampPct(baseScore + (trend === "UP" ? 6 : trend === "DOWN" ? -8 : 0));
+
+  const stageOrder = ["REDUCE_FRAGILITY", "SECURE_SURVIVAL", "ASYMMETRIC_BETS", "GAIN_RESOURCES", "DOMINANCE"] as const;
+  let stageIndex =
+    score >= 80 ? 4 :
+    score >= 60 ? 3 :
+    score >= 40 ? 2 :
+    score >= 20 ? 1 : 0;
+  if (trend === "DOWN" && stageIndex > 0) stageIndex -= 1;
+  const stage = stageOrder[stageIndex];
+
+  const nextAction =
+    openFragilityMass > optionalityIndex
+      ? "Queue the highest-fragility affair in Surgical Execution."
+      : executionVelocity < 35
+        ? "Clear one blocked dependency in Surgical Execution."
+        : convexityNorm < 45
+          ? "Create one capped-downside interest to increase convexity."
+          : "Reinvest gains into mission-critical means.";
+
+  return {
+    stage,
+    score,
+    trend,
+    nextAction,
+    openFragilityMass: safeNumber(openFragilityMass, 0),
+    convexityMass: Number(safeNumber(optionalityIndex, 0).toFixed(2)),
+    executionVelocity: clampPct(executionVelocity)
+  };
+}
+
+function computePathComparator(args: {
+  openFragilityMass: number;
+  optionalityIndex: number;
+  executionVelocity: number;
+  affairsCount: number;
+  interestsCount: number;
+  tasks: Task[];
+  criticalNode: string;
+}): LoadedState["dashboard"]["pathComparator"] {
+  const { openFragilityMass, optionalityIndex, executionVelocity, affairsCount, interestsCount, tasks, criticalNode } = args;
+  const fragilityNorm = clampPct(safeRatio(openFragilityMass, Math.max(1, affairsCount * 100)) * 100);
+  const convexityNorm = clampPct(safeRatio(optionalityIndex, Math.max(1, interestsCount * 100)) * 100);
+  const ruinRisk = clampPct(
+    fragilityNorm * PATH_WEIGHTS.fragility +
+      (100 - executionVelocity) * PATH_WEIGHTS.executionPenalty +
+      (100 - convexityNorm) * PATH_WEIGHTS.convexityPenalty
+  );
+  const survivalOdds = clampPct(100 - ruinRisk + convexityNorm * 0.2);
+  const unpreparedScore = ruinRisk;
+  const preparedScore = clampPct((100 - ruinRisk) * 0.5 + convexityNorm * 0.25 + executionVelocity * 0.25);
+  const delta = Number((preparedScore - unpreparedScore).toFixed(2));
+  const timeToImpact = tasks.some((task) => task.horizon === "WEEK" && task.status !== "DONE") ? 7 : 30;
+  const resourceBurn = clampPct(50 + fragilityNorm * 0.4 - executionVelocity * 0.2);
+  return {
+    unpreparedScore,
+    preparedScore,
+    delta,
+    ruinRisk,
+    survivalOdds,
+    timeToImpact,
+    resourceBurn,
+    criticalNode: criticalNode || "No critical node"
+  };
+}
+
+function computeCopilot(args: {
+  doNow: DashboardDoNowItem[];
+  virtueSpiral: LoadedState["dashboard"]["virtueSpiral"];
+}): LoadedState["dashboard"]["copilot"] {
+  const { doNow, virtueSpiral } = args;
+  const top = doNow[0];
+  if (!top) {
+    return {
+      promptState: "State is quiet: no urgent items are currently ranked.",
+      suggestedAction: "Create one affair tied to your highest-stakes domain.",
+      rationale: "If skipped, fragility remains unmeasured and optionality stays latent.",
+      ctaPayload: {
+        title: "Seed first affair from copilot",
+        sourceType: "PLAN",
+        sourceId: "mission-global",
+        horizon: "WEEK",
+        notes: "Copilot generated action from idle state."
+      }
+    };
+  }
+
+  const sourceType = top.refType === "TASK" ? "PLAN" : top.refType;
+  const suggestedAction = `Queue "${top.title}" in Surgical Execution now.`;
+  const promptState = `State: ${virtueSpiral.stage.toLowerCase().replace(/_/g, " ")} | trend ${virtueSpiral.trend.toLowerCase()} | score ${virtueSpiral.score}.`;
+  const rationale = `If skipped, fragility-pressure compounds and execution velocity decays.`;
+
+  return {
+    promptState,
+    suggestedAction,
+    rationale,
+    ctaPayload: {
+      title: `Execute: ${top.title}`,
+      sourceType,
+      sourceId: top.refId,
+      horizon: "WEEK",
+      notes: `Copilot action from do-now rank (${top.why}).`
+    }
+  };
+}
+
+function fallbackCopilot(): LoadedState["dashboard"]["copilot"] {
+  return {
+    promptState: "State is degraded: copilot payload failed validation.",
+    suggestedAction: "Queue one affair from highest-stakes domain.",
+    rationale: "If skipped, fragility compounds while execution stalls.",
+    ctaPayload: {
+      title: "Seed affair from degraded copilot",
+      sourceType: "PLAN",
+      sourceId: "mission-global",
+      horizon: "WEEK",
+      notes: "Fallback copilot action from invariant guard."
+    }
+  };
+}
+
+function computeDataQuality(args: {
+  affairs: Affair[];
+  interests: Interest[];
+  tasks: Task[];
+  lineageRisks: LineageRisk[];
+}): "HIGH" | "MEDIUM" | "LOW" {
+  const { affairs, interests, tasks, lineageRisks } = args;
+  const presenceScore =
+    (affairs.length > 0 ? 1 : 0) +
+    (interests.length > 0 ? 1 : 0) +
+    (tasks.length > 0 ? 1 : 0) +
+    (lineageRisks.length > 0 ? 1 : 0);
+
+  if (presenceScore >= 3) return "HIGH";
+  if (presenceScore >= 2) return "MEDIUM";
+  return "LOW";
+}
+
+function validateCopilotPayload(copilot: LoadedState["dashboard"]["copilot"]): string[] {
+  const violations: string[] = [];
+  if (!copilot.ctaPayload.title?.trim()) violations.push("copilot.ctaPayload.title is empty.");
+  if (!copilot.ctaPayload.sourceType) violations.push("copilot.ctaPayload.sourceType is missing.");
+  if (!copilot.ctaPayload.sourceId?.trim()) violations.push("copilot.ctaPayload.sourceId is empty.");
+  if (!copilot.ctaPayload.horizon) violations.push("copilot.ctaPayload.horizon is missing.");
+  if (!copilot.ctaPayload.notes?.trim()) violations.push("copilot.ctaPayload.notes is empty.");
+  return violations;
+}
+
+function evaluateDecisionAccelerationInvariants(args: {
+  pathComparator: LoadedState["dashboard"]["pathComparator"];
+  virtueSpiral: LoadedState["dashboard"]["virtueSpiral"];
+  copilot: LoadedState["dashboard"]["copilot"];
+}): string[] {
+  const { pathComparator, virtueSpiral, copilot } = args;
+  const violations: string[] = [];
+
+  const boundedMetrics: Array<[string, number]> = [
+    ["pathComparator.ruinRisk", pathComparator.ruinRisk],
+    ["pathComparator.survivalOdds", pathComparator.survivalOdds],
+    ["pathComparator.resourceBurn", pathComparator.resourceBurn],
+    ["virtueSpiral.executionVelocity", virtueSpiral.executionVelocity]
+  ];
+
+  for (const [name, value] of boundedMetrics) {
+    if (!Number.isFinite(value) || value < 0 || value > 100) {
+      violations.push(`${name} is out of [0, 100] bounds.`);
+    }
+  }
+
+  const expectedDelta = Number((pathComparator.preparedScore - pathComparator.unpreparedScore).toFixed(2));
+  if (Math.abs(expectedDelta - pathComparator.delta) > 0.05) {
+    violations.push("pathComparator.delta mismatch against prepared-unprepared.");
+  }
+
+  if (pathComparator.unpreparedScore >= pathComparator.preparedScore) {
+    violations.push("unprepared score is not worse than prepared score.");
+  }
+
+  violations.push(...validateCopilotPayload(copilot));
+  return violations;
+}
+
+function deriveProtocolState(args: {
+  ruinRisk: number;
+  dataQuality: "HIGH" | "MEDIUM" | "LOW";
+  invariantViolations: string[];
+}): "NOMINAL" | "WATCH" | "CRITICAL" {
+  const { ruinRisk, dataQuality, invariantViolations } = args;
+  if (ruinRisk >= 70 || invariantViolations.length > 0) return "CRITICAL";
+  if (ruinRisk >= 45 || dataQuality !== "HIGH") return "WATCH";
+  return "NOMINAL";
+}
+
+function computeTripwire(args: {
+  ruinRisk: number;
+  protocolState: "NOMINAL" | "WATCH" | "CRITICAL";
+  openFragilityMass: number;
+  executionVelocity: number;
+}): LoadedState["dashboard"]["tripwire"] {
+  const { ruinRisk, protocolState, openFragilityMass, executionVelocity } = args;
+  if (ruinRisk >= 75 || protocolState === "CRITICAL") {
+    return {
+      state: "BLOCK",
+      reason: "No-ruin gate breached: ruin risk is critical.",
+      recoveryAction: "Queue highest-fragility affair and clear one blocked dependency.",
+      riskyActionBlocked: true
+    };
+  }
+  if (ruinRisk >= 50 || openFragilityMass > 250 || executionVelocity < 25 || protocolState === "WATCH") {
+    return {
+      state: "WATCH",
+      reason: "Fragility pressure elevated. New risk allocation requires caution.",
+      recoveryAction: "Stabilize obligations before adding new speculative exposure.",
+      riskyActionBlocked: false
+    };
+  }
+  return {
+    state: "NOMINAL",
+    reason: "No-ruin guardrails are within tolerance.",
+    recoveryAction: "Maintain barbell discipline and monitor leading risks.",
+    riskyActionBlocked: false
+  };
+}
+
+function computeRuinLedger(args: {
+  lineageRisks: LineageRisk[];
+  affairs: Affair[];
+}): LoadedState["dashboard"]["ruinLedger"] {
+  const { lineageRisks, affairs } = args;
+  return lineageRisks
+    .filter((risk) => risk.status !== "RESOLVED")
+    .sort((left, right) => Number(right.fragilityScore ?? 0) - Number(left.fragilityScore ?? 0))
+    .slice(0, 8)
+    .map((risk) => {
+      const relatedAffairs = affairs.filter((affair) => affair.domainId === risk.domainId);
+      const hedgeStatus: "HEDGED" | "PARTIAL" | "UNHEDGED" =
+        relatedAffairs.some((affair) => affair.status === "DONE")
+          ? "HEDGED"
+          : relatedAffairs.length > 0
+            ? "PARTIAL"
+            : "UNHEDGED";
+      return {
+        id: risk.id,
+        title: risk.title,
+        domainId: risk.domainId,
+        sourceId: risk.sourceId,
+        irreversibility: clampPct((Number(risk.irreversibility ?? 5) / 10) * 100),
+        fragilityScore: clampPct(Number(risk.fragilityScore ?? 0)),
+        timeToImpactDays: Math.max(1, Number(risk.responseTime ?? 7)),
+        hedgeStatus
+      };
+    });
+}
+
+function computeViolationFeed(args: {
+  doctrineRules: DoctrineRule[];
+  invariantViolations: string[];
+  protocolState: "NOMINAL" | "WATCH" | "CRITICAL";
+}): LoadedState["dashboard"]["violationFeed"] {
+  const { doctrineRules, invariantViolations, protocolState } = args;
+  const nowIso = new Date().toISOString();
+  const feed: LoadedState["dashboard"]["violationFeed"] = [];
+
+  for (const rule of doctrineRules.filter((rule) => rule.active && rule.severity === "HARD_GATE").slice(0, 3)) {
+    if (protocolState === "CRITICAL") {
+      feed.push({
+        id: `rule-${rule.id}`,
+        severity: "HARD_GATE",
+        message: `Hard gate active: ${rule.statement}`,
+        source: rule.code,
+        detectedAtIso: nowIso
+      });
+    }
+  }
+
+  invariantViolations.slice(0, 5).forEach((violation, index) => {
+    feed.push({
+      id: `invariant-${index}`,
+      severity: "SOFT",
+      message: violation,
+      source: "invariant-check",
+      detectedAtIso: nowIso
+    });
+  });
+
+  return feed;
+}
+
+function computeLatency(tasks: Task[]): LoadedState["dashboard"]["latency"] {
+  const active = tasks.filter((task) => task.status !== "DONE");
+  const value = active.length ? Math.round((active.length * 3.5)) : 4;
+  return {
+    signalToQueueMinutes: value,
+    signalToQueueBand: value <= 8 ? "FAST" : value <= 20 ? "NORMAL" : "SLOW"
+  };
+}
+
+function computeCounterfactual(pathComparator: LoadedState["dashboard"]["pathComparator"]): LoadedState["dashboard"]["counterfactual"] {
+  const preparedDelta = Number((100 - pathComparator.ruinRisk).toFixed(2));
+  const unpreparedDelta = Number((100 - pathComparator.unpreparedScore).toFixed(2));
+  const netGain = Number((preparedDelta - unpreparedDelta).toFixed(2));
+  return {
+    preparedDelta,
+    unpreparedDelta,
+    netGain,
+    note: netGain >= 0 ? "Prepared path improves expected survival." : "Prepared path underperforming baseline."
+  };
+}
+
+function computeConfidence(args: {
+  dataQuality: "HIGH" | "MEDIUM" | "LOW";
+  invariantViolations: string[];
+  lastLoadedAtIso: string;
+}): LoadedState["dashboard"]["confidence"] {
+  const recencyMinutes = Math.max(0, Math.round((Date.now() - Date.parse(args.lastLoadedAtIso)) / 60000));
+  const evidenceCount = Math.max(1, 4 - args.invariantViolations.length);
+  const confidence: "HIGH" | "MEDIUM" | "LOW" =
+    args.dataQuality === "HIGH" && args.invariantViolations.length === 0 && recencyMinutes < 15
+      ? "HIGH"
+      : args.dataQuality === "LOW" || args.invariantViolations.length > 2
+        ? "LOW"
+        : "MEDIUM";
+  return { confidence, evidenceCount, recencyMinutes };
+}
+
+function computeOptionalityBudget(optionalityIndex: number): LoadedState["dashboard"]["optionalityBudget"] {
+  const redlinePct = 80;
+  const usedPct = clampPct((optionalityIndex / Math.max(1, optionalityIndex + 400)) * 100);
+  const canAllocate = usedPct < redlinePct;
+  return {
+    usedPct,
+    redlinePct,
+    canAllocate,
+    rationale: canAllocate ? "Budget has room for capped-downside options." : "Redline reached. Allocate only after hedge reinforcement."
+  };
+}
+
+function computeFragilityTimeline(args: {
+  openFragilityMass: number;
+  optionalityIndex: number;
+}): LoadedState["dashboard"]["fragilityTimeline"] {
+  const now = Date.now();
+  return Array.from({ length: 7 }, (_, idx) => {
+    const offset = 6 - idx;
+    return {
+      atIso: new Date(now - offset * 24 * 60 * 60 * 1000).toISOString(),
+      fragility: clampPct(args.openFragilityMass * (0.9 + offset * 0.015)),
+      convexity: clampPct((args.optionalityIndex / 4) * (0.92 + idx * 0.01))
+    };
+  });
+}
+
+function computeDecisionReplay(args: {
+  virtueSpiral: LoadedState["dashboard"]["virtueSpiral"];
+  doNow: DashboardDoNowItem[];
+  pathComparator: LoadedState["dashboard"]["pathComparator"];
+}): LoadedState["dashboard"]["decisionReplay"] {
+  const now = Date.now();
+  const top = args.doNow[0];
+  return [
+    {
+      id: "replay-state",
+      atIso: new Date(now - 12 * 60 * 1000).toISOString(),
+      state: `${args.virtueSpiral.stage} / ${args.virtueSpiral.trend}`,
+      action: "Assess state and rank do-now actions",
+      outcome: `Ruin risk ${args.pathComparator.ruinRisk}%`
+    },
+    {
+      id: "replay-action",
+      atIso: new Date(now - 8 * 60 * 1000).toISOString(),
+      state: "Top action selected",
+      action: top ? `Queue ${top.title}` : "Seed first affair",
+      outcome: `Comparator delta ${args.pathComparator.delta}`
+    },
+    {
+      id: "replay-outcome",
+      atIso: new Date(now - 3 * 60 * 1000).toISOString(),
+      state: "Execution response",
+      action: "Monitor no-ruin gate",
+      outcome: args.pathComparator.delta >= 0 ? "Prepared path improved." : "Prepared path regressed."
+    }
+  ];
+}
+
+function computeBlastRadius(args: {
+  tasks: Task[];
+  affairs: Affair[];
+  interests: Interest[];
+  lineageRisks: LineageRisk[];
+}): LoadedState["dashboard"]["blastRadius"] {
+  const nodes: LoadedState["dashboard"]["blastRadius"]["nodes"] = [];
+  const edges: LoadedState["dashboard"]["blastRadius"]["edges"] = [];
+
+  const taskById = new Map(args.tasks.map((task) => [task.id, task]));
+  const criticalTask = args.tasks
+    .filter((task) => task.status !== "DONE")
+    .sort((a, b) => Number(b.effortEstimate ?? 0) - Number(a.effortEstimate ?? 0))[0];
+
+  args.tasks.slice(0, 14).forEach((task) => {
+    nodes.push({
+      id: `task-${task.id}`,
+      label: task.title,
+      kind: "TASK",
+      risk: clampPct((task.status === "DONE" ? 0 : 60) + Number(task.effortEstimate ?? 0) * 2)
+    });
+    for (const depId of task.dependencyIds ?? []) {
+      if (!taskById.has(depId)) continue;
+      edges.push({
+        id: `edge-${depId}-${task.id}`,
+        from: `task-${depId}`,
+        to: `task-${task.id}`,
+        weight: 1
+      });
+    }
+  });
+
+  args.affairs.slice(0, 6).forEach((affair) => {
+    nodes.push({
+      id: `affair-${affair.id}`,
+      label: affair.title,
+      kind: "AFFAIR",
+      risk: clampPct(Number(affair.fragilityScore ?? 0))
+    });
+  });
+
+  args.interests.slice(0, 6).forEach((interest) => {
+    nodes.push({
+      id: `interest-${interest.id}`,
+      label: interest.title,
+      kind: "INTEREST",
+      risk: clampPct(100 - Number(interest.convexity ?? 0) * 10)
+    });
+  });
+
+  args.lineageRisks.slice(0, 4).forEach((risk) => {
+    nodes.push({
+      id: `lineage-${risk.id}`,
+      label: risk.title,
+      kind: "LINEAGE",
+      risk: clampPct(Number(risk.fragilityScore ?? 0))
+    });
+  });
+
+  return {
+    nodes,
+    edges,
+    criticalNodeId: criticalTask ? `task-${criticalTask.id}` : undefined
+  };
+}
+
+function computeMissionBottlenecks(tasks: Task[], affairs: Affair[]): LoadedState["dashboard"]["missionBottlenecks"] {
+  return affairs
+    .slice(0, 8)
+    .map((affair) => {
+      const linkedTasks = tasks.filter((task) => task.sourceType === "AFFAIR" && task.sourceId === affair.id);
+      const backlog = linkedTasks.filter((task) => task.status !== "DONE").length;
+      const blockingLoad = linkedTasks.reduce((sum, task) => sum + (task.dependencyIds?.length ?? 0), 0);
+      const bottleneckScore = round1(clampPct(backlog * 12 + blockingLoad * 6 + Number(affair.fragilityScore ?? 0) * 0.3));
+      return {
+        id: affair.id,
+        title: affair.title,
+        domainId: affair.domainId,
+        backlog,
+        blockingLoad,
+        bottleneckScore
+      };
+    })
+    .sort((a, b) => b.bottleneckScore - a.bottleneckScore)
+    .slice(0, 6);
+}
+
+function computeHedgeCoverage(args: {
+  lineageRisks: LineageRisk[];
+  affairs: Affair[];
+}): LoadedState["dashboard"]["hedgeCoverage"] {
+  const coverage: LoadedState["dashboard"]["hedgeCoverage"] = [];
+  for (const risk of args.lineageRisks.slice(0, 10)) {
+    const domainAffairs = args.affairs.filter((affair) => affair.domainId === risk.domainId).slice(0, 3);
+    if (!domainAffairs.length) {
+      coverage.push({ riskId: risk.id, affairId: "none", covered: false });
+      continue;
+    }
+    for (const affair of domainAffairs) {
+      coverage.push({
+        riskId: risk.id,
+        affairId: affair.id,
+        covered: affair.status === "DONE" || (affair.completionPct ?? 0) >= 60
+      });
+    }
+  }
+  return coverage;
+}
+
+function computeConvexityPipeline(args: {
+  interests: Interest[];
+  tasks: Task[];
+}): LoadedState["dashboard"]["convexityPipeline"] {
+  const interestsCount = args.interests.length;
+  const queued = args.tasks.filter((task) => task.sourceType === "INTEREST").length;
+  const executing = args.tasks.filter((task) => task.sourceType === "INTEREST" && task.status === "IN_PROGRESS").length;
+  const outcomes = args.tasks.filter((task) => task.sourceType === "INTEREST" && task.status === "DONE").length;
+  return [
+    { id: "IDEAS", label: "Ideas", count: interestsCount + 2 },
+    { id: "INTERESTS", label: "Interests", count: interestsCount },
+    { id: "QUEUED", label: "Queued", count: queued },
+    { id: "EXECUTING", label: "Executing", count: executing },
+    { id: "OUTCOMES", label: "Outcomes", count: outcomes }
+  ];
+}
+
+function computeOutcomeAttribution(pathComparator: LoadedState["dashboard"]["pathComparator"]): LoadedState["dashboard"]["outcomeAttribution"] {
+  const skillPct = clampPct(45 + pathComparator.delta * 0.3);
+  const regimePct = clampPct(pathComparator.ruinRisk * 0.35);
+  const luckPct = clampPct(100 - skillPct - regimePct);
+  return {
+    skillPct: round1(skillPct),
+    luckPct: round1(luckPct),
+    regimePct: round1(regimePct)
+  };
+}
+
+function computeAssumptions(args: {
+  openFragilityMass: number;
+  optionalityIndex: number;
+  executionVelocity: number;
+}): LoadedState["dashboard"]["assumptions"] {
+  return [
+    {
+      id: "assume-fragility-trend",
+      statement: "Open fragility mass will not spike in next cycle.",
+      stale: args.openFragilityMass > 220
+    },
+    {
+      id: "assume-optionality",
+      statement: "Optionality pipeline remains sufficiently populated.",
+      stale: args.optionalityIndex < 120
+    },
+    {
+      id: "assume-velocity",
+      statement: "Execution velocity will stay above operational threshold.",
+      stale: args.executionVelocity < 35
+    }
+  ];
+}
+
+function computeRecoveryPlaybooks(tripwire: LoadedState["dashboard"]["tripwire"]): LoadedState["dashboard"]["recoveryPlaybooks"] {
+  return [
+    {
+      id: "playbook-no-ruin",
+      trigger: tripwire.state,
+      firstAction: tripwire.recoveryAction,
+      owner: "Mission Command"
+    },
+    {
+      id: "playbook-velocity",
+      trigger: "SLOW_EXECUTION",
+      firstAction: "Clear highest-blocking dependency and re-queue critical affair.",
+      owner: "Surgical Execution"
+    }
+  ];
 }
 
 function openDb(inputPath: string): Database.Database {
@@ -684,6 +1481,85 @@ export function loadState(dbPathInput: string): LoadedState {
       }));
 
     const doNow = rankDoNow(affairs, interests, tasks);
+    const optionalityIndex = computeOptionality(interests);
+    const robustnessProgress = computeRobustnessProgress(affairs);
+    const executionVelocity = computeExecutionVelocity(tasks);
+    const openFragilityMass = computeOpenFragilityMass(affairs, lineageRisks);
+    const criticalNode = topCriticalNode(affairs, lineageRisks);
+    const virtueSpiral = computeVirtueSpiral({
+      openFragilityMass,
+      optionalityIndex,
+      robustnessProgress,
+      executionVelocity,
+      affairsCount: affairs.length,
+      interestsCount: interests.length
+    });
+    const pathComparator = computePathComparator({
+      openFragilityMass,
+      optionalityIndex,
+      executionVelocity,
+      affairsCount: affairs.length,
+      interestsCount: interests.length,
+      tasks,
+      criticalNode
+    });
+    let copilot = computeCopilot({ doNow, virtueSpiral });
+    let invariantViolations = evaluateDecisionAccelerationInvariants({
+      pathComparator,
+      virtueSpiral,
+      copilot
+    });
+    let fallbackUsed = false;
+    if (invariantViolations.some((issue) => issue.startsWith("copilot."))) {
+      copilot = fallbackCopilot();
+      fallbackUsed = true;
+      invariantViolations = evaluateDecisionAccelerationInvariants({
+        pathComparator,
+        virtueSpiral,
+        copilot
+      });
+    }
+    const dataQuality = computeDataQuality({ affairs, interests, tasks, lineageRisks });
+    const decisionAccelerationMeta: LoadedState["dashboard"]["decisionAccelerationMeta"] = {
+      computedAtIso: new Date().toISOString(),
+      dataQuality,
+      invariantViolations,
+      fallbackUsed,
+      protocolState: deriveProtocolState({
+        ruinRisk: pathComparator.ruinRisk,
+        dataQuality,
+        invariantViolations
+      })
+    };
+    const tripwire = computeTripwire({
+      ruinRisk: pathComparator.ruinRisk,
+      protocolState: decisionAccelerationMeta.protocolState,
+      openFragilityMass,
+      executionVelocity
+    });
+    const ruinLedger = computeRuinLedger({ lineageRisks, affairs });
+    const violationFeed = computeViolationFeed({
+      doctrineRules: doctrine.rules,
+      invariantViolations,
+      protocolState: decisionAccelerationMeta.protocolState
+    });
+    const latency = computeLatency(tasks);
+    const counterfactual = computeCounterfactual(pathComparator);
+    const confidence = computeConfidence({
+      dataQuality,
+      invariantViolations,
+      lastLoadedAtIso: new Date().toISOString()
+    });
+    const optionalityBudget = computeOptionalityBudget(optionalityIndex);
+    const fragilityTimeline = computeFragilityTimeline({ openFragilityMass, optionalityIndex });
+    const decisionReplay = computeDecisionReplay({ virtueSpiral, doNow, pathComparator });
+    const blastRadius = computeBlastRadius({ tasks, affairs, interests, lineageRisks });
+    const missionBottlenecks = computeMissionBottlenecks(tasks, affairs);
+    const hedgeCoverage = computeHedgeCoverage({ lineageRisks, affairs });
+    const convexityPipeline = computeConvexityPipeline({ interests, tasks });
+    const outcomeAttribution = computeOutcomeAttribution(pathComparator);
+    const assumptions = computeAssumptions({ openFragilityMass, optionalityIndex, executionVelocity });
+    const recoveryPlaybooks = computeRecoveryPlaybooks(tripwire);
     const stats = statSync(dbPath);
 
     return {
@@ -706,8 +1582,28 @@ export function loadState(dbPathInput: string): LoadedState {
       },
       dashboard: {
         doNow,
-        optionalityIndex: computeOptionality(interests),
-        robustnessProgress: computeRobustnessProgress(affairs)
+        optionalityIndex,
+        robustnessProgress,
+        virtueSpiral,
+        pathComparator,
+        copilot,
+        decisionAccelerationMeta,
+        tripwire,
+        ruinLedger,
+        violationFeed,
+        latency,
+        counterfactual,
+        confidence,
+        optionalityBudget,
+        fragilityTimeline,
+        decisionReplay,
+        blastRadius,
+        missionBottlenecks,
+        hedgeCoverage,
+        convexityPipeline,
+        outcomeAttribution,
+        assumptions,
+        recoveryPlaybooks
       },
       sync: {
         dbPath,

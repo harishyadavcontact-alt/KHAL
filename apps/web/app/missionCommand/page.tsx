@@ -7,7 +7,7 @@ import { useWarRoomData } from "../../lib/war-room/useWarRoomData";
 
 export default function MissionCommandPage() {
   const router = useRouter();
-  const { data, loading, error } = useWarRoomData();
+  const { data, loading, error, refresh } = useWarRoomData();
 
   return (
     <KhalOpsShell title="Mission Command" subtitle="Hierarchy">
@@ -20,6 +20,9 @@ export default function MissionCommandPage() {
           data={data}
           onDomainClick={(domain) => router.push(`/war-room?domain=${encodeURIComponent(domain.id)}`)}
           onWarGame={(mode, targetId) => router.push(`/war-gaming/${mode}?target=${encodeURIComponent(targetId ?? "mission-global")}`)}
+          onQueueAction={async () => {
+            await refresh();
+          }}
         />
       )}
     </KhalOpsShell>

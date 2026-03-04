@@ -29,6 +29,9 @@ export default function DashboardPage() {
             onWarGameSource={(sourceId) => router.push(`/war-gaming/source?target=${encodeURIComponent(sourceId)}`)}
             onWarGameDomain={(domainId) => router.push(`/war-gaming/domain?target=${encodeURIComponent(domainId)}`)}
             onWarGameLineage={(lineageNodeId) => router.push(`/war-gaming/lineage?target=${encodeURIComponent(lineageNodeId)}`)}
+            onQueueAction={async () => {
+              await refresh();
+            }}
           />
           <DomainModal
             selectedDomain={selectedDomain}

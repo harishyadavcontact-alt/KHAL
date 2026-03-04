@@ -9,21 +9,71 @@ import { OperationalDoNowPanel } from "./maya/OperationalDoNowPanel";
 import { StakesTriadPanel } from "./maya/StakesTriadPanel";
 import { BarbellGuardrailPanel } from "./maya/BarbellGuardrailPanel";
 import { AsymmetryCurvePanel } from "./maya/AsymmetryCurvePanel";
+import { FogOfMayaPanel } from "./maya/FogOfMayaPanel";
+import { ExecutionSplitPanel } from "./maya/ExecutionSplitPanel";
+import { VirtueSpiralPanel } from "./VirtueSpiralPanel";
+import { DoNowCopilotCard } from "./DoNowCopilotCard";
+import { ProtocolStatusStrip } from "./ProtocolStatusStrip";
+import {
+  ConfidenceEvidenceStrip,
+  CounterfactualDeltaPanel,
+  FragilityHeatTimelinePanel,
+  NoRuinTripwirePanel,
+  OptionalityBudgetPanel,
+  RuinLedgerPanel
+} from "./panels/RobustnessPanels";
+import { v03Flags } from "../../lib/war-room/feature-flags";
 
 export function DashboardView({
   data,
   onOpenDomain,
   onWarGameSource,
   onWarGameDomain,
-  onWarGameLineage
+  onWarGameLineage,
+  onQueueAction
 }: {
   data: AppData;
   onOpenDomain: (domain: Domain) => void;
   onWarGameSource?: (sourceId: string) => void;
   onWarGameDomain?: (domainId: string) => void;
   onWarGameLineage?: (lineageNodeId: string) => void;
+  onQueueAction?: () => Promise<void> | void;
 }) {
   const [selectedSegment, setSelectedSegment] = React.useState<string>("Allies");
+  const fallbackDecisionAcceleration = React.useMemo(() => ({
+    virtueSpiral: {
+      stage: "REDUCE_FRAGILITY" as const,
+      score: 0,
+      trend: "STABLE" as const,
+      nextAction: "No decision telemetry available yet.",
+      openFragilityMass: 0,
+      convexityMass: 0,
+      executionVelocity: 0
+    },
+    pathComparator: {
+      unpreparedScore: 0,
+      preparedScore: 0,
+      delta: 0,
+      ruinRisk: 0,
+      survivalOdds: 0,
+      timeToImpact: 0,
+      resourceBurn: 0,
+      criticalNode: "No critical node"
+    },
+    copilot: {
+      promptState: "State telemetry unavailable.",
+      suggestedAction: "Create one affair to seed execution.",
+      rationale: "Without seeded obligations, the system cannot rank next actions.",
+      ctaPayload: {
+        title: "Seed first affair from dashboard copilot",
+        sourceType: "PLAN" as const,
+        sourceId: "mission-global",
+        horizon: "WEEK" as const,
+        notes: "Fallback copilot action."
+      }
+    }
+  }), []);
+  const decisionAcceleration = data.decisionAcceleration ?? fallbackDecisionAcceleration;
 
   const filteredPanel = React.useMemo(() => {
     const domainsById = new Map(data.domains.map((domain) => [domain.id, domain]));
@@ -66,12 +116,37 @@ export function DashboardView({
   return (
     <div className="max-w-7xl mx-auto px-3 py-5">
       <HUD user={data.user} />
+      <ProtocolStatusStrip meta={data.decisionAccelerationMeta} />
+      {v03Flags.confidence && <ConfidenceEvidenceStrip confidence={data.confidence} protocolState={data.decisionAccelerationMeta?.protocolState} />}
+      {v03Flags.tripwire && <NoRuinTripwirePanel tripwire={data.tripwire} />}
+      <FogOfMayaPanel data={data} />
+
+      <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-4 mb-6">
+        <VirtueSpiralPanel spiral={decisionAcceleration.virtueSpiral} />
+        <DoNowCopilotCard
+          copilot={decisionAcceleration.copilot}
+          onQueued={onQueueAction}
+          blocked={data.tripwire?.riskyActionBlocked}
+          blockedReason={data.tripwire?.reason}
+        />
+      </div>
 
       <OperationalDoNowPanel data={data} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <StakesTriadPanel data={data} />
         <BarbellGuardrailPanel data={data} />
+        <ExecutionSplitPanel data={data} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        {v03Flags.optionality && <OptionalityBudgetPanel state={data.optionalityBudget} />}
+        <FragilityHeatTimelinePanel points={data.fragilityTimeline} />
+        <CounterfactualDeltaPanel data={data} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <RuinLedgerPanel items={data.ruinLedger} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">

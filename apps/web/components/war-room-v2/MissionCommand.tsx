@@ -4,15 +4,26 @@ import { HeatGrid } from "./charts/HeatGrid";
 import { FlowLanes } from "./charts/FlowLanes";
 import { StackedBalanceBar } from "./charts/StackedBalanceBar";
 import { buildMissionVisualSnapshot } from "../../lib/war-room/visual-encodings";
+import { VirtueSpiralPanel } from "./VirtueSpiralPanel";
+import { DoNowCopilotCard } from "./DoNowCopilotCard";
+import { ProtocolStatusStrip } from "./ProtocolStatusStrip";
+import {
+  ConfidenceEvidenceStrip,
+  MissionBottleneckPanel,
+  RecoveryPlaybooksPanel
+} from "./panels/RobustnessPanels";
+import { v03Flags } from "../../lib/war-room/feature-flags";
 
 export const MissionCommand = ({
   data,
   onDomainClick: _onDomainClick,
-  onWarGame
+  onWarGame,
+  onQueueAction
 }: {
   data: AppData;
   onDomainClick: (d: Domain) => void;
   onWarGame: (mode: WarGameMode, targetId?: string) => void;
+  onQueueAction?: () => Promise<void> | void;
 }) => {
   const tierRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [activeTierIndex, setActiveTierIndex] = useState(0);
@@ -88,9 +99,58 @@ export const MissionCommand = ({
     missionSnapshot.rows.forEach((row, index) => map.set(row.id, index));
     return map;
   }, [missionSnapshot.rows]);
+  const fallbackDecisionAcceleration = useMemo(() => ({
+    virtueSpiral: {
+      stage: "REDUCE_FRAGILITY" as const,
+      score: 0,
+      trend: "STABLE" as const,
+      nextAction: "No decision telemetry available yet.",
+      openFragilityMass: 0,
+      convexityMass: 0,
+      executionVelocity: 0
+    },
+    pathComparator: {
+      unpreparedScore: 0,
+      preparedScore: 0,
+      delta: 0,
+      ruinRisk: 0,
+      survivalOdds: 0,
+      timeToImpact: 0,
+      resourceBurn: 0,
+      criticalNode: "No critical node"
+    },
+    copilot: {
+      promptState: "State telemetry unavailable.",
+      suggestedAction: "Create one affair to seed execution.",
+      rationale: "Without seeded obligations, the system cannot rank next actions.",
+      ctaPayload: {
+        title: "Seed first affair from mission copilot",
+        sourceType: "PLAN" as const,
+        sourceId: "mission-global",
+        horizon: "WEEK" as const,
+        notes: "Fallback copilot action."
+      }
+    }
+  }), []);
+  const decisionAcceleration = data.decisionAcceleration ?? fallbackDecisionAcceleration;
 
   return (
     <div className="max-w-7xl mx-auto px-3 py-5">
+      <ProtocolStatusStrip meta={data.decisionAccelerationMeta} />
+      {v03Flags.confidence && <ConfidenceEvidenceStrip confidence={data.confidence} protocolState={data.decisionAccelerationMeta?.protocolState} />}
+      <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-4 mb-5">
+        <VirtueSpiralPanel spiral={decisionAcceleration.virtueSpiral} />
+        <DoNowCopilotCard
+          copilot={decisionAcceleration.copilot}
+          onQueued={onQueueAction}
+          blocked={data.tripwire?.riskyActionBlocked}
+          blockedReason={data.tripwire?.reason}
+        />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+        <MissionBottleneckPanel rows={data.missionBottlenecks} />
+        <RecoveryPlaybooksPanel rows={data.recoveryPlaybooks} />
+      </div>
       <section className="glass p-4 rounded-xl border border-red-500/20 mb-5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-3">
           <div>
