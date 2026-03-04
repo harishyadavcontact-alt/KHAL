@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Zap } from "lucide-react";
 import { DecisionModal } from "./DecisionModal";
 import {
   BlastRadiusSnapshot,
+  Craft,
+  DecisionEvaluationResult,
   DoctrineViolationEvent,
   HedgeCoverageCell,
   OptionalityBudgetState,
@@ -18,18 +21,26 @@ import {
   Task,
   UserProfile,
   VolatilitySourceDto,
-  WarGameMode
+  WarGameMode,
+  WarGameRole
 } from "./types";
 import { FragilityRadar } from "./FragilityRadar";
 import { TaskKillChain } from "./TaskKillChain";
-import { WAR_GAME_MODES, WAR_GAME_STAGES, calculateReadiness } from "./war-game-protocol";
+import { WAR_GAME_GRAMMAR_REGISTRY, WAR_GAME_MODES, WAR_GAME_STAGES, calculateReadiness, evaluateWarGameMode } from "./war-game-protocol";
 import { WarGameVolatility } from "./wargame_volatility";
 import { WarGameDomains } from "./wargame_domains";
 import { WarGameAffair } from "./wargame_affair";
 import { WarGameInterest } from "./wargame_interest";
+import { WarGameCraft } from "./wargame_craft";
 import { WarGameMission } from "./wargame_mission";
 import { WarGameLineage } from "./wargame_lineage";
-import { computeAsymmetrySnapshot, computeBarbellGuardrail, computeFragilistaWatchlist } from "../../lib/war-room/operational-metrics";
+import {
+  computeAsymmetrySnapshot,
+  computeBarbellGuardrail,
+  computeFragilistaWatchlist,
+  computeInterestProtocolChecks,
+  isInterestProtocolReady
+} from "../../lib/war-room/operational-metrics";
 import { HeatGrid } from "./charts/HeatGrid";
 import { FlowLanes } from "./charts/FlowLanes";
 import { StackedBalanceBar } from "./charts/StackedBalanceBar";
@@ -46,12 +57,15 @@ import {
   OptionalityBudgetPanel
 } from "./panels/RobustnessPanels";
 import { v03Flags } from "../../lib/war-room/feature-flags";
+import { FractalFlowRail } from "./FractalFlowRail";
+import { DependencyWarningsCard } from "./DependencyWarningsCard";
 
 function modeTargetOptions(mode: WarGameMode, data: {
   sources: VolatilitySourceDto[];
   domains: Domain[];
   affairs: Affair[];
   interests: Interest[];
+  crafts: Craft[];
   lineages: LineageNodeDto[];
   missionGraph?: MissionGraphDto;
 }) {
@@ -59,6 +73,7 @@ function modeTargetOptions(mode: WarGameMode, data: {
   if (mode === "domain") return data.domains.map((item) => ({ id: item.id, label: item.name }));
   if (mode === "affair") return data.affairs.map((item) => ({ id: item.id, label: item.title }));
   if (mode === "interest") return data.interests.map((item) => ({ id: item.id, label: item.title }));
+  if (mode === "craft") return data.crafts.map((item) => ({ id: item.id, label: item.name }));
   if (mode === "lineage") return data.lineages.map((item) => ({ id: item.id, label: `${item.level} - ${item.name}` }));
   const missionIds = new Set<string>(["mission-global"]);
   for (const node of data.missionGraph?.nodes ?? []) missionIds.add(node.missionId);
@@ -148,6 +163,7 @@ export const WarGaming = ({
   lineages,
   affairs,
   interests,
+  crafts,
   tasks,
   lineageRisks,
   missionGraph,
@@ -169,6 +185,7 @@ export const WarGaming = ({
   lineages: LineageNodeDto[];
   affairs: Affair[];
   interests: Interest[];
+  crafts: Craft[];
   tasks: Task[];
   lineageRisks: LineageRiskDto[];
   missionGraph?: MissionGraphDto;
@@ -187,17 +204,44 @@ export const WarGaming = ({
   onContextChange?: (mode: WarGameMode, targetId?: string) => void;
   onAddTask: (task: any) => Promise<void> | void;
 }) => {
+  const router = useRouter();
+  const roleStorageKey = "khal.wargame.role";
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [role, setRole] = useState<WarGameRole>("MISSIONARY");
+  const [decisionEval, setDecisionEval] = useState<DecisionEvaluationResult | null>(null);
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [domainFilter, setDomainFilter] = useState<string>("all");
   const [lineageFilter, setLineageFilter] = useState<string>("all");
   const [mode, setMode] = useState<WarGameMode>(initialMode ?? "affair");
 
+  useEffect(() => {
+    try {
+      const value = window.localStorage.getItem(roleStorageKey);
+      if (value === "MISSIONARY" || value === "VISIONARY") {
+        setRole(value);
+      }
+    } catch {
+      // no-op
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(roleStorageKey, role);
+    } catch {
+      // no-op
+    }
+  }, [role]);
+
   const modeTargets = useMemo(
-    () => modeTargetOptions(mode, { sources, domains, affairs, interests, lineages, missionGraph }),
-    [affairs, domains, interests, lineages, missionGraph, mode, sources]
+    () => modeTargetOptions(mode, { sources, domains, affairs, interests, crafts, lineages, missionGraph }),
+    [affairs, crafts, domains, interests, lineages, missionGraph, mode, sources]
   );
   const [modeTargetId, setModeTargetId] = useState<string>(initialTargetId ?? modeTargets[0]?.id ?? "");
+  const selectedInterest = useMemo(
+    () => (mode === "interest" ? interests.find((interest) => interest.id === modeTargetId) : undefined),
+    [interests, mode, modeTargetId]
+  );
 
   useEffect(() => {
     setMode(initialMode ?? "affair");
@@ -217,6 +261,32 @@ export const WarGaming = ({
   useEffect(() => {
     onContextChange?.(mode, modeTargetId);
   }, [mode, modeTargetId, onContextChange]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/decision/evaluate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mode,
+        targetId: modeTargetId || "global",
+        role,
+        noRuinGate: (protocolState ?? "NOMINAL") !== "CRITICAL"
+      })
+    })
+      .then((res) => res.json())
+      .then((payload) => {
+        if (cancelled) return;
+        setDecisionEval(payload as DecisionEvaluationResult);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setDecisionEval(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, modeTargetId, protocolState, role]);
 
   const domainById = new Map(domains.map((domain) => [domain.id, domain]));
 
@@ -252,20 +322,30 @@ export const WarGaming = ({
   );
 
   const targetReadinessPreview = useMemo(() => {
+    const selectedCraft = crafts.find((craft) => craft.id === modeTargetId);
     const hasHedgeEdge = mode === "domain"
       ? Boolean(domains.find((domain) => domain.id === modeTargetId)?.hedge && domains.find((domain) => domain.id === modeTargetId)?.edge)
       : mode === "affair"
         ? true
         : mode === "interest"
           ? true
+          : mode === "craft"
+            ? Boolean((selectedCraft?.barbellStrategies.length ?? 0) > 0 && (selectedCraft?.heuristics.length ?? 0) > 0)
           : true;
     const hasFragilityProfile = mode === "domain"
       ? Boolean(domains.find((domain) => domain.id === modeTargetId)?.fragilityText)
-      : mode !== "mission";
+      : mode !== "mission" && mode !== "craft";
     return calculateReadiness({
       mode,
       completedStages: ["A", "B", "C"],
-      orkCount: mode === "affair" ? affairs.find((affair) => affair.id === modeTargetId)?.plan?.objectives?.length ?? 0 : mode === "interest" ? interests.find((interest) => interest.id === modeTargetId)?.objectives?.length ?? 0 : 0,
+      orkCount:
+        mode === "affair"
+          ? affairs.find((affair) => affair.id === modeTargetId)?.plan?.objectives?.length ?? 0
+          : mode === "interest"
+            ? interests.find((interest) => interest.id === modeTargetId)?.objectives?.length ?? 0
+            : mode === "craft"
+              ? selectedCraft?.heuristics.length ?? 0
+              : 0,
       kpiCount: 0,
       hasThresholds: false,
       hasPreparation: false,
@@ -279,7 +359,7 @@ export const WarGaming = ({
       ergodicityGate: false,
       metricLimitGate: false
     });
-  }, [affairs, domains, interests, mode, modeTargetId]);
+  }, [affairs, crafts, domains, interests, mode, modeTargetId]);
 
   const operationalSnapshot = useMemo(
     () => computeBarbellGuardrail({ affairs, interests, tasks, lineageRisks, domains }),
@@ -346,6 +426,22 @@ export const WarGaming = ({
     };
     return computeFragilistaWatchlist(scopedData, 6);
   }, [affairs, domainFilter, domains, filteredAffairs, filteredDomains, filteredRisks, filteredTasks, interests, lineages, missionGraph, sourceFilter, sources, tasks, user]);
+  const interestProtocolViolations = useMemo(() => {
+    if (!selectedInterest) return [];
+    return computeInterestProtocolChecks(selectedInterest)
+      .filter((check) => !check.passed)
+      .map((check, index) => ({
+        id: `lab-protocol-${selectedInterest.id}-${index}`,
+        severity: "SOFT" as const,
+        message: `Lab protocol: ${check.label}`,
+        source: selectedInterest.title,
+        detectedAtIso: new Date().toISOString()
+      }));
+  }, [selectedInterest]);
+  const mergedViolationFeed = useMemo(
+    () => [...(violationFeed ?? []), ...interestProtocolViolations],
+    [interestProtocolViolations, violationFeed]
+  );
   const concentrationPct = useMemo(() => {
     const active = interests.filter((interest) => (domainFilter === "all" ? true : interest.domainId === domainFilter));
     if (!active.length) return 0;
@@ -356,6 +452,112 @@ export const WarGaming = ({
     const maxBucket = Math.max(...Array.from(byDomain.values()));
     return (maxBucket / active.length) * 100;
   }, [domainFilter, interests]);
+  const completedModes = useMemo<Partial<Record<WarGameMode, boolean>>>(() => {
+    const domainReady = domains.some(
+      (domain) => Boolean(domain.stakesText?.trim()) && Boolean(domain.risksText?.trim()) && Boolean(domain.fragilityText?.trim()) && Boolean(domain.vulnerabilitiesText?.trim())
+    );
+    const affairReady = affairs.some((affair) => (affair.plan?.objectives?.length ?? 0) > 0);
+    const interestReady = interests.some((interest) => isInterestProtocolReady(interest));
+    const craftReady = crafts.some(
+      (craft) =>
+        craft.heaps.length > 0 &&
+        craft.models.length > 0 &&
+        craft.frameworks.length > 0 &&
+        craft.barbellStrategies.length > 0 &&
+        craft.heuristics.length > 0
+    );
+    const lineageReady = filteredRisks.length > 0;
+    const missionReady = (missionGraph?.nodes?.length ?? 0) > 0;
+    return {
+      source: sourceRows.length > 0,
+      domain: domainReady,
+      affair: affairReady,
+      interest: interestReady,
+      craft: craftReady,
+      lineage: lineageReady,
+      mission: missionReady
+    };
+  }, [affairs, crafts, domains, filteredRisks.length, interests, missionGraph?.nodes?.length, sourceRows.length]);
+
+  const currentFilledFieldKeys = useMemo(() => {
+    if (mode === "source") {
+      const source = sources.find((item) => item.id === modeTargetId);
+      return [
+        source?.name ? "source_profile" : null,
+        (source?.domains?.length ?? 0) > 0 ? "linked_domains" : null,
+        (source?.domains?.length ?? 0) > 0 ? "propagation_paths" : null,
+        source?.domainCount ? "uncertainty_band" : null
+      ].filter(Boolean) as string[];
+    }
+    if (mode === "domain") {
+      const domain = domains.find((item) => item.id === modeTargetId);
+      return [
+        domain?.volatilitySourceName || domain?.volatility ? "domain_class" : null,
+        domain?.stakesText ? "stakes" : null,
+        domain?.risksText ? "risk_map" : null,
+        domain?.fragilityText || domain?.vulnerabilitiesText ? "fragility_profile" : null,
+        domain?.hedge || domain?.edge || domain?.heuristics ? "ends_means_posture" : null
+      ].filter(Boolean) as string[];
+    }
+    if (mode === "affair") {
+      const affair = affairs.find((item) => item.id === modeTargetId);
+      const hasPlan = (affair?.plan?.objectives?.length ?? 0) > 0;
+      return [
+        affair?.title ? "objective" : null,
+        hasPlan ? "orks_kpis" : null,
+        affair?.means?.craftId ? "preparation" : null,
+        affair?.plan?.timeHorizon ? "thresholds" : null,
+        tasks.some((task) => String(task.sourceType ?? "").toUpperCase() === "AFFAIR" && String(task.sourceId ?? "") === modeTargetId) ? "execution_chain" : null
+      ].filter(Boolean) as string[];
+    }
+    if (mode === "interest") {
+      const interest = interests.find((item) => item.id === modeTargetId);
+      return [
+        interest?.labStage ? "forge_wield_tinker" : null,
+        interest?.hypothesis ? "hypothesis" : null,
+        interest?.maxLossPct && interest?.expiryDate ? "loss_expiry" : null,
+        (interest?.killCriteria?.length ?? 0) > 0 ? "kill_criteria" : null,
+        typeof interest?.hedgePct === "number" && typeof interest?.edgePct === "number" ? "barbell_split" : null,
+        interest?.evidenceNote || tasks.some((task) => String(task.sourceType ?? "").toUpperCase() === "INTEREST" && String(task.sourceId ?? "") === modeTargetId && String(task.status ?? "").toLowerCase() !== "not_started") ? "evidence" : null
+      ].filter(Boolean) as string[];
+    }
+    if (mode === "craft") {
+      const craft = crafts.find((item) => item.id === modeTargetId);
+      return [
+        (craft?.heaps.length ?? 0) > 0 ? "heap_set" : null,
+        (craft?.models.length ?? 0) > 0 ? "model_extraction" : null,
+        (craft?.frameworks.length ?? 0) > 0 ? "framework_assembly" : null,
+        (craft?.barbellStrategies.length ?? 0) > 0 ? "barbell_output" : null,
+        (craft?.heuristics.length ?? 0) > 0 ? "heuristic_output" : null
+      ].filter(Boolean) as string[];
+    }
+    if (mode === "lineage") {
+      return [
+        filteredRisks.length > 0 ? "exposure_map" : null,
+        filteredRisks.some((risk) => Number(risk.exposure ?? 0) > 0) ? "stake_scaling" : null,
+        filteredRisks.some((risk) => Number(risk.dependency ?? 0) > 0) ? "blast_radius" : null,
+        filteredRisks.some((risk) => Number(risk.irreversibility ?? 0) > 0) ? "intergenerational_risk" : null
+      ].filter(Boolean) as string[];
+    }
+    return [
+      (missionGraph?.nodes?.length ?? 0) > 0 ? "hierarchy" : null,
+      (missionGraph?.dependencies?.length ?? 0) > 0 ? "dependency_chain" : null,
+      targetReadinessPreview.score >= 0 ? "readiness" : null,
+      !targetReadinessPreview.blocked ? "no_ruin_constraints" : null
+    ].filter(Boolean) as string[];
+  }, [affairs, crafts, domains, filteredRisks, interests, missionGraph?.dependencies, missionGraph?.nodes, mode, modeTargetId, sources, targetReadinessPreview.blocked, targetReadinessPreview.score, tasks]);
+
+  const modeEvaluation = useMemo(
+    () =>
+      evaluateWarGameMode({
+        mode,
+        role,
+        readinessScore: targetReadinessPreview.score,
+        filledFieldKeys: currentFilledFieldKeys,
+        completedModes
+      }),
+    [completedModes, currentFilledFieldKeys, mode, role, targetReadinessPreview.score]
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -367,6 +569,7 @@ export const WarGaming = ({
         targetId={modeTargetId}
         domains={domains}
         sources={sources}
+        crafts={crafts}
         lineages={lineages}
         affairs={affairs}
         interests={interests}
@@ -381,11 +584,93 @@ export const WarGaming = ({
           War Gaming
         </h1>
         <div className="hidden lg:block text-[10px] uppercase tracking-widest text-zinc-500 font-mono">War Gaming Chamber</div>
-        <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold transition-colors text-white">
-          <Plus className="w-5 h-5" />
-          Start WarGame Protocol
-        </button>
+        <div className="flex items-center gap-2">
+          {selectedInterest && (
+            <button
+              onClick={() => router.push(`/lab?focus=${encodeURIComponent(selectedInterest.id)}`)}
+              className="px-3 py-2 rounded-lg border border-emerald-400/30 bg-emerald-500/10 text-[10px] font-bold uppercase tracking-widest text-emerald-200"
+            >
+              Open Lab Context
+            </button>
+          )}
+          <button
+            onClick={() => setIsModalOpen(true)}
+            disabled={modeEvaluation.blockedActions || Boolean(decisionEval?.blocked)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-colors text-white ${
+              modeEvaluation.blockedActions || decisionEval?.blocked ? "bg-zinc-700 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-500"
+            }`}
+          >
+            <Plus className="w-5 h-5" />
+            Start WarGame Protocol
+          </button>
+        </div>
       </div>
+      {(modeEvaluation.blockedActions || decisionEval?.blocked) && (
+        <div className="mb-3 text-xs text-amber-300">
+          Execution actions blocked for current role/gates. Resolve dependencies or required grammar fields.
+        </div>
+      )}
+      <FractalFlowRail
+        mode={mode}
+        role={role}
+        onRoleChange={setRole}
+        onModeSelect={setMode}
+        evaluation={modeEvaluation}
+        completedModes={completedModes}
+      />
+      <DependencyWarningsCard evaluation={modeEvaluation} />
+      {decisionEval ? (
+        <div className="rounded-xl border border-white/15 bg-zinc-900/40 p-3 mb-4">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Decision Funnel</div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
+            {decisionEval.stages.map((stage) => (
+              <div key={stage.id} className={`rounded border px-2 py-1.5 text-[11px] ${stage.passed ? "border-emerald-500/35 bg-emerald-500/10" : "border-red-500/35 bg-red-500/10"}`}>
+                <div className="uppercase tracking-widest">{stage.id}</div>
+                <div className={stage.passed ? "text-emerald-200" : "text-red-200"}>{stage.message}</div>
+              </div>
+            ))}
+          </div>
+          {decisionEval.blockReasons.length ? (
+            <div className="space-y-1">
+              {decisionEval.blockReasons.map((reason) => (
+                <div key={`${reason.code}-${reason.guardId ?? "none"}`} className="rounded border border-red-500/25 bg-red-500/10 px-2 py-1.5 text-xs">
+                  <div className="font-semibold text-red-200">{reason.code}</div>
+                  <div className="text-red-100/90">{reason.message}</div>
+                  {reason.missingItems.length ? <div className="text-red-200/80">Missing: {reason.missingItems.join(", ")}</div> : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-xs text-emerald-300">No doctrine blocks in current context.</div>
+          )}
+        </div>
+      ) : null}
+      <div className="rounded-xl border border-white/10 bg-zinc-900/30 p-3 mb-4">
+        <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Mode Grammar</div>
+        <div className="text-xs text-zinc-300 mb-2">{WAR_GAME_GRAMMAR_REGISTRY[mode].narrative}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {WAR_GAME_GRAMMAR_REGISTRY[mode].fields.map((field) => {
+            const filled = currentFilledFieldKeys.includes(field.key);
+            return (
+              <div key={field.key} className="rounded border border-white/10 bg-zinc-950/50 px-2 py-1.5 text-[11px]">
+                <div className="flex items-center justify-between">
+                  <span className="uppercase tracking-widest text-zinc-400">{field.label}</span>
+                  <span className={filled ? "text-emerald-300" : "text-amber-300"}>{filled ? "present" : field.required ? "missing" : "optional"}</span>
+                </div>
+                <div className="text-zinc-500 mt-1">{field.description}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {selectedInterest && (
+        <div className="mb-4 text-xs text-zinc-300">
+          Interest protocol:{" "}
+          <span className={isInterestProtocolReady(selectedInterest) ? "text-emerald-300" : "text-red-300"}>
+            {isInterestProtocolReady(selectedInterest) ? "ready" : "incomplete"}
+          </span>
+        </div>
+      )}
 
       <div className="glass p-6 rounded-xl border border-white/10 mb-8">
         <div className="flex items-start justify-between gap-4 mb-4">
@@ -503,7 +788,7 @@ export const WarGaming = ({
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-8">
         {v03Flags.blastRadius && <DependencyBlastRadiusPanel snapshot={blastRadius} />}
         <HedgeCoverageMatrixPanel cells={hedgeCoverage} />
-        <DoctrineViolationFeedPanel events={violationFeed} />
+        <DoctrineViolationFeedPanel events={mergedViolationFeed} />
       </div>
       <div className="mb-8">
         <CorrelationRiskCard concentrationPct={concentrationPct} />
@@ -515,6 +800,7 @@ export const WarGaming = ({
       {mode === "domain" && <WarGameDomains domainId={modeTargetId} domains={domains} affairs={affairs} interests={interests} lineageRisks={lineageRisks} />}
       {mode === "affair" && <WarGameAffair affairId={modeTargetId} affairs={affairs} domains={domains} />}
       {mode === "interest" && <WarGameInterest interestId={modeTargetId} interests={interests} affairs={affairs} />}
+      {mode === "craft" && <WarGameCraft craftId={modeTargetId} crafts={crafts} />}
       {mode === "mission" && <WarGameMission missionId={modeTargetId} missionGraph={missionGraph} affairs={affairs} interests={interests} />}
       {mode === "lineage" && <WarGameLineage lineageNodeId={modeTargetId} lineages={lineages} lineageRisks={lineageRisks} />}
 

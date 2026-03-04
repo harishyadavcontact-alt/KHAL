@@ -10,6 +10,7 @@ interface InterestsViewProps {
   onSelectAffair: (id: string) => void;
   onCreateInterest: (payload: { title: string; domainId: string }) => Promise<void>;
   onWarGame: (interestId: string) => void;
+  onOpenLab?: (interestId: string) => void;
 }
 
 function buildDummyInterests(data: AppData): Interest[] {
@@ -21,7 +22,7 @@ function buildDummyInterests(data: AppData): Interest[] {
   ];
 }
 
-export function InterestsView({ data, selectedInterestId, onSelectInterest, onSelectAffair, onCreateInterest, onWarGame }: InterestsViewProps) {
+export function InterestsView({ data, selectedInterestId, onSelectInterest, onSelectAffair, onCreateInterest, onWarGame, onOpenLab }: InterestsViewProps) {
   const [open, setOpen] = React.useState(false);
   const [title, setTitle] = React.useState("");
   const [domainId, setDomainId] = React.useState(data.domains[0]?.id ?? "general");
@@ -189,7 +190,16 @@ export function InterestsView({ data, selectedInterestId, onSelectInterest, onSe
                 </div>
               ))}
             </div>
-            <div className="mt-3 flex justify-end">
+            <div className="mt-3 flex justify-end gap-2">
+              <button
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpenLab?.(interest.id);
+                }}
+                className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold uppercase tracking-widest text-white"
+              >
+                Open Lab
+              </button>
               <button
                 onClick={(event) => {
                   event.stopPropagation();

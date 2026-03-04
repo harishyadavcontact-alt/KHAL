@@ -1,15 +1,15 @@
 NEXT_STEPS.md
 
-Current Phase: v0.3 visual decision acceleration
+Current Phase: v0.4.2 Fractal War Gaming (mode-specific grammar + hybrid role flow)
 
 Immediate build slice:
-- Virtue Spiral panel (Dashboard + Mission Command).
-- Dual-path comparator (War Gaming header).
-- Do-Now action copilot card with one-click task queue.
-- API dashboard extensions on `/api/state`:
-  - `virtueSpiral`
-  - `pathComparator`
-  - `copilot`
+- Add `craft` as first-class war-gaming mode (`/war-gaming/craft`).
+- Enforce mode-specific grammar registry across `source/domain/affair/interest/craft/lineage/mission`.
+- Introduce hybrid role flow:
+  - `Missionary` dependency-first gating.
+  - `Visionary` jump with deterministic warnings.
+- Keep Lab as semantic aggregator for interest experiments.
+- Keep API contracts additive and route-compatible.
 
 Validation gates:
 - `npm run typecheck`

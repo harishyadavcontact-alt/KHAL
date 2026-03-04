@@ -11,7 +11,7 @@ export const CANONICAL_VOLATILITY_SLOTS: Array<{ key: CanonicalVolatilitySlotKey
   { key: "law6", label: "Law 6 (TBD)" }
 ];
 
-export const EXPECTED_WARGAME_MODES = ["source", "domain", "affair", "interest", "mission", "lineage"] as const;
+export const EXPECTED_WARGAME_MODES = ["source", "domain", "affair", "interest", "craft", "mission", "lineage"] as const;
 
 const SLOT_ORDER: Record<CanonicalVolatilitySlotKey, number> = {
   universe: 0,

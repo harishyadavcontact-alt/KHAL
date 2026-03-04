@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ChevronRight, Zap } from "lucide-react";
 import { motion } from "motion/react";
-import { Affair, DoctrineRuleDto, DoctrineRulebookDto, Domain, Interest, LineageNodeDto, MissionGraphDto, ProtocolExtrasDto, VolatilitySourceDto, WarGameMode } from "./types";
+import { Affair, Craft, DoctrineRuleDto, DoctrineRulebookDto, Domain, Interest, LineageNodeDto, MissionGraphDto, ProtocolExtrasDto, VolatilitySourceDto, WarGameMode } from "./types";
 import { cn } from "./utils";
 import { WAR_GAME_STAGES, calculateReadiness, modeToPlanSourceType } from "./war-game-protocol";
 
@@ -14,6 +14,7 @@ function modeLabel(mode: WarGameMode): string {
   if (mode === "domain") return "Domain WarGame";
   if (mode === "affair") return "Affair WarGame";
   if (mode === "interest") return "Interest WarGame";
+  if (mode === "craft") return "Craft WarGame";
   if (mode === "mission") return "Mission WarGame";
   return "Lineage WarGame";
 }
@@ -25,6 +26,7 @@ export const DecisionModal = ({
   targetId,
   domains,
   sources,
+  crafts,
   lineages,
   affairs,
   interests,
@@ -38,6 +40,7 @@ export const DecisionModal = ({
   targetId?: string;
   domains: Domain[];
   sources: VolatilitySourceDto[];
+  crafts: Craft[];
   lineages: LineageNodeDto[];
   affairs: Affair[];
   interests: Interest[];
@@ -67,9 +70,10 @@ export const DecisionModal = ({
     if (mode === "domain") return domains.map((item) => ({ id: item.id, label: item.name }));
     if (mode === "affair") return affairs.map((item) => ({ id: item.id, label: item.title }));
     if (mode === "interest") return interests.map((item) => ({ id: item.id, label: item.title }));
+    if (mode === "craft") return crafts.map((item) => ({ id: item.id, label: item.name }));
     if (mode === "mission") return missionIds.map((id) => ({ id, label: id }));
     return lineages.map((item) => ({ id: item.id, label: `${item.level} - ${item.name}` }));
-  }, [affairs, domains, interests, lineages, missionIds, mode, sources]);
+  }, [affairs, crafts, domains, interests, lineages, missionIds, mode, sources]);
 
   const [formData, setFormData] = useState(() => ({
     mode,

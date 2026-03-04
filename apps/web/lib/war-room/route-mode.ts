@@ -1,6 +1,6 @@
-export type WarGameRouteMode = "source" | "domain" | "affair" | "interest" | "mission" | "lineage";
+export type WarGameRouteMode = "source" | "domain" | "affair" | "interest" | "craft" | "mission" | "lineage";
 
-const MODES: WarGameRouteMode[] = ["source", "domain", "affair", "interest", "mission", "lineage"];
+const MODES: WarGameRouteMode[] = ["source", "domain", "affair", "interest", "craft", "mission", "lineage"];
 
 export function isWarGameRouteMode(value: string): value is WarGameRouteMode {
   return MODES.includes(value as WarGameRouteMode);

@@ -23,6 +23,7 @@ export function WarGamingModeClient({ mode, targetId }: { mode: WarGameRouteMode
           lineages={data.lineages?.nodes ?? []}
           affairs={data.affairs}
           interests={data.interests}
+          crafts={data.crafts}
           tasks={data.tasks}
           lineageRisks={data.lineageRisks ?? []}
           missionGraph={data.missionGraph}

@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Anchor,
+  FlaskConical,
   Briefcase,
   Clock3,
   Compass,
@@ -30,6 +31,7 @@ export const KHAL_OPS_NAV_ITEMS: KhalOpsNavItem[] = [
   { href: "/source-of-volatility", label: "Source of Volatility", icon: Sword, matchPrefixes: ["/laws"] },
   { href: "/maya", label: "Maya", icon: Hexagon },
   { href: "/interests", label: "Interests", icon: Anchor },
+  { href: "/lab", label: "Lab", icon: FlaskConical },
   { href: "/affairs", label: "Affairs", icon: Briefcase },
   { href: "/war-gaming", label: "War Gaming", icon: Zap },
   { href: "/surgical-execution", label: "Surgical Execution", icon: Crosshair },
@@ -47,6 +49,7 @@ export const KHAL_OPS_BYPASS_PREFIXES = [
   "/maya",
   "/laws",
   "/interests",
+  "/lab",
   "/affairs",
   "/war-gaming",
   "/surgical-execution",

@@ -27,6 +27,15 @@ const interestSchema = z.object({
   stakes: z.number().min(0).max(10).optional(),
   risk: z.number().min(0).max(10).optional(),
   convexity: z.number().min(0).max(10).optional(),
+  labStage: z.enum(["FORGE", "WIELD", "TINKER"]).optional(),
+  hypothesis: z.string().optional(),
+  maxLossPct: z.number().min(0).max(100).optional(),
+  expiryDate: z.string().optional(),
+  killCriteria: z.array(z.string()).optional(),
+  hedgePct: z.number().min(0).max(100).optional(),
+  edgePct: z.number().min(0).max(100).optional(),
+  irreversibility: z.number().min(0).max(100).optional(),
+  evidenceNote: z.string().optional(),
   asymmetry: z.string().optional(),
   upside: z.string().optional(),
   downside: z.string().optional(),
@@ -148,6 +157,7 @@ function toMonolithAppData(payload: ReturnType<typeof loadState>) {
 
   const interests = (state.interests ?? []).map((interest: any) => ({
     ...interest,
+    labStage: interest.labStage ?? "FORGE",
     perspective: interest.perspective ?? "macro",
     objectives: Array.isArray(interest.objectives) ? interest.objectives : []
   }));

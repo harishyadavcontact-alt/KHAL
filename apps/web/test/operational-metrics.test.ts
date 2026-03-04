@@ -7,7 +7,11 @@ import {
   computeExecutionSplit,
   computeFragilistaWatchlist,
   computeHarmSignalSnapshot,
-  computeStakeTriad
+  computeInterestAsymmetryScore,
+  computeInterestProtocolChecks,
+  computeLabSummary,
+  computeStakeTriad,
+  withLabDerivedFields
 } from "../lib/war-room/operational-metrics";
 
 function makeBaseData(): AppData {
@@ -223,5 +227,46 @@ describe("operational metrics", () => {
 
     const split = computeExecutionSplit(data);
     expect(["interests-heavy", "fragile-middle"]).toContain(split.imbalanceBand);
+  });
+
+  it("computes deterministic asymmetry score and protocol checks for lab interests", () => {
+    const interest = makeInterest("interest-lab", "domain-1", 8, 9, "in_progress");
+    interest.hypothesis = "Convex tinkering compounds over iterations";
+    interest.maxLossPct = 15;
+    interest.expiryDate = "2099-01-01T00:00:00.000Z";
+    interest.killCriteria = ["No measurable edge by review date"];
+    interest.hedgePct = 80;
+    interest.edgePct = 20;
+    interest.irreversibility = 25;
+
+    const scoreA = computeInterestAsymmetryScore(interest);
+    const scoreB = computeInterestAsymmetryScore({ ...interest });
+    expect(scoreA).toBe(scoreB);
+    expect(scoreA).toBeGreaterThan(0);
+    expect(scoreA).toBeLessThanOrEqual(100);
+
+    const checks = computeInterestProtocolChecks(interest, { id: "domain-1", name: "D1", stakesText: "high stakes", risksText: "critical" });
+    expect(checks.every((check) => check.passed)).toBe(true);
+  });
+
+  it("marks protocol readiness false when lab checklist is incomplete", () => {
+    const data = makeBaseData();
+    data.interests = [
+      {
+        ...makeInterest("interest-bad", "domain-1", 8, 8),
+        labStage: "WIELD",
+        hypothesis: "",
+        maxLossPct: 0,
+        expiryDate: "2000-01-01T00:00:00.000Z",
+        killCriteria: [],
+        hedgePct: 40,
+        edgePct: 40
+      }
+    ];
+
+    const derived = withLabDerivedFields(data);
+    expect(derived.interests[0]?.protocolReady).toBe(false);
+    const summary = computeLabSummary(derived);
+    expect(summary.blockedExperiments).toBe(1);
   });
 });

@@ -1,0 +1,368 @@
+import type { Affair, Craft, Interest, KhalState, Task } from "@khal/domain";
+import {
+  decisionEvaluationResultSchema,
+  decisionSpecSchema,
+  type DecisionBlockReasonDto,
+  type DecisionEvaluationResultDto,
+  type DecisionSpecDto,
+  type WarGameModeSpec
+} from "./schema";
+
+const PIPELINE_STAGES = [
+  "Context Load",
+  "Grammar Completion",
+  "Dependency Check",
+  "Risk/Fragility Computation",
+  "Ends/Means Fit",
+  "Doctrine Guard Evaluation",
+  "Execution Eligibility",
+  "Action Plan Emit"
+];
+
+const SPEC: DecisionSpecDto = decisionSpecSchema.parse({
+  version: "v0.4.3",
+  pipelineStages: PIPELINE_STAGES,
+  guards: [
+    { id: "G1_COMPLEX_MONOMODAL", title: "Complex Domain Requires Bimodal Ends", description: "Block monomodal ends in complex domains unless overridden.", hard: true },
+    { id: "G2_AFFAIRS_ROBUSTNESS", title: "Affairs Must Bias Robustness", description: "Affairs must show downside cap posture.", hard: true },
+    { id: "G3_INTEREST_CONVEXITY", title: "Interests Must Bias Convexity", description: "Interests need upside + max-loss declaration.", hard: true },
+    { id: "G4_NO_RUIN", title: "No-Ruin Gate", description: "Execution blocked when no-ruin gates fail.", hard: true },
+    { id: "G5_EXACT_MISSING", title: "Exact Missing Items", description: "Block responses must include exact missing items.", hard: true }
+  ],
+  modes: [
+    { mode: "source", title: "Source", narrative: "War-game volatility sources and propagation.", requiredFields: ["source_profile", "linked_domains", "propagation_paths", "uncertainty_band"], predecessors: [] },
+    { mode: "domain", title: "Domain", narrative: "War-game domain posture and fragility logic.", requiredFields: ["domain_class", "stakes", "risk_map", "fragility_profile", "ends_means_posture"], predecessors: ["source"] },
+    { mode: "affair", title: "Affair", narrative: "War-game obligations and deterministic prep.", requiredFields: ["objective", "orks_kpis", "preparation", "thresholds", "execution_chain"], predecessors: ["domain"] },
+    { mode: "interest", title: "Interest", narrative: "War-game options via Forge/Wield/Tinker.", requiredFields: ["forge_wield_tinker", "hypothesis", "loss_expiry", "kill_criteria", "barbell_split", "evidence"], predecessors: ["domain"] },
+    { mode: "craft", title: "Craft", narrative: "War-game heaps to heuristics pipeline.", requiredFields: ["heap_set", "model_extraction", "framework_assembly", "barbell_output", "heuristic_output"], predecessors: ["interest"] },
+    { mode: "lineage", title: "Lineage", narrative: "War-game exposure scaling and blast radius.", requiredFields: ["exposure_map", "stake_scaling", "blast_radius", "intergenerational_risk"], predecessors: ["source", "domain"] },
+    { mode: "mission", title: "Mission", narrative: "War-game hierarchy and no-ruin mission synthesis.", requiredFields: ["hierarchy", "dependency_chain", "readiness", "no_ruin_constraints"], predecessors: ["affair", "interest", "lineage"] }
+  ]
+});
+
+function isComplexDomain(domain: KhalState["domains"][number] | undefined): boolean {
+  if (!domain) return false;
+  const hay = `${domain.description ?? ""} ${domain.stateOfTheArtNotes ?? ""}`.toLowerCase();
+  return hay.includes("complex") || hay.includes("thick") || hay.includes("nonlinear") || hay.includes("volatility");
+}
+
+function hasDomainBarbellPosture(state: KhalState, domainId: string): { hedge: boolean; edge: boolean } {
+  const relatedEnds = state.ends.filter((end) => end.domainId === domainId);
+  const relatedInterests = state.interests.filter((interest) => interest.domainId === domainId);
+  const endText = relatedEnds
+    .map((end) => `${end.title ?? ""} ${end.description ?? ""}`)
+    .join(" ")
+    .toLowerCase();
+  const hedge = /\bhedge\b/.test(endText) || relatedInterests.some((interest) => (interest.hedgePct ?? 0) > 0);
+  const edge = /\bedge\b/.test(endText) || relatedInterests.some((interest) => (interest.edgePct ?? 0) > 0);
+  return { hedge, edge };
+}
+
+function missingForMode(mode: WarGameModeSpec, state: KhalState, targetId: string): string[] {
+  if (mode === "source") {
+    const source = (state.sources ?? []).find((item) => item.id === targetId);
+    return [
+      source?.name ? null : "source_profile",
+      (source?.domains?.length ?? 0) > 0 ? null : "linked_domains",
+      (source?.domains?.length ?? 0) > 0 ? null : "propagation_paths",
+      source?.code ? null : "uncertainty_band"
+    ].filter(Boolean) as string[];
+  }
+  if (mode === "domain") {
+    const domain = state.domains.find((item) => item.id === targetId);
+    const fragilitys = state.fragilities.filter((item) => item.domainId === targetId);
+    const domainEnds = state.ends.filter((item) => item.domainId === targetId);
+    const { hedge, edge } = hasDomainBarbellPosture(state, targetId);
+    return [
+      domain ? null : "domain_class",
+      fragilitys.length > 0 || state.affairs.some((item) => item.domainId === targetId) ? null : "stakes",
+      fragilitys.some((item) => item.risk > 0) ? null : "risk_map",
+      fragilitys.length > 0 ? null : "fragility_profile",
+      domainEnds.length > 0 && hedge && edge ? null : "ends_means_posture"
+    ].filter(Boolean) as string[];
+  }
+  if (mode === "affair") {
+    const affair = state.affairs.find((item) => item.id === targetId);
+    return [
+      affair?.title ? null : "objective",
+      typeof affair?.stakes === "number" && typeof affair?.risk === "number" ? null : "orks_kpis",
+      affair?.means?.craftId ? null : "preparation",
+      affair?.timeline ? null : "thresholds",
+      state.tasks.some((task) => task.sourceType === "AFFAIR" && task.sourceId === targetId) ? null : "execution_chain"
+    ].filter(Boolean) as string[];
+  }
+  if (mode === "interest") {
+    const interest = state.interests.find((item) => item.id === targetId);
+    const linkedTasks = state.tasks.filter((task) => task.sourceType === "INTEREST" && task.sourceId === targetId);
+    return [
+      interest?.labStage ? null : "forge_wield_tinker",
+      interest?.hypothesis ? null : "hypothesis",
+      interest?.maxLossPct && interest?.expiryDate ? null : "loss_expiry",
+      (interest?.killCriteria?.length ?? 0) > 0 ? null : "kill_criteria",
+      typeof interest?.hedgePct === "number" && typeof interest?.edgePct === "number" ? null : "barbell_split",
+      linkedTasks.some((task) => task.status !== "NOT_STARTED") || interest?.evidenceNote ? null : "evidence"
+    ].filter(Boolean) as string[];
+  }
+  if (mode === "craft") {
+    const craft = state.crafts.find((item) => item.id === targetId);
+    return [
+      (craft?.heaps?.length ?? 0) > 0 ? null : "heap_set",
+      (craft?.models?.length ?? 0) > 0 ? null : "model_extraction",
+      (craft?.frameworks?.length ?? 0) > 0 ? null : "framework_assembly",
+      (craft?.barbellStrategies?.length ?? 0) > 0 ? null : "barbell_output",
+      (craft?.heuristics?.length ?? 0) > 0 ? null : "heuristic_output"
+    ].filter(Boolean) as string[];
+  }
+  if (mode === "lineage") {
+    const risks = (state.lineageRisks ?? []).filter((item) => item.lineageNodeId === targetId || targetId === "global");
+    return [
+      risks.length > 0 ? null : "exposure_map",
+      risks.some((risk) => Number(risk.exposure ?? 0) > 0) ? null : "stake_scaling",
+      risks.some((risk) => Number(risk.dependency ?? 0) > 0) ? null : "blast_radius",
+      risks.some((risk) => Number(risk.irreversibility ?? 0) > 0) ? null : "intergenerational_risk"
+    ].filter(Boolean) as string[];
+  }
+  const nodes = state.missionGraph?.nodes ?? [];
+  const deps = state.missionGraph?.dependencies ?? [];
+  return [
+    nodes.length > 0 ? null : "hierarchy",
+    deps.length > 0 ? null : "dependency_chain",
+    nodes.length > 0 ? null : "readiness",
+    null
+  ].filter(Boolean) as string[];
+}
+
+function completedModes(state: KhalState): Record<WarGameModeSpec, boolean> {
+  const anySource = (state.sources ?? []).length > 0;
+  const anyDomain = state.domains.length > 0;
+  const anyAffair = state.affairs.length > 0;
+  const anyInterest = state.interests.some((i) => Boolean(i.maxLossPct && i.hedgePct && i.edgePct));
+  const anyCraft = state.crafts.some((c) => c.heaps.length > 0 && c.models.length > 0 && c.frameworks.length > 0 && c.barbellStrategies.length > 0 && c.heuristics.length > 0);
+  const anyLineage = (state.lineageRisks ?? []).length > 0;
+  const anyMission = (state.missionGraph?.nodes?.length ?? 0) > 0;
+  return {
+    source: anySource,
+    domain: anyDomain,
+    affair: anyAffair,
+    interest: anyInterest,
+    craft: anyCraft,
+    lineage: anyLineage,
+    mission: anyMission
+  };
+}
+
+function evaluateGuards(args: {
+  mode: WarGameModeSpec;
+  targetId: string;
+  state: KhalState;
+  noRuinGate: boolean;
+  overrides: string[];
+}): DecisionBlockReasonDto[] {
+  const reasons: DecisionBlockReasonDto[] = [];
+  const hasOverride = (guardId: string) => args.overrides.includes(guardId);
+
+  if (args.mode === "domain") {
+    const domain = args.state.domains.find((item) => item.id === args.targetId);
+    const { hedge, edge } = hasDomainBarbellPosture(args.state, args.targetId);
+    if (isComplexDomain(domain) && (!hedge || !edge) && !hasOverride("G1_COMPLEX_MONOMODAL")) {
+      reasons.push({
+        code: "COMPLEX_MONOMODAL_BLOCK",
+        guardId: "G1_COMPLEX_MONOMODAL",
+        message: "Complex domain requires bimodal barbell ends (hedge + edge).",
+        missingItems: [!hedge ? "hedge" : null, !edge ? "edge" : null].filter(Boolean) as string[],
+        overridable: true
+      });
+    }
+  }
+
+  if (args.mode === "affair") {
+    const affair = args.state.affairs.find((item) => item.id === args.targetId);
+    const posture = affair?.strategy?.posture?.toLowerCase() ?? "";
+    const domainPosture = hasDomainBarbellPosture(args.state, affair?.domainId ?? "");
+    const hasRobustnessSignal = posture.includes("robust") || posture.includes("hedge") || domainPosture.hedge;
+    if (!hasRobustnessSignal && !hasOverride("G2_AFFAIRS_ROBUSTNESS")) {
+      reasons.push({
+        code: "AFFAIR_NO_HEDGE",
+        guardId: "G2_AFFAIRS_ROBUSTNESS",
+        message: "Affairs must bias robustness with downside cap posture.",
+        missingItems: ["affair.strategy.posture or domain hedge signal"],
+        overridable: true
+      });
+    }
+  }
+
+  if (args.mode === "interest") {
+    const interest = args.state.interests.find((item) => item.id === args.targetId);
+    const missing = [
+      typeof interest?.maxLossPct === "number" ? null : "maxLossPct",
+      typeof interest?.hedgePct === "number" ? null : "hedgePct",
+      typeof interest?.edgePct === "number" ? null : "edgePct"
+    ].filter(Boolean) as string[];
+    if (missing.length && !hasOverride("G3_INTEREST_CONVEXITY")) {
+      reasons.push({
+        code: "INTEREST_CONVEXITY_INCOMPLETE",
+        guardId: "G3_INTEREST_CONVEXITY",
+        message: "Interests require convex setup: upside path with declared max-loss.",
+        missingItems: missing,
+        overridable: true
+      });
+    }
+  }
+
+  if (!args.noRuinGate) {
+    reasons.push({
+      code: "NO_RUIN_GATE_FAILED",
+      guardId: "G4_NO_RUIN",
+      message: "No-ruin gate failed. Execution is blocked.",
+      missingItems: ["noRuinGate=true"],
+      overridable: false
+    });
+  }
+
+  return reasons;
+}
+
+export function getDecisionSpec(): DecisionSpecDto {
+  return SPEC;
+}
+
+export function evaluateDecision(args: {
+  mode: WarGameModeSpec;
+  targetId: string;
+  state: KhalState;
+  role?: "MISSIONARY" | "VISIONARY";
+  noRuinGate?: boolean;
+  overrides?: string[];
+}): DecisionEvaluationResultDto {
+  const modeSpec = SPEC.modes.find((item) => item.mode === args.mode);
+  if (!modeSpec) {
+    return decisionEvaluationResultSchema.parse({
+      mode: args.mode,
+      targetId: args.targetId,
+      blocked: true,
+      readinessScore: 0,
+      missingRequiredFields: [],
+      blockReasons: [{ code: "MODE_NOT_FOUND", message: "Mode spec not found.", missingItems: [], overridable: false }],
+      stages: PIPELINE_STAGES.map((id, index) => ({ id, passed: index === 0, message: index === 0 ? "Context loaded." : "Blocked: mode spec missing.", missingItems: [] })),
+      nextStage: "Context Load"
+    });
+  }
+
+  const missingRequiredFields = missingForMode(args.mode, args.state, args.targetId);
+  const completed = completedModes(args.state);
+  const missingPredecessors = modeSpec.predecessors.filter((mode) => !completed[mode]);
+  const guardReasons = evaluateGuards({
+    mode: args.mode,
+    targetId: args.targetId,
+    state: args.state,
+    noRuinGate: args.noRuinGate ?? true,
+    overrides: args.overrides ?? []
+  });
+  const role = args.role ?? "MISSIONARY";
+  const dependencyBlocked = role === "MISSIONARY" && missingPredecessors.length > 0;
+  const reasons: DecisionBlockReasonDto[] = [
+    ...(missingPredecessors.length
+      ? [{
+          code: "PREDECESSOR_MISSING",
+          message: `Missing predecessor modes: ${missingPredecessors.join(", ")}`,
+          missingItems: missingPredecessors,
+          overridable: false
+        }]
+      : []),
+    ...(missingRequiredFields.length
+      ? [{
+          code: "GRAMMAR_INCOMPLETE",
+          message: "Required grammar fields are missing.",
+          missingItems: missingRequiredFields,
+          overridable: false
+        }]
+      : []),
+    ...guardReasons
+  ];
+  const blocked = dependencyBlocked || missingRequiredFields.length > 0 || guardReasons.length > 0;
+  const readinessScore = Math.max(0, Math.min(100, 100 - missingRequiredFields.length * 10 - missingPredecessors.length * 8 - guardReasons.length * 12));
+
+  const stages = PIPELINE_STAGES.map((stage, index) => {
+    const passed =
+      index === 0 ? true :
+      index === 1 ? missingRequiredFields.length === 0 :
+      index === 2 ? missingPredecessors.length === 0 || role === "VISIONARY" :
+      index === 5 ? guardReasons.length === 0 :
+      index < 5 ? missingRequiredFields.length === 0 :
+      !blocked;
+    const missingItems =
+      stage === "Grammar Completion" ? missingRequiredFields :
+      stage === "Dependency Check" ? missingPredecessors :
+      stage === "Doctrine Guard Evaluation" ? guardReasons.flatMap((reason) => reason.missingItems) :
+      [];
+    return {
+      id: stage,
+      passed,
+      message: passed ? "Passed" : "Blocked",
+      missingItems
+    };
+  });
+  const firstBlockedStage = stages.find((stage) => !stage.passed)?.id;
+
+  return decisionEvaluationResultSchema.parse({
+    mode: args.mode,
+    targetId: args.targetId,
+    blocked,
+    readinessScore,
+    missingRequiredFields,
+    blockReasons: reasons,
+    stages,
+    nextStage: firstBlockedStage
+  });
+}
+
+export function buildDraftMutations(args: {
+  mode: WarGameModeSpec;
+  targetId?: string;
+  prompt: string;
+  state: KhalState;
+}): Array<Record<string, unknown>> {
+  const lower = args.prompt.toLowerCase();
+  const out: Array<Record<string, unknown>> = [];
+  if (args.mode === "affair" || lower.includes("affair")) {
+    out.push({
+      kind: "CREATE_AFFAIR",
+      payload: {
+        title: "Agent Draft Affair",
+        domainId: args.targetId ?? args.state.domains[0]?.id ?? "general",
+        status: "NOT_STARTED",
+        stakes: 5,
+        risk: 5
+      }
+    });
+  }
+  if (args.mode === "interest" || lower.includes("interest")) {
+    out.push({
+      kind: "CREATE_INTEREST",
+      payload: {
+        title: "Agent Draft Interest",
+        domainId: args.targetId ?? args.state.domains[0]?.id ?? "general",
+        status: "NOT_STARTED",
+        stakes: 5,
+        risk: 5,
+        convexity: 6,
+        labStage: "FORGE",
+        hedgePct: 90,
+        edgePct: 10
+      }
+    });
+  }
+  if (lower.includes("task") || lower.includes("queue")) {
+    out.push({
+      kind: "CREATE_TASK",
+      payload: {
+        title: "Agent Draft Execution Task",
+        sourceType: "PLAN",
+        sourceId: "mission-global",
+        horizon: "WEEK",
+        status: "NOT_STARTED"
+      }
+    });
+  }
+  return out;
+}

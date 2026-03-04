@@ -44,6 +44,47 @@ describe("sync engine integration", () => {
     expect(loaded.dashboard.optionalityIndex).toBeGreaterThan(0);
   });
 
+  it("persists lab experiment fields on interest create/update", () => {
+    const dbPath = fixtureDb();
+    const id = randomUUID();
+    writeInterest(dbPath, {
+      id,
+      title: "Lab Interest",
+      domainId: "integration",
+      stakes: 6,
+      risk: 4,
+      convexity: 8,
+      labStage: "FORGE",
+      hypothesis: "Convexity rises with bounded downside",
+      maxLossPct: 20,
+      expiryDate: "2099-01-01T00:00:00.000Z",
+      killCriteria: ["No positive signal by expiry"],
+      hedgePct: 80,
+      edgePct: 20,
+      irreversibility: 30,
+      evidenceNote: "Initial baseline"
+    });
+    writeInterest(dbPath, {
+      id,
+      title: "Lab Interest Updated",
+      domainId: "integration",
+      labStage: "WIELD",
+      hypothesis: "Updated hypothesis",
+      maxLossPct: 15,
+      killCriteria: ["Stop on drawdown breach"],
+      hedgePct: 85,
+      edgePct: 15
+    });
+
+    const loaded = loadState(dbPath);
+    const interest = loaded.state.interests.find((item) => item.id === id);
+    expect(interest?.labStage).toBe("WIELD");
+    expect(interest?.maxLossPct).toBe(15);
+    expect(interest?.killCriteria?.length).toBe(1);
+    expect(interest?.hedgePct).toBe(85);
+    expect(interest?.edgePct).toBe(15);
+  });
+
   it("blocks task done transition if dependencies not done", () => {
     const dbPath = fixtureDb();
     const loaded = loadState(dbPath);

@@ -12,6 +12,9 @@ import type {
   ExecutionSplitMetrics,
   FragilistaWatchItem,
   HarmSignalSnapshot,
+  Interest,
+  LabProtocolCheck,
+  LabSummaryMetrics,
   OperationalNowItem,
   StakeTriadMetrics
 } from "../../components/war-room-v2/types";
@@ -92,6 +95,11 @@ function safeDateTs(value?: string): number | null {
   if (!value) return null;
   const ts = Date.parse(value);
   return Number.isFinite(ts) ? ts : null;
+}
+
+function isHighStakesDomain(domain?: AppData["domains"][number]): boolean {
+  const text = `${domain?.stakesText ?? ""} ${domain?.risksText ?? ""}`.toLowerCase();
+  return text.includes("high") || text.includes("critical") || text.includes("severe");
 }
 
 function domainFragilityProxy(input: OperationalInput): number {
@@ -487,5 +495,98 @@ export function computeExecutionSplit(input: AppData): ExecutionSplitMetrics {
     affairsOpenCount: activeAffairs.length,
     interestsActiveCount: activeInterests.length,
     imbalanceBand
+  };
+}
+
+export function computeInterestAsymmetryScore(interest: Interest): number {
+  const convexity = clamp(asNumber(interest.convexity, 0), 0, 10) * 10;
+  const maxLoss = clamp(asNumber(interest.maxLossPct, 100), 0, 100);
+  const irreversibility = clamp(asNumber(interest.irreversibility, 100), 0, 100);
+  const risk = clamp(asNumber(interest.risk, 5), 0, 10) * 10;
+  const hedgePct = clamp(asNumber(interest.hedgePct, 0), 0, 100);
+  const edgePct = clamp(asNumber(interest.edgePct, 0), 0, 100);
+
+  const downsideCapQuality = 100 - maxLoss;
+  const splitDistance = Math.abs(hedgePct - edgePct);
+  const barbellShapeQuality = clamp(splitDistance, 0, 100);
+  const reversibilityQuality = 100 - irreversibility;
+
+  const raw =
+    convexity * 0.35 +
+    downsideCapQuality * 0.3 +
+    barbellShapeQuality * 0.2 +
+    reversibilityQuality * 0.15 -
+    risk * 0.1;
+
+  return round1(clamp(raw, 0, 100));
+}
+
+export function computeInterestProtocolChecks(interest: Interest, domain?: AppData["domains"][number]): LabProtocolCheck[] {
+  const now = Date.now();
+  const expiryTs = safeDateTs(interest.expiryDate);
+  const killCriteria = (interest.killCriteria ?? []).filter((item) => item.trim().length > 0);
+  const hedgePct = clamp(asNumber(interest.hedgePct, 0), 0, 100);
+  const edgePct = clamp(asNumber(interest.edgePct, 0), 0, 100);
+  const highStakes = isHighStakesDomain(domain);
+
+  return [
+    { key: "hypothesis", label: "Hypothesis defined", passed: Boolean(interest.hypothesis && interest.hypothesis.trim()) },
+    { key: "max_loss", label: "Max loss declared (0-100)", passed: asNumber(interest.maxLossPct, -1) > 0 && asNumber(interest.maxLossPct, -1) <= 100 },
+    { key: "expiry", label: "Expiry date is future", passed: Boolean(expiryTs && expiryTs > now), detail: interest.expiryDate },
+    { key: "kill", label: "Kill criteria present", passed: killCriteria.length >= 1 },
+    { key: "barbell_sum", label: "Hedge + Edge = 100", passed: Math.abs(hedgePct + edgePct - 100) < 0.001 },
+    { key: "hedge_floor", label: highStakes ? "High-stakes hedge >= 70%" : "Hedge floor rule", passed: highStakes ? hedgePct >= 70 : true, detail: highStakes ? `${hedgePct}%` : "not-high-stakes" },
+    { key: "irreversibility", label: "Irreversibility declared", passed: interest.irreversibility != null }
+  ];
+}
+
+export function isInterestProtocolReady(interest: Interest, domain?: AppData["domains"][number]): boolean {
+  return computeInterestProtocolChecks(interest, domain).every((check) => check.passed);
+}
+
+export function computeLabSummary(input: AppData): LabSummaryMetrics {
+  const domainById = new Map(input.domains.map((domain) => [domain.id, domain]));
+  const interests = input.interests ?? [];
+  if (!interests.length) {
+    return {
+      protocolIntegrity: 0,
+      blockedExperiments: 0,
+      averageAsymmetryScore: 0,
+      staleOptionalityCount: 0
+    };
+  }
+
+  const readiness = interests.map((interest) => isInterestProtocolReady(interest, domainById.get(interest.domainId)));
+  const asymmetryScores = interests.map((interest) => computeInterestAsymmetryScore(interest));
+  const now = Date.now();
+  const staleOptionalityCount = interests.filter((interest) => {
+    const ts = safeDateTs(interest.expiryDate);
+    return ts !== null && ts <= now;
+  }).length;
+
+  const blockedExperiments = readiness.filter((value) => !value).length;
+  return {
+    protocolIntegrity: round1((readiness.filter(Boolean).length / Math.max(1, interests.length)) * 100),
+    blockedExperiments,
+    averageAsymmetryScore: round1(average(asymmetryScores)),
+    staleOptionalityCount
+  };
+}
+
+export function withLabDerivedFields(input: AppData): AppData {
+  const domainById = new Map(input.domains.map((domain) => [domain.id, domain]));
+  const interests = input.interests.map((interest) => {
+    const asymmetryScore = computeInterestAsymmetryScore(interest);
+    const protocolReady = isInterestProtocolReady(interest, domainById.get(interest.domainId));
+    return {
+      ...interest,
+      labStage: interest.labStage ?? "FORGE",
+      asymmetryScore,
+      protocolReady
+    };
+  });
+  return {
+    ...input,
+    interests
   };
 }

@@ -935,7 +935,16 @@ function mapInterests(rows: Array<Record<string, unknown>>): Interest[] {
     downside: row.downside ? String(row.downside) : undefined,
     convexity: Number(row.convexity ?? 0),
     status: String(row.status ?? "NOT_STARTED") as Interest["status"],
-    notes: row.notes ? String(row.notes) : undefined
+    notes: row.notes ? String(row.notes) : undefined,
+    labStage: row.lab_stage ? String(row.lab_stage).toUpperCase() as Interest["labStage"] : "FORGE",
+    hypothesis: row.hypothesis ? String(row.hypothesis) : undefined,
+    maxLossPct: row.max_loss_pct != null ? Number(row.max_loss_pct) : undefined,
+    expiryDate: row.expiry_date ? String(row.expiry_date) : undefined,
+    killCriteria: parseJsonOrDefault<string[]>(row.kill_criteria_json, []),
+    hedgePct: row.hedge_pct != null ? Number(row.hedge_pct) : undefined,
+    edgePct: row.edge_pct != null ? Number(row.edge_pct) : undefined,
+    irreversibility: row.irreversibility != null ? Number(row.irreversibility) : undefined,
+    evidenceNote: row.evidence_note ? String(row.evidence_note) : undefined
   }));
 }
 
@@ -1701,7 +1710,11 @@ export function writeInterest(dbPathInput: string, payload: Partial<Interest> & 
     const exists = db.prepare("SELECT id FROM interests WHERE id=?").get(payload.id) as { id: string } | undefined;
     if (exists) {
       db.prepare(
-        `UPDATE interests SET domain_id=?, title=?, stakes=?, risk=?, asymmetry=?, upside=?, downside=?, convexity=?, status=?, notes=?, updated_at=datetime('now') WHERE id=?`
+        `UPDATE interests
+         SET domain_id=?, title=?, stakes=?, risk=?, asymmetry=?, upside=?, downside=?, convexity=?, status=?, notes=?,
+             lab_stage=?, hypothesis=?, max_loss_pct=?, expiry_date=?, kill_criteria_json=?, hedge_pct=?, edge_pct=?, irreversibility=?, evidence_note=?,
+             updated_at=datetime('now')
+         WHERE id=?`
       ).run(
         payload.domainId ?? "general",
         payload.title,
@@ -1713,11 +1726,23 @@ export function writeInterest(dbPathInput: string, payload: Partial<Interest> & 
         payload.convexity ?? 0,
         payload.status ?? "NOT_STARTED",
         payload.notes ?? null,
+        payload.labStage ?? "FORGE",
+        payload.hypothesis ?? null,
+        payload.maxLossPct ?? null,
+        payload.expiryDate ?? null,
+        JSON.stringify(payload.killCriteria ?? []),
+        payload.hedgePct ?? null,
+        payload.edgePct ?? null,
+        payload.irreversibility ?? null,
+        payload.evidenceNote ?? null,
         payload.id
       );
     } else {
       db.prepare(
-        `INSERT INTO interests (id, domain_id, title, stakes, risk, asymmetry, upside, downside, convexity, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO interests
+         (id, domain_id, title, stakes, risk, asymmetry, upside, downside, convexity, status, notes,
+          lab_stage, hypothesis, max_loss_pct, expiry_date, kill_criteria_json, hedge_pct, edge_pct, irreversibility, evidence_note)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).run(
         payload.id,
         payload.domainId ?? "general",
@@ -1729,7 +1754,16 @@ export function writeInterest(dbPathInput: string, payload: Partial<Interest> & 
         payload.downside ?? null,
         payload.convexity ?? 0,
         payload.status ?? "NOT_STARTED",
-        payload.notes ?? null
+        payload.notes ?? null,
+        payload.labStage ?? "FORGE",
+        payload.hypothesis ?? null,
+        payload.maxLossPct ?? null,
+        payload.expiryDate ?? null,
+        JSON.stringify(payload.killCriteria ?? []),
+        payload.hedgePct ?? null,
+        payload.edgePct ?? null,
+        payload.irreversibility ?? null,
+        payload.evidenceNote ?? null
       );
     }
   } finally {
@@ -1747,7 +1781,16 @@ export function writeInterest(dbPathInput: string, payload: Partial<Interest> & 
     upside: payload.upside,
     downside: payload.downside,
     status: (payload.status ?? "NOT_STARTED") as Interest["status"],
-    notes: payload.notes
+    notes: payload.notes,
+    labStage: payload.labStage ?? "FORGE",
+    hypothesis: payload.hypothesis,
+    maxLossPct: payload.maxLossPct,
+    expiryDate: payload.expiryDate,
+    killCriteria: payload.killCriteria ?? [],
+    hedgePct: payload.hedgePct,
+    edgePct: payload.edgePct,
+    irreversibility: payload.irreversibility,
+    evidenceNote: payload.evidenceNote
   };
 }
 

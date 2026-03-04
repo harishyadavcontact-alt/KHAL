@@ -52,6 +52,7 @@ import { cn } from './utils';
 import { AppData, Law, Domain, Craft, Interest, Affair, Entity, Perspective, Task } from './types';
 import { TaskCard } from './TaskCard';
 import { ConvexityPipelinePanel, DecisionLatencyMeterPanel, NoRuinTripwirePanel } from './panels/RobustnessPanels';
+import { isInterestProtocolReady } from '../../lib/war-room/operational-metrics';
 export const SurgicalExecution = ({
   tasks,
   affairs = [],
@@ -88,6 +89,16 @@ export const SurgicalExecution = ({
   const [creatingSubtask, setCreatingSubtask] = useState(false);
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
   const tripwireBlocked = Boolean(tripwire?.riskyActionBlocked);
+  const selectedInterest = useMemo(() => {
+    if (!selectedTask) return undefined;
+    if (String(selectedTask.sourceType ?? '').toUpperCase() === 'INTEREST') {
+      return interests.find((interest) => interest.id === selectedTask.sourceId);
+    }
+    return undefined;
+  }, [interests, selectedTask]);
+  const interestProtocolBlocked = Boolean(
+    selectedInterest && ((selectedInterest.labStage ?? 'FORGE') !== 'WIELD' || !isInterestProtocolReady(selectedInterest))
+  );
   const doneTasks = tasks.filter((t) => t.status === 'done').length;
   const activeTasks = tasks.filter((t) => t.status === 'in_progress').length;
   const velocityPerWeek = (doneTasks + activeTasks).toFixed(1);
@@ -215,7 +226,7 @@ export const SurgicalExecution = ({
                     onClick={async () => {
                       setCreatingSubtask(true);
                       try {
-                        if (tripwireBlocked) return;
+                        if (tripwireBlocked || interestProtocolBlocked) return;
                         await onCreateTask({
                           title: subtaskTitle.trim(),
                           sourceType: selectedTask.sourceType ?? String(selectedTask.type ?? 'PLAN').toUpperCase(),
@@ -234,6 +245,9 @@ export const SurgicalExecution = ({
                   >
                     {creatingSubtask ? 'Creating...' : 'Add Subtask'}
                   </button>
+                  {interestProtocolBlocked && (
+                    <div className="text-xs text-red-300">Blocked: linked Interest must be WIELD and protocol-ready.</div>
+                  )}
                 </div>
               </div>
               <div className="p-6 bg-zinc-900/80 border-t border-white/10 flex justify-end">

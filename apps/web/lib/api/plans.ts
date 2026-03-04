@@ -5,7 +5,7 @@ import { ok, withDb } from "../api";
 type AnyRow = Record<string, unknown>;
 
 const planBlueprintCreateSchema = z.object({
-  sourceType: z.enum(["SOURCE", "DOMAIN", "AFFAIR", "INTEREST", "MISSION", "LINEAGE"]),
+  sourceType: z.enum(["SOURCE", "DOMAIN", "AFFAIR", "INTEREST", "CRAFT", "MISSION", "LINEAGE"]),
   sourceId: z.string().min(1),
   title: z.string().min(1),
   scheduleStart: z.string().optional(),

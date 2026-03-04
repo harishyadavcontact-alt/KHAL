@@ -4,6 +4,7 @@ import { HeatGrid } from "./charts/HeatGrid";
 import { FlowLanes } from "./charts/FlowLanes";
 import { StackedBalanceBar } from "./charts/StackedBalanceBar";
 import { buildMissionVisualSnapshot } from "../../lib/war-room/visual-encodings";
+import { isInterestProtocolReady } from "../../lib/war-room/operational-metrics";
 import { VirtueSpiralPanel } from "./VirtueSpiralPanel";
 import { DoNowCopilotCard } from "./DoNowCopilotCard";
 import { ProtocolStatusStrip } from "./ProtocolStatusStrip";
@@ -133,6 +134,13 @@ export const MissionCommand = ({
     }
   }), []);
   const decisionAcceleration = data.decisionAcceleration ?? fallbackDecisionAcceleration;
+  const labBlockedCount = useMemo(
+    () =>
+      data.interests.filter(
+        (interest) => (interest.labStage ?? "FORGE") === "WIELD" && !isInterestProtocolReady(interest)
+      ).length,
+    [data.interests]
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-3 py-5">
@@ -174,6 +182,10 @@ export const MissionCommand = ({
             <div className="p-2 rounded-lg bg-zinc-900/60 border border-white/5">
               <div className="text-[10px] uppercase text-zinc-500">Interests (Edge)</div>
               <div className="text-base font-bold text-emerald-300">{data.interests.length}</div>
+            </div>
+            <div className="p-2 rounded-lg bg-zinc-900/60 border border-white/5">
+              <div className="text-[10px] uppercase text-zinc-500">Lab Bottlenecks</div>
+              <div className="text-base font-bold text-amber-300">{labBlockedCount}</div>
             </div>
           </div>
         </div>

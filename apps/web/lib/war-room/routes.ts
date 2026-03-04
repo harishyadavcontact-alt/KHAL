@@ -6,6 +6,7 @@ export function routeForView(view: WarRoomViewState): string {
   if (view === "mission") return "/missionCommand";
   if (view === "laws") return "/source-of-volatility";
   if (view === "interests") return "/interests";
+  if (view === "lab") return "/lab";
   if (view === "affairs") return "/affairs";
   if (view === "war-gaming") return "/war-gaming/affair";
   if (view === "execution") return "/surgical-execution";

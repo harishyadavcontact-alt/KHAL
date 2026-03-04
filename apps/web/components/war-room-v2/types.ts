@@ -5,13 +5,15 @@ export type WarRoomViewState =
   | "mission"
   | "laws"
   | "interests"
+  | "lab"
   | "affairs"
   | "war-gaming"
   | "execution"
   | "crafts"
   | "time-horizon"
   | "lineages";
-export type WarGameMode = "source" | "domain" | "affair" | "interest" | "mission" | "lineage";
+export type WarGameMode = "source" | "domain" | "affair" | "interest" | "craft" | "mission" | "lineage";
+export type WarGameRole = "MISSIONARY" | "VISIONARY";
 export type ParityStatus = "exact" | "functionally_equivalent" | "drifted" | "missing";
 export type DoctrineScopeType = "GLOBAL" | "MODE" | "ENTITY";
 export type DoctrineRuleKind = "RULE" | "POLICY" | "OMISSION" | "TRIGGER" | "BARRIER" | "BET_RULE";
@@ -131,6 +133,17 @@ export interface Interest {
   convexity?: number;
   status?: string;
   objectives?: string[];
+  labStage?: "FORGE" | "WIELD" | "TINKER";
+  hypothesis?: string;
+  maxLossPct?: number;
+  expiryDate?: string;
+  killCriteria?: string[];
+  hedgePct?: number;
+  edgePct?: number;
+  irreversibility?: number;
+  evidenceNote?: string;
+  asymmetryScore?: number;
+  protocolReady?: boolean;
 }
 
 export interface Affair {
@@ -575,6 +588,111 @@ export interface DecisionAccelerationMeta {
   protocolState: "NOMINAL" | "WATCH" | "CRITICAL";
 }
 
+export interface LabProtocolCheck {
+  key: string;
+  label: string;
+  passed: boolean;
+  detail?: string;
+}
+
+export interface LabSummaryMetrics {
+  protocolIntegrity: number;
+  blockedExperiments: number;
+  averageAsymmetryScore: number;
+  staleOptionalityCount: number;
+}
+
+export type SecondBrainProvider = "OBSIDIAN" | "NOTION";
+
+export interface DecisionGuard {
+  id: string;
+  title: string;
+  description: string;
+  hard: boolean;
+}
+
+export interface DecisionModeSpec {
+  mode: WarGameMode;
+  title: string;
+  narrative: string;
+  requiredFields: string[];
+  predecessors: WarGameMode[];
+}
+
+export interface DecisionSpec {
+  version: string;
+  pipelineStages: string[];
+  guards: DecisionGuard[];
+  modes: DecisionModeSpec[];
+}
+
+export interface DecisionBlockReason {
+  code: string;
+  message: string;
+  guardId?: string;
+  missingItems: string[];
+  overridable: boolean;
+}
+
+export interface PipelineStageStatus {
+  id: string;
+  passed: boolean;
+  message: string;
+  missingItems: string[];
+}
+
+export interface DecisionEvaluationResult {
+  mode: WarGameMode;
+  targetId: string;
+  blocked: boolean;
+  readinessScore: number;
+  missingRequiredFields: string[];
+  blockReasons: DecisionBlockReason[];
+  stages: PipelineStageStatus[];
+  nextStage?: string;
+}
+
+export interface DecisionOverrideRecord {
+  id: string;
+  mode: WarGameMode;
+  targetId: string;
+  guardIds: string[];
+  overrideReason: string;
+  operator: string;
+  timestamp: string;
+}
+
+export interface WarGameGrammarField {
+  key: string;
+  label: string;
+  required: boolean;
+  description: string;
+}
+
+export interface WarGameGrammarSpec {
+  mode: WarGameMode;
+  title: string;
+  narrative: string;
+  fields: WarGameGrammarField[];
+}
+
+export interface WarGameDependencyStatus {
+  mode: WarGameMode;
+  requiredModes: WarGameMode[];
+  missingModes: WarGameMode[];
+  blocked: boolean;
+}
+
+export interface WarGameModeEvaluation {
+  mode: WarGameMode;
+  role: WarGameRole;
+  readinessScore: number;
+  missingRequiredFields: string[];
+  dependency: WarGameDependencyStatus;
+  blockedActions: boolean;
+  nextRecommendedMode?: WarGameMode;
+}
+
 export interface AppData {
   user: UserProfile;
   strategyMatrix: StrategyMatrix;
@@ -680,7 +798,7 @@ export interface CriteriaDto {
 
 export interface PlanBlueprintDto {
   id: string;
-  sourceType: "SOURCE" | "DOMAIN" | "AFFAIR" | "INTEREST" | "MISSION" | "LINEAGE";
+  sourceType: "SOURCE" | "DOMAIN" | "AFFAIR" | "INTEREST" | "CRAFT" | "MISSION" | "LINEAGE";
   sourceId: string;
   title: string;
   scheduleStart?: string;
@@ -723,7 +841,7 @@ export interface ReadinessBreakdownDto {
 
 export interface ProtocolExtrasDto {
   protocolVersion: string;
-  mode: "SOURCE" | "DOMAIN" | "AFFAIR" | "INTEREST" | "MISSION" | "LINEAGE";
+  mode: "SOURCE" | "DOMAIN" | "AFFAIR" | "INTEREST" | "CRAFT" | "MISSION" | "LINEAGE";
   readinessScore: number;
   readinessBand: "ready" | "conditional" | "fragile";
   readinessBreakdown: ReadinessBreakdownDto;

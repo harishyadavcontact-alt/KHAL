@@ -10,6 +10,7 @@ import { SurgicalExecution } from './SurgicalExecution';
 import { DecisionChamber } from './DecisionChamber';
 import { LawsView } from './LawsView';
 import { InterestsView } from './InterestsView';
+import { LabView } from './LabView';
 import { AffairsView } from './AffairsView';
 import { CraftsView } from './CraftsView';
 import { DomainModal } from './DomainModal';
@@ -20,17 +21,18 @@ import { KhalFinalMark } from '../branding/KhalFinalMark';
 import { DashboardView } from './DashboardView';
 import { WarRoomView } from './WarRoomView';
 
-const WAR_GAME_MODES: WarGameMode[] = ['source', 'domain', 'affair', 'interest', 'mission', 'lineage'];
+const WAR_GAME_MODES: WarGameMode[] = ['source', 'domain', 'affair', 'interest', 'craft', 'mission', 'lineage'];
 
 const isWarGameMode = (value: string | null | undefined): value is WarGameMode => {
   return Boolean(value && WAR_GAME_MODES.includes(value as WarGameMode));
 };
 
-const modeToSourceType = (mode: WarGameMode): 'SOURCE' | 'DOMAIN' | 'AFFAIR' | 'INTEREST' | 'MISSION' | 'LINEAGE' => {
+const modeToSourceType = (mode: WarGameMode): 'SOURCE' | 'DOMAIN' | 'AFFAIR' | 'INTEREST' | 'CRAFT' | 'MISSION' | 'LINEAGE' => {
   if (mode === 'source') return 'SOURCE';
   if (mode === 'domain') return 'DOMAIN';
   if (mode === 'affair') return 'AFFAIR';
   if (mode === 'interest') return 'INTEREST';
+  if (mode === 'craft') return 'CRAFT';
   if (mode === 'mission') return 'MISSION';
   return 'LINEAGE';
 };
@@ -55,6 +57,7 @@ const pathToView = (pathname: string): WarRoomViewState | null => {
   if (pathname.startsWith('/war-room')) return 'war-room';
   if (pathname.startsWith('/war-gaming')) return 'war-gaming';
   if (pathname.startsWith('/missionCommand') || pathname.startsWith('/mission-command')) return 'mission';
+  if (pathname.startsWith('/lab')) return 'lab';
   return null;
 };
 
@@ -96,6 +99,7 @@ const App = () => {
       mission: 'mission',
       laws: 'laws',
       interests: 'interests',
+      lab: 'lab',
       affairs: 'affairs',
       'war-gaming': 'war-gaming',
       execution: 'execution',
@@ -139,6 +143,7 @@ const App = () => {
     { id: 'mission', label: 'Mission Command', icon: LayoutDashboard },
     { id: 'laws', label: 'Source of Volatility', icon: Globe },
     { id: 'interests', label: 'Interests', icon: Anchor },
+    { id: 'lab', label: 'Lab', icon: Zap },
     { id: 'affairs', label: 'Affairs', icon: Briefcase },
     { id: 'war-gaming', label: 'War Gaming', icon: Zap },
     { id: 'execution', label: 'Surgical Execution', icon: Crosshair },
@@ -162,6 +167,10 @@ const App = () => {
     }
     if (nextView === 'war-gaming') {
       router.push('/war-gaming');
+      return;
+    }
+    if (nextView === 'lab') {
+      router.push('/lab');
       return;
     }
     setActiveView(nextView);
@@ -695,9 +704,11 @@ const App = () => {
                     onSelectInterest={setSelectedInterestId}
                     onSelectAffair={setSelectedAffairId}
                     onCreateInterest={createInterest}
+                    onOpenLab={(interestId) => window.location.assign(`/lab?focus=${encodeURIComponent(interestId)}`)}
                     onWarGame={(interestId) => openWarGame('interest', interestId)}
                   />
                 )}
+                {activeView === 'lab' && <LabView data={data} onRefresh={refreshAppData} />}
                 {activeView === 'affairs' && (
                   <AffairsView data={data} onSelectAffair={setSelectedAffairId} onCreateAffair={createAffair} onWarGame={(affairId) => openWarGame('affair', affairId)} />
                 )}
@@ -709,6 +720,7 @@ const App = () => {
                     lineages={data.lineages?.nodes ?? []}
                     affairs={data.affairs}
                     interests={data.interests}
+                    crafts={data.crafts}
                     tasks={data.tasks}
                     lineageRisks={data.lineageRisks ?? []}
                     missionGraph={data.missionGraph}

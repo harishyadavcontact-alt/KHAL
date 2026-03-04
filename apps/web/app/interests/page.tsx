@@ -28,6 +28,7 @@ export default function InterestsPage() {
             await createInterest(payload);
             await refresh();
           }}
+          onOpenLab={(interestId) => router.push(`/lab?focus=${encodeURIComponent(interestId)}`)}
           onWarGame={(interestId) => router.push(`/war-gaming/interest?target=${encodeURIComponent(interestId)}`)}
         />
       )}

@@ -1,4 +1,5 @@
-import type { WarGameMode } from "./types";
+import type { WarGameDependencyStatus, WarGameGrammarSpec, WarGameMode, WarGameModeEvaluation, WarGameRole } from "./types";
+import { getDecisionSpec } from "../../lib/decision-spec";
 
 export interface WarGameStage {
   id: "A" | "B" | "C" | "D" | "E";
@@ -46,6 +47,7 @@ export const WAR_GAME_MODES: Array<{ id: WarGameMode; label: string }> = [
   { id: "domain", label: "Domain WarGame" },
   { id: "affair", label: "Affair WarGame" },
   { id: "interest", label: "Interest WarGame" },
+  { id: "craft", label: "Craft WarGame" },
   { id: "mission", label: "Mission WarGame" },
   { id: "lineage", label: "Lineage WarGame" }
 ];
@@ -58,13 +60,70 @@ export const WAR_GAME_STAGES: WarGameStage[] = [
   { id: "E", title: "Readiness & Execute", description: "Score readiness and apply critical execute gates." }
 ];
 
-export function modeToPlanSourceType(mode: WarGameMode): "SOURCE" | "DOMAIN" | "AFFAIR" | "INTEREST" | "MISSION" | "LINEAGE" {
+const DECISION_SPEC = getDecisionSpec();
+export const WAR_GAME_PREDECESSORS: Record<WarGameMode, WarGameMode[]> = Object.fromEntries(
+  DECISION_SPEC.modes.map((mode) => [mode.mode, mode.predecessors])
+) as Record<WarGameMode, WarGameMode[]>;
+
+export const WAR_GAME_GRAMMAR_REGISTRY: Record<WarGameMode, WarGameGrammarSpec> = Object.fromEntries(
+  DECISION_SPEC.modes.map((mode) => [
+    mode.mode,
+    {
+      mode: mode.mode,
+      title: mode.title,
+      narrative: mode.narrative,
+      fields: mode.requiredFields.map((key) => ({
+        key,
+        label: key.replaceAll("_", " "),
+        required: true,
+        description: `Required field: ${key}`
+      }))
+    }
+  ])
+) as Record<WarGameMode, WarGameGrammarSpec>;
+
+export function modeToPlanSourceType(mode: WarGameMode): "SOURCE" | "DOMAIN" | "AFFAIR" | "INTEREST" | "CRAFT" | "MISSION" | "LINEAGE" {
   if (mode === "source") return "SOURCE";
   if (mode === "domain") return "DOMAIN";
   if (mode === "affair") return "AFFAIR";
   if (mode === "interest") return "INTEREST";
+  if (mode === "craft") return "CRAFT";
   if (mode === "mission") return "MISSION";
   return "LINEAGE";
+}
+
+export function evaluateWarGameMode(args: {
+  mode: WarGameMode;
+  role: WarGameRole;
+  readinessScore: number;
+  filledFieldKeys: string[];
+  completedModes: Partial<Record<WarGameMode, boolean>>;
+}): WarGameModeEvaluation {
+  const grammar = WAR_GAME_GRAMMAR_REGISTRY[args.mode];
+  const requiredFieldKeys = grammar.fields.filter((field) => field.required).map((field) => field.key);
+  const filled = new Set(args.filledFieldKeys);
+  const missingRequiredFields = requiredFieldKeys.filter((field) => !filled.has(field));
+
+  const requiredModes = WAR_GAME_PREDECESSORS[args.mode];
+  const missingModes = requiredModes.filter((mode) => !args.completedModes[mode]);
+  const dependency: WarGameDependencyStatus = {
+    mode: args.mode,
+    requiredModes,
+    missingModes,
+    blocked: missingModes.length > 0
+  };
+  const blockedActions = missingRequiredFields.length > 0 || (args.role === "MISSIONARY" && dependency.blocked);
+  const nextRecommendedMode = missingModes[0] ?? (missingRequiredFields.length ? args.mode : undefined);
+
+  return {
+    mode: args.mode,
+    role: args.role,
+    readinessScore: Math.max(0, Math.min(100, Math.round(args.readinessScore))),
+    missingRequiredFields,
+    dependency,
+    blockedActions,
+    nextRecommendedMode
+  };
 }
 
 export function calculateReadiness(input: ReadinessInput): ReadinessResult {

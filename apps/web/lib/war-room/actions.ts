@@ -57,11 +57,12 @@ const ensureTaskSourceType = (sourceType?: string): "AFFAIR" | "INTEREST" | "PLA
   return "PLAN";
 };
 
-const modeToSourceType = (mode: WarGameMode): "SOURCE" | "DOMAIN" | "AFFAIR" | "INTEREST" | "MISSION" | "LINEAGE" => {
+const modeToSourceType = (mode: WarGameMode): "SOURCE" | "DOMAIN" | "AFFAIR" | "INTEREST" | "CRAFT" | "MISSION" | "LINEAGE" => {
   if (mode === "source") return "SOURCE";
   if (mode === "domain") return "DOMAIN";
   if (mode === "affair") return "AFFAIR";
   if (mode === "interest") return "INTEREST";
+  if (mode === "craft") return "CRAFT";
   if (mode === "mission") return "MISSION";
   return "LINEAGE";
 };
@@ -98,8 +99,38 @@ export async function createInterest(payload: { title: string; domainId: string 
       status: "NOT_STARTED",
       stakes: 5,
       risk: 5,
-      convexity: 5
+      convexity: 5,
+      labStage: "FORGE",
+      hedgePct: 90,
+      edgePct: 10
     })
+  });
+}
+
+export async function updateInterest(
+  id: string,
+  payload: Partial<{
+    title: string;
+    domainId: string;
+    stakes: number;
+    risk: number;
+    convexity: number;
+    status: "NOT_STARTED" | "IN_PROGRESS" | "DONE" | "PARKED" | "WAITING";
+    labStage: "FORGE" | "WIELD" | "TINKER";
+    hypothesis: string;
+    maxLossPct: number;
+    expiryDate: string;
+    killCriteria: string[];
+    hedgePct: number;
+    edgePct: number;
+    irreversibility: number;
+    evidenceNote: string;
+  }>
+) {
+  await requestJson(`/api/interests/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
   });
 }
 

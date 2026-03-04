@@ -95,6 +95,15 @@ export interface Interest {
   convexity: number;
   status: Status;
   notes?: string;
+  labStage?: "FORGE" | "WIELD" | "TINKER";
+  hypothesis?: string;
+  maxLossPct?: number;
+  expiryDate?: string;
+  killCriteria?: string[];
+  hedgePct?: number;
+  edgePct?: number;
+  irreversibility?: number;
+  evidenceNote?: string;
 }
 
 export interface Task {

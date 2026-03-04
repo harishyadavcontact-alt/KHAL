@@ -1,0 +1,9 @@
+ALTER TABLE interests ADD COLUMN lab_stage TEXT;
+ALTER TABLE interests ADD COLUMN hypothesis TEXT;
+ALTER TABLE interests ADD COLUMN max_loss_pct REAL;
+ALTER TABLE interests ADD COLUMN expiry_date TEXT;
+ALTER TABLE interests ADD COLUMN kill_criteria_json TEXT;
+ALTER TABLE interests ADD COLUMN hedge_pct REAL;
+ALTER TABLE interests ADD COLUMN edge_pct REAL;
+ALTER TABLE interests ADD COLUMN irreversibility REAL;
+ALTER TABLE interests ADD COLUMN evidence_note TEXT;
