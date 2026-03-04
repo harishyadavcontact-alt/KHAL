@@ -74,6 +74,10 @@ node scripts/qa-report.mjs
 ## Quality Gate (v0.4.3-RC)
 - CI is npm-only and deterministic (`npm ci`).
 - Required checks are split into: `verify`, `build`, `smoke`, `security-audit`.
+- Local single-command reliability gate:
+  - `npm run quality:gate`
+- CI workflow hygiene audit:
+  - `npm run ci:audit`
 - Cross-platform smoke and perf outputs are written to:
   - `artifacts/quality/smoke-routes.json`
   - `artifacts/quality/perf-smoke.json`
@@ -83,6 +87,8 @@ node scripts/qa-report.mjs
   - `docs/uat/v0.4.3-uat-evidence-template.md`
 - CI gate contract:
   - `docs/release/ci-gate-contract.md`
+- Main-branch release packaging sequence:
+  - `npm run release:package:main`
 
 ## Fractal War Gaming (v0.4.2)
 - Modes are first-class and mode-specific: `source`, `domain`, `affair`, `interest`, `craft`, `lineage`, `mission`.
