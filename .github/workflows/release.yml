@@ -1,0 +1,83 @@
+﻿name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version tag (for example v0.4.3-rc1)'
+        required: true
+        type: string
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm --workspace @khal/web run test
+      - name: Run smoke + perf
+        shell: bash
+        run: |
+          npm --workspace @khal/web exec next start -p 3010 > release-server.log 2>&1 &
+          for i in {1..45}; do
+            if curl -fsS http://localhost:3010 >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          node scripts/smoke-routes.mjs --baseUrl=http://localhost:3010
+          node scripts/perf-smoke.mjs --baseUrl=http://localhost:3010
+          node scripts/qa-report.mjs
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create tag for workflow_dispatch
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag "${{ steps.version.outputs.tag }}" || true
+          git push origin "${{ steps.version.outputs.tag }}" || true
+      - name: Generate changelog excerpt
+        shell: bash
+        run: |
+          mkdir -p artifacts/quality
+          head -n 120 CHANGELOG.md > artifacts/quality/changelog-excerpt.md
+      - name: Upload quality artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-quality-artifacts
+          path: artifacts/quality
+          if-no-files-found: warn
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            artifacts/quality/*.json
+            artifacts/quality/*.md

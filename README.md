@@ -34,9 +34,17 @@ npm --workspace @khal/web run dev
 - `/war-room`
 - `/missionCommand`
 - `/source-of-volatility`
+- `/lab`
 - `/interests`
 - `/affairs`
 - `/war-gaming` (landing redirects to `/war-gaming/affair`)
+- `/war-gaming/source`
+- `/war-gaming/domain`
+- `/war-gaming/affair`
+- `/war-gaming/interest`
+- `/war-gaming/craft`
+- `/war-gaming/lineage`
+- `/war-gaming/mission`
 - `/surgical-execution`
 - `/crafts-library`
 - `/time-horizon`
@@ -59,7 +67,30 @@ npm run typecheck
 npm run build
 npm --workspace @khal/web run test
 npm --workspace @khal/web run smoke:routes
+npm --workspace @khal/web run perf:smoke
+node scripts/qa-report.mjs
 ```
+
+## Quality Gate (v0.4.3-RC)
+- CI is npm-only and deterministic (`npm ci`).
+- Required checks are split into: `verify`, `build`, `smoke`, `security-audit`.
+- Cross-platform smoke and perf outputs are written to:
+  - `artifacts/quality/smoke-routes.json`
+  - `artifacts/quality/perf-smoke.json`
+  - `artifacts/quality/qa-summary.json`
+- UAT checklist and evidence templates:
+  - `docs/uat/v0.4.3-uat-checklist.md`
+  - `docs/uat/v0.4.3-uat-evidence-template.md`
+- CI gate contract:
+  - `docs/release/ci-gate-contract.md`
+
+## Fractal War Gaming (v0.4.2)
+- Modes are first-class and mode-specific: `source`, `domain`, `affair`, `interest`, `craft`, `lineage`, `mission`.
+- Hybrid role flow:
+  - `Missionary`: stricter dependency-first posture, risky actions blocked when predecessor grammar is missing.
+  - `Visionary`: free mode jumps with deterministic dependency warnings.
+- Canonical decision tree artifact:
+  - `docs/decision-tree/war-room-fractal-decision-tree.md`
 
 ## References
 - Web implementation notes: `apps/web/README.md`

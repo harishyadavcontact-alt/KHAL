@@ -10,11 +10,13 @@
     "build": "next build",
     "prestart": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/ensure-port-3010.ps1 -Port 3010",
     "start": "next start -p 3010",
-    "lint": "tsc --noEmit -p tsconfig.json",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "next typegen && tsc --noEmit -p tsconfig.json",
+    "typecheck": "next typegen && tsc --noEmit -p tsconfig.json",
     "test": "vitest run --passWithNoTests --maxWorkers=1",
     "test:decision-compat": "vitest run test/decision-compatibility.test.ts",
-    "smoke:routes": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/smoke-routes-3010.ps1 -BaseUrl http://localhost:3010"
+    "smoke:routes": "node ../../scripts/smoke-routes.mjs --baseUrl=http://localhost:3010",
+    "smoke:routes:ps1": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/smoke-routes-3010.ps1 -BaseUrl http://localhost:3010",
+    "perf:smoke": "node ../../scripts/perf-smoke.mjs --baseUrl=http://localhost:3010"
   },
   "dependencies": {
     "@khal/domain": "file:../../packages/domain",

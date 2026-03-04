@@ -7,6 +7,9 @@ coverage
 .khal.local.json
 *.log
 .vscode/
+.idea/
+.codex_tmp/
 data/
 exports/
 *.tsbuildinfo
+artifacts/
