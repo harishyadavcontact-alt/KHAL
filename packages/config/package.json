@@ -5,6 +5,6 @@
   "type": "module",
   "exports": {
     "./tsconfig.base": "./tsconfig.base.json",
-    "./vitest.base": "./vitest.base.ts"
+    "./vitest.base": "./vitest.base.mjs"
   }
 }

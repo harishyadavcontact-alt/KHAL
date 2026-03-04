@@ -4,7 +4,8 @@ Goal:
 Decision-making operating system.
 
 Single Source of Truth:
-Excel Spreadsheet.
+SQLite runtime database (`data/KHAL.sqlite`).
+Excel (`Genesis.xlsx`) is archival/reference only.
 
 Architecture Philosophy:
 - War Room = authoritative ontology
@@ -25,5 +26,6 @@ Modes:
 
 Rules:
 Never redesign Excel schema silently.
+Never treat Excel as runtime authority without an explicit migration decision.
 Narrative > dashboards.
 Speed > polish.

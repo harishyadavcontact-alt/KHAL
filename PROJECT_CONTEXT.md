@@ -1,17 +1,24 @@
 PROJECT_CONTEXT.md
 
-Khal is a browser-based visualization layer
-over an Excel antifragility framework.
+KHAL is a browser-based decision operating system over a SQLite runtime.
 
-User can:
-- add affairs
-- add interests
-- create plans
-- manage tasks
-- visualize domains
+Core loop:
+- Volatility and causal opacity set the operating condition.
+- Harm is treated as the most reliable signal.
+- Affairs reduce fragility and move toward robustness.
+- Interests add convex optionality and move beyond robustness.
+- Mission Command sequences action under hierarchy and dependency constraints.
 
-Excel remains backend.
-UI is bi-directional editor.
+Primary user capabilities:
+- create and manage affairs
+- create and manage interests
+- run war-gaming protocols
+- queue surgical execution tasks
+- inspect domain and lineage risk posture
+
+Data model policy:
+- SQLite is the operational and strategic source of truth.
+- `Genesis.xlsx` is retained as historical reference only.
 
 End goal:
-Agent called theKhal acts as commander.
+- an always-on decision cockpit that surfaces the next best action instantly.

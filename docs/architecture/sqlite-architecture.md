@@ -1,10 +1,9 @@
 # KHAL SQLite Architecture (v0.2 Pivot)
 
 ## Canonical Data Model
-- **Canonical ontology authority**: Excel workbook (schema and doctrine structure)
-- **Operational runtime store**: `data/KHAL.sqlite` (local projection/cache for performance and offline execution)
-- **Interop formats**: Excel, CSV, JSON (import/export)
-- **UI writes/reads**: SQLite runtime, then synchronized/mapped back to canonical Excel structure
+- **Canonical runtime + strategic authority**: `data/KHAL.sqlite`
+- **Runtime mode**: local-first, offline-capable, deterministic API reads/writes
+- **Historical artifacts**: `Genesis.xlsx` retained for reference only (not active authority)
 
 ## War Room Translation
 War Room has narrative hierarchy. It maps to:
@@ -47,10 +46,3 @@ Hierarchy:
 - DB bootstrap script: `scripts/bootstrap-sqlite.ts`
 - Schema migration: `packages/sqlite-core/migrations/0001_init.sql`
 - Runtime adapter entry: `packages/sqlite-core/src/index.ts`
-
-## Excel/SQLite Sync Strategy
-1. Bootstrap DB schema (projection)
-2. Import canonical workbook (`Genesis.xlsx`) into SQLite projection
-3. Run APIs/UI on SQLite runtime for speed
-4. Export/sync changes through explicit mapping layer to preserve Excel authority
-5. Never redesign Excel schema silently

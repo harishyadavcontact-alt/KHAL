@@ -2,6 +2,12 @@ import React, { useMemo, useState } from "react";
 import { Activity, ArrowRight, Briefcase, ChevronRight, Compass, Layers, Shield, Sword, Target } from "lucide-react";
 import { AppData, Affair } from "./types";
 import { cn } from "./utils";
+import {
+  AssumptionRegisterPanel,
+  DecisionReplayPanel,
+  OutcomeAttributionPanel,
+  RecoveryPlaybooksPanel
+} from "./panels/RobustnessPanels";
 
 interface DecisionChamberProps {
   affair: Affair;
@@ -172,6 +178,15 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans,
       </div>
 
       {error && <div className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</div>}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <DecisionReplayPanel events={data.decisionReplay} />
+        <OutcomeAttributionPanel data={data} />
+        <AssumptionRegisterPanel assumptions={data.assumptions} />
+      </div>
+      <div className="mb-6">
+        <RecoveryPlaybooksPanel rows={data.recoveryPlaybooks} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-4 space-y-6">
