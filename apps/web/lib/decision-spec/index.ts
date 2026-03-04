@@ -1,10 +1,17 @@
 import type { Affair, Craft, Interest, KhalState, Task } from "@khal/domain";
 import {
+  doctrineQuickActionSchema,
   decisionEvaluationResultSchema,
   decisionSpecSchema,
+  triageEvaluationSnapshotSchema,
+  triageSuggestionSchema,
   type DecisionBlockReasonDto,
   type DecisionEvaluationResultDto,
   type DecisionSpecDto,
+  type DoctrineQuickActionDto,
+  type DoctrineQuickActionKindDto,
+  type TriageEvaluationSnapshotDto,
+  type TriageSuggestionDto,
   type WarGameModeSpec
 } from "./schema";
 
@@ -313,6 +320,145 @@ export function evaluateDecision(args: {
     blockReasons: reasons,
     stages,
     nextStage: firstBlockedStage
+  });
+}
+
+function triageActionsForReason(args: {
+  mode: WarGameModeSpec;
+  targetId: string;
+  reason: DecisionBlockReasonDto;
+}): DoctrineQuickActionDto[] {
+  const base = {
+    mode: args.mode,
+    targetId: args.targetId
+  };
+  const action = (kind: DoctrineQuickActionKindDto, label: string, payload: Record<string, unknown>, guardIds: string[] = []) =>
+    doctrineQuickActionSchema.parse({
+      id: `${kind}-${args.mode}-${args.targetId}`,
+      label,
+      kind,
+      targetRef: base,
+      payload,
+      guardIds
+    });
+
+  if (args.reason.code === "INTEREST_CONVEXITY_INCOMPLETE" || args.reason.code === "GRAMMAR_INCOMPLETE") {
+    const has = (key: string) => args.reason.missingItems.includes(key);
+    const out: DoctrineQuickActionDto[] = [];
+    if (has("maxLossPct") || has("loss_expiry")) out.push(action("SET_INTEREST_MAX_LOSS_DEFAULT", "Set max-loss default (10%)", { maxLossPct: 10 }, ["G3_INTEREST_CONVEXITY"]));
+    if (has("expiryDate") || has("loss_expiry")) out.push(action("SET_INTEREST_EXPIRY_DEFAULT_30D", "Set expiry to +30 days", { expiryOffsetDays: 30 }, ["G3_INTEREST_CONVEXITY"]));
+    if (has("killCriteria") || has("kill_criteria")) out.push(action("ADD_INTEREST_KILL_CRITERIA_TEMPLATE", "Add kill-criteria template", { killCriteria: ["No measurable edge by expiry review."] }, ["G3_INTEREST_CONVEXITY"]));
+    if (has("barbell_split") || has("hedgePct") || has("edgePct")) out.push(action("SET_INTEREST_BARBELL_90_10", "Set barbell split 90/10", { hedgePct: 90, edgePct: 10 }, ["G3_INTEREST_CONVEXITY"]));
+    return out;
+  }
+
+  if (args.reason.code === "AFFAIR_NO_HEDGE") {
+    return [
+      action("SET_AFFAIR_THRESHOLD_TEMPLATE", "Set affair threshold template", { objectives: ["Define no-ruin threshold"], uncertainty: "Known constraints", timeHorizon: "WEEK" }, ["G2_AFFAIRS_ROBUSTNESS"]),
+      action("SET_AFFAIR_PREP_TEMPLATE", "Set affair prep template", { methodology: "Checklist first", technology: "Minimal moving parts", techniques: "Fail-safe rehearsal" }, ["G2_AFFAIRS_ROBUSTNESS"])
+    ];
+  }
+
+  if (args.reason.code === "COMPLEX_MONOMODAL_BLOCK") {
+    return [
+      action(
+        "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE",
+        "Set domain hedge+edge posture template",
+        { hedgeText: "Protect downside via robust baseline.", edgeText: "Expose to asymmetric upside via capped bets." },
+        ["G1_COMPLEX_MONOMODAL"]
+      )
+    ];
+  }
+
+  if (args.reason.code === "NO_RUIN_GATE_FAILED") {
+    return [action("TRIPWIRE_RECOVERY_PATH", "Open no-ruin recovery path", { guidance: "Resolve tripwire recovery action before execution." }, ["G4_NO_RUIN"])];
+  }
+
+  return [];
+}
+
+function reasonPriority(reason: DecisionBlockReasonDto): number {
+  if (reason.code === "NO_RUIN_GATE_FAILED") return 100;
+  if (reason.code === "COMPLEX_MONOMODAL_BLOCK") return 90;
+  if (reason.code === "AFFAIR_NO_HEDGE") return 85;
+  if (reason.code === "INTEREST_CONVEXITY_INCOMPLETE") return 80;
+  if (reason.code === "GRAMMAR_INCOMPLETE") return 75;
+  if (reason.code === "PREDECESSOR_MISSING") return 60;
+  return 50;
+}
+
+export function buildDeterministicTriage(args: {
+  mode: WarGameModeSpec;
+  targetId: string;
+  state: KhalState;
+  role?: "MISSIONARY" | "VISIONARY";
+  noRuinGate?: boolean;
+  overrides?: string[];
+}): TriageSuggestionDto[] {
+  const evaluation = evaluateDecision(args);
+  const suggestions: TriageSuggestionDto[] = [];
+
+  for (const reason of evaluation.blockReasons) {
+    const actions = triageActionsForReason({ mode: args.mode, targetId: args.targetId, reason });
+    if (!actions.length) {
+      suggestions.push(
+        triageSuggestionSchema.parse({
+          id: `${reason.code}-${args.mode}-${args.targetId}`,
+          mode: args.mode,
+          targetId: args.targetId,
+          title: reason.code,
+          reason: reason.message,
+          priority: reasonPriority(reason),
+          missingItems: reason.missingItems,
+          expectedReadinessDelta: reason.code === "PREDECESSOR_MISSING" ? 8 : 10
+        })
+      );
+      continue;
+    }
+    for (const action of actions) {
+      suggestions.push(
+        triageSuggestionSchema.parse({
+          id: `${reason.code}-${action.kind}-${args.mode}-${args.targetId}`,
+          mode: args.mode,
+          targetId: args.targetId,
+          title: action.label,
+          reason: reason.message,
+          priority: reasonPriority(reason),
+          missingItems: reason.missingItems,
+          actionKind: action.kind,
+          actionPayload: action.payload,
+          expectedReadinessDelta: reason.code === "NO_RUIN_GATE_FAILED" ? 0 : 10
+        })
+      );
+    }
+  }
+
+  return suggestions.sort((left, right) => {
+    if (right.priority !== left.priority) return right.priority - left.priority;
+    if (right.expectedReadinessDelta !== left.expectedReadinessDelta) return right.expectedReadinessDelta - left.expectedReadinessDelta;
+    return left.id.localeCompare(right.id);
+  });
+}
+
+export function evaluateDecisionWithTriage(args: {
+  mode: WarGameModeSpec;
+  targetId: string;
+  state: KhalState;
+  role?: "MISSIONARY" | "VISIONARY";
+  noRuinGate?: boolean;
+  overrides?: string[];
+}): TriageEvaluationSnapshotDto {
+  const evaluation = evaluateDecision(args);
+  const suggestions = buildDeterministicTriage(args);
+  const nextAction = suggestions[0]?.title ?? (evaluation.blocked ? "Resolve blockers" : "Proceed to action plan emit");
+  return triageEvaluationSnapshotSchema.parse({
+    mode: args.mode,
+    targetId: args.targetId,
+    blocked: evaluation.blocked,
+    readinessScore: evaluation.readinessScore,
+    nextAction,
+    suggestions,
+    generatedAtIso: new Date().toISOString()
   });
 }
 

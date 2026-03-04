@@ -273,6 +273,76 @@ export interface ExecutionSplitMetrics {
   imbalanceBand: "balanced" | "affairs-heavy" | "interests-heavy" | "fragile-middle";
 }
 
+export interface HudStatusSnapshot {
+  protocolState: "NOMINAL" | "WATCH" | "CRITICAL";
+  confidence: "HIGH" | "MEDIUM" | "LOW";
+  dataQuality: "HIGH" | "MEDIUM" | "LOW";
+  volatilityBand: "stable" | "watch" | "critical";
+  fallbackUsed: boolean;
+  invariantViolationCount: number;
+  activeAlertCount: number;
+  computedAtIso: string;
+}
+
+export interface LifeClockSnapshot {
+  ageYears: number;
+  lifeExpectancyYears: number;
+  yearsRemaining: number;
+  progressPct: number;
+  runwayDays: number;
+  runwayBand: "critical" | "watch" | "stable";
+}
+
+export interface AlertQueueItem {
+  id: string;
+  title: string;
+  severity: "CRITICAL" | "WATCH" | "INFO";
+  source: string;
+  reason: string;
+  nextAction?: string;
+}
+
+export interface SystemAnatomyNode {
+  id: string;
+  label: string;
+  lane: "risk" | "robust" | "optionality";
+  score: number;
+}
+
+export interface SystemAnatomyEdge {
+  id: string;
+  from: string;
+  to: string;
+  weight: number;
+}
+
+export interface SystemAnatomySnapshot {
+  nodes: SystemAnatomyNode[];
+  edges: SystemAnatomyEdge[];
+  criticalNodeId?: string;
+}
+
+export interface ViaNegativaItem {
+  id: string;
+  title: string;
+  pressure: number;
+  source: string;
+  reason: string;
+}
+
+export interface BlackSwanReadinessSnapshot {
+  crisisMode: "CALM" | "WATCH" | "CRISIS";
+  readinessScore: number;
+  openCriticalRisks: number;
+  trigger: string;
+  nextAction: string;
+}
+
+export interface ExecutionDistributionSnapshot {
+  defense: { total: number; done: number; inProgress: number };
+  offense: { total: number; done: number; inProgress: number };
+}
+
 export interface NoRuinTripwireState {
   state: "NOMINAL" | "WATCH" | "BLOCK";
   reason: string;
@@ -650,6 +720,51 @@ export interface DecisionEvaluationResult {
   blockReasons: DecisionBlockReason[];
   stages: PipelineStageStatus[];
   nextStage?: string;
+}
+
+export type DoctrineQuickActionKind =
+  | "SET_INTEREST_MAX_LOSS_DEFAULT"
+  | "SET_INTEREST_EXPIRY_DEFAULT_30D"
+  | "ADD_INTEREST_KILL_CRITERIA_TEMPLATE"
+  | "SET_INTEREST_BARBELL_90_10"
+  | "SET_AFFAIR_THRESHOLD_TEMPLATE"
+  | "SET_AFFAIR_PREP_TEMPLATE"
+  | "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE"
+  | "TRIPWIRE_RECOVERY_PATH";
+
+export interface DoctrineQuickAction {
+  id: string;
+  label: string;
+  kind: DoctrineQuickActionKind;
+  targetRef: {
+    mode: WarGameMode;
+    targetId: string;
+  };
+  payload: Record<string, unknown>;
+  guardIds: string[];
+}
+
+export interface TriageSuggestion {
+  id: string;
+  mode: WarGameMode;
+  targetId: string;
+  title: string;
+  reason: string;
+  priority: number;
+  missingItems: string[];
+  actionKind?: DoctrineQuickActionKind;
+  actionPayload?: Record<string, unknown>;
+  expectedReadinessDelta: number;
+}
+
+export interface TriageEvaluationSnapshot {
+  mode: WarGameMode;
+  targetId: string;
+  blocked: boolean;
+  readinessScore: number;
+  nextAction: string;
+  suggestions: TriageSuggestion[];
+  generatedAtIso: string;
 }
 
 export interface DecisionOverrideRecord {
