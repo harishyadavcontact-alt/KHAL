@@ -1,5 +1,5 @@
 import React from "react";
-import { AppData, Domain } from "./types";
+import { AppData, Domain, TriageEvaluationSnapshot } from "./types";
 import { HUD } from "./HUD";
 import { StrategyCircle } from "./StrategyCircle";
 import { FragilityRadar } from "./FragilityRadar";
@@ -14,15 +14,27 @@ import { ExecutionSplitPanel } from "./maya/ExecutionSplitPanel";
 import { VirtueSpiralPanel } from "./VirtueSpiralPanel";
 import { DoNowCopilotCard } from "./DoNowCopilotCard";
 import { ProtocolStatusStrip } from "./ProtocolStatusStrip";
+import { HudStatusStrip } from "./hud/HudStatusStrip";
+import { LifeClockCard } from "./hud/LifeClockCard";
+import { AlertQueuePanel } from "./hud/AlertQueuePanel";
 import {
+  BlackSwanReadinessPanel,
   ConfidenceEvidenceStrip,
   CounterfactualDeltaPanel,
+  ExecutionDistributionPanel,
   FragilityHeatTimelinePanel,
   NoRuinTripwirePanel,
   OptionalityBudgetPanel,
-  RuinLedgerPanel
+  RuinLedgerPanel,
+  ViaNegativaPanel
 } from "./panels/RobustnessPanels";
+import { NextActionStrip } from "./panels/NextActionStrip";
 import { v03Flags } from "../../lib/war-room/feature-flags";
+import {
+  computeBlackSwanReadiness,
+  computeExecutionDistribution,
+  computeViaNegativaQueue
+} from "../../lib/war-room/operational-metrics";
 
 export function DashboardView({
   data,
@@ -74,6 +86,74 @@ export function DashboardView({
     }
   }), []);
   const decisionAcceleration = data.decisionAcceleration ?? fallbackDecisionAcceleration;
+  const viaNegativa = React.useMemo(() => computeViaNegativaQueue(data, 5), [data]);
+  const blackSwan = React.useMemo(() => computeBlackSwanReadiness(data), [data]);
+  const executionDistribution = React.useMemo(() => computeExecutionDistribution(data), [data]);
+  const [triage, setTriage] = React.useState<TriageEvaluationSnapshot | null>(null);
+  const [actionNotice, setActionNotice] = React.useState("");
+  const triageContext = React.useMemo(() => {
+    if (data.interests.length) return { mode: "interest", targetId: data.interests[0].id };
+    if (data.affairs.length) return { mode: "affair", targetId: data.affairs[0].id };
+    if (data.domains.length) return { mode: "domain", targetId: data.domains[0].id };
+    return { mode: "mission", targetId: "mission-global" };
+  }, [data.affairs, data.domains, data.interests]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch("/api/decision/triage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...triageContext, role: "MISSIONARY", noRuinGate: true })
+    })
+      .then((res) => res.json())
+      .then((payload) => {
+        if (cancelled) return;
+        setTriage(payload as TriageEvaluationSnapshot);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setTriage(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [triageContext]);
+
+  const openWarGaming = React.useCallback((mode: string, targetId: string) => {
+    if (typeof window !== "undefined") {
+      window.location.assign(`/war-gaming/${mode}?target=${encodeURIComponent(targetId)}`);
+    }
+  }, []);
+
+  const applyTriageAction = React.useCallback(
+    async (suggestionId: string) => {
+      const suggestion = triage?.suggestions.find((item) => item.id === suggestionId);
+      if (!suggestion?.actionKind) return;
+      try {
+        const response = await fetch("/api/decision/quick-action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            kind: suggestion.actionKind,
+            targetRef: { mode: suggestion.mode, targetId: suggestion.targetId },
+            payload: suggestion.actionPayload ?? {},
+            role: "MISSIONARY",
+            noRuinGate: true
+          })
+        });
+        const payload = await response.json();
+        if (!response.ok || payload?.error) {
+          setActionNotice(String(payload?.error ?? "Quick action failed."));
+          return;
+        }
+        if (payload?.evaluation) setTriage(payload.evaluation as TriageEvaluationSnapshot);
+        setActionNotice(`Applied: ${suggestion.title}`);
+      } catch {
+        setActionNotice("Quick action failed.");
+      }
+    },
+    [triage]
+  );
 
   const filteredPanel = React.useMemo(() => {
     const domainsById = new Map(data.domains.map((domain) => [domain.id, domain]));
@@ -115,10 +195,14 @@ export function DashboardView({
 
   return (
     <div className="max-w-7xl mx-auto px-3 py-5">
+      {v03Flags.hud && <HudStatusStrip data={data} />}
+      <NextActionStrip triage={triage} onOpen={openWarGaming} onApplyAction={applyTriageAction} />
+      {actionNotice ? <div className="mb-3 text-xs text-blue-300">{actionNotice}</div> : null}
       <HUD user={data.user} />
       <ProtocolStatusStrip meta={data.decisionAccelerationMeta} />
       {v03Flags.confidence && <ConfidenceEvidenceStrip confidence={data.confidence} protocolState={data.decisionAccelerationMeta?.protocolState} />}
       {v03Flags.tripwire && <NoRuinTripwirePanel tripwire={data.tripwire} />}
+      {v03Flags.hud && <AlertQueuePanel data={data} compact />}
       <FogOfMayaPanel data={data} />
 
       <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-4 mb-6">
@@ -133,7 +217,8 @@ export function DashboardView({
 
       <OperationalDoNowPanel data={data} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div className={`grid grid-cols-1 ${v03Flags.hud ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-4 mb-6`}>
+        {v03Flags.hud && <LifeClockCard data={data} />}
         <StakesTriadPanel data={data} />
         <BarbellGuardrailPanel data={data} />
         <ExecutionSplitPanel data={data} />
@@ -147,6 +232,12 @@ export function DashboardView({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <RuinLedgerPanel items={data.ruinLedger} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <ViaNegativaPanel items={viaNegativa} />
+        <BlackSwanReadinessPanel snapshot={blackSwan} />
+        <ExecutionDistributionPanel snapshot={executionDistribution} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
