@@ -1,0 +1,174 @@
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { existsSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { tmpdir } from "node:os";
+import Database from "better-sqlite3";
+import { initDatabase } from "@khal/sqlite-core";
+import { POST as dryRunPost } from "../app/api/agent/wargame/dry-run/route";
+import { POST as commitPost } from "../app/api/agent/wargame/commit/route";
+import { POST as evaluatePost } from "../app/api/decision/evaluate/route";
+import { POST as overridePost } from "../app/api/decision/override/route";
+
+const SETTINGS_PATH = path.resolve(process.cwd(), "..", "..", ".khal.local.json");
+
+function writeSettings(dbPath: string) {
+  writeFileSync(SETTINGS_PATH, JSON.stringify({ dbPath }, null, 2), "utf-8");
+}
+
+function fixtureDb(): string {
+  const tempDir = mkdtempSync(path.join(tmpdir(), "khal-tri-readable-"));
+  const dbPath = path.join(tempDir, "KHAL-tri-readable.sqlite");
+  initDatabase(dbPath);
+  return dbPath;
+}
+
+function postJson(url: string, body: unknown): Request {
+  return new Request(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+}
+
+describe("tri-readable api contracts", () => {
+  let previousSettings: string | null = null;
+  let dbPath = "";
+
+  beforeEach(() => {
+    previousSettings = existsSync(SETTINGS_PATH) ? readFileSync(SETTINGS_PATH, "utf-8") : null;
+    dbPath = fixtureDb();
+    writeSettings(dbPath);
+  });
+
+  afterEach(() => {
+    if (previousSettings === null) {
+      if (existsSync(SETTINGS_PATH)) unlinkSync(SETTINGS_PATH);
+    } else {
+      writeFileSync(SETTINGS_PATH, previousSettings, "utf-8");
+    }
+    rmSync(path.dirname(dbPath), { recursive: true, force: true });
+  });
+
+  it("keeps evaluate deterministic for same input and persists override audit", async () => {
+    const request = {
+      mode: "domain" as const,
+      targetId: "domain-economic-power",
+      role: "MISSIONARY" as const,
+      noRuinGate: true
+    };
+    const first = await evaluatePost(postJson("http://localhost/api/decision/evaluate", request));
+    const second = await evaluatePost(postJson("http://localhost/api/decision/evaluate", request));
+    const firstJson = await first.json();
+    const secondJson = await second.json();
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(secondJson.readinessScore).toBe(firstJson.readinessScore);
+    expect(secondJson.blockReasons).toEqual(firstJson.blockReasons);
+
+    const overrideResponse = await overridePost(
+      postJson("http://localhost/api/decision/override", {
+        mode: "domain",
+        targetId: "domain-economic-power",
+        guardIds: ["G1_COMPLEX_MONOMODAL"],
+        overrideReason: "Operator approved exception for controlled experiment",
+        operator: "uat-operator"
+      })
+    );
+    const overrideJson = await overrideResponse.json();
+    expect(overrideResponse.status).toBe(201);
+    expect(Array.isArray(overrideJson.guardIds)).toBe(true);
+
+    const db = new Database(dbPath, { readonly: true });
+    try {
+      const countRow = db.prepare("SELECT COUNT(*) AS count FROM decision_overrides").get() as { count: number };
+      expect(countRow.count).toBe(1);
+    } finally {
+      db.close();
+    }
+  });
+
+  it("rejects commit mutations that were not proposed in dry-run", async () => {
+    const dryRunResponse = await dryRunPost(
+      postJson("http://localhost/api/agent/wargame/dry-run", {
+        mode: "interest",
+        targetId: "domain-economic-power",
+        prompt: "war game this interest and queue execution",
+        role: "VISIONARY",
+        noRuinGate: true
+      })
+    );
+    const dryRunJson = await dryRunResponse.json();
+    expect(dryRunResponse.status).toBe(201);
+    expect(Array.isArray(dryRunJson.proposedMutations)).toBe(true);
+
+    const commitResponse = await commitPost(
+      postJson("http://localhost/api/agent/wargame/commit", {
+        dryRunId: dryRunJson.id,
+        acceptedMutations: [
+          {
+            kind: "CREATE_TASK",
+            payload: {
+              id: "11111111-1111-1111-1111-111111111111",
+              title: "Injected mutation",
+              sourceType: "PLAN",
+              sourceId: "mission-global"
+            }
+          }
+        ],
+        mode: "interest",
+        targetId: "domain-economic-power",
+        role: "VISIONARY",
+        noRuinGate: true
+      })
+    );
+    const commitJson = await commitResponse.json();
+    expect(commitResponse.status).toBe(400);
+    expect(String(commitJson.error)).toContain("subset of dry-run proposals");
+
+    const db = new Database(dbPath, { readonly: true });
+    try {
+      const row = db.prepare("SELECT status FROM agent_dry_runs WHERE id=?").get(dryRunJson.id) as { status: string };
+      expect(row.status).toBe("PENDING");
+    } finally {
+      db.close();
+    }
+  });
+
+  it("commits a valid dry-run subset and marks row committed", async () => {
+    const dryRunResponse = await dryRunPost(
+      postJson("http://localhost/api/agent/wargame/dry-run", {
+        mode: "interest",
+        targetId: "domain-economic-power",
+        prompt: "war game this interest and queue execution",
+        role: "VISIONARY",
+        noRuinGate: true
+      })
+    );
+    const dryRunJson = await dryRunResponse.json();
+    expect(dryRunResponse.status).toBe(201);
+    const acceptedMutations = (dryRunJson.proposedMutations as Array<Record<string, unknown>>).slice(0, 1);
+    expect(acceptedMutations.length).toBe(1);
+
+    const commitResponse = await commitPost(
+      postJson("http://localhost/api/agent/wargame/commit", {
+        dryRunId: dryRunJson.id,
+        acceptedMutations,
+        mode: "interest",
+        targetId: "domain-economic-power",
+        role: "VISIONARY",
+        noRuinGate: true
+      })
+    );
+    const commitJson = await commitResponse.json();
+    expect(commitResponse.status).toBe(200);
+    expect(commitJson.commitResult.committedCount).toBe(1);
+
+    const db = new Database(dbPath, { readonly: true });
+    try {
+      const row = db.prepare("SELECT status FROM agent_dry_runs WHERE id=?").get(dryRunJson.id) as { status: string };
+      expect(row.status).toBe("COMMITTED");
+    } finally {
+      db.close();
+    }
+  });
+});
