@@ -515,5 +515,128 @@ export const mockAppData: AppData = {
         evidence: { streakDays: 9 }
       }
     ]
-  }
+  },
+  decisionAcceleration: {
+    virtueSpiral: {
+      stage: "ASYMMETRIC_BETS",
+      score: 57,
+      trend: "STABLE",
+      nextAction: "Queue the highest-fragility affair in Surgical Execution.",
+      openFragilityMass: 211,
+      convexityMass: 228,
+      executionVelocity: 37.5
+    },
+    pathComparator: {
+      unpreparedScore: 62,
+      preparedScore: 54,
+      delta: -8,
+      ruinRisk: 62,
+      survivalOdds: 45,
+      timeToImpact: 7,
+      resourceBurn: 64,
+      criticalNode: "Stabilize Sleep + Recovery"
+    },
+    copilot: {
+      promptState: "State: asymmetric bets | trend stable | score 57.",
+      suggestedAction: "Queue \"Stabilize Sleep + Recovery\" in Surgical Execution now.",
+      rationale: "If skipped, fragility-pressure compounds and execution velocity decays.",
+      ctaPayload: {
+        title: "Execute: Stabilize Sleep + Recovery",
+        sourceType: "AFFAIR",
+        sourceId: "affair-health-baseline",
+        horizon: "WEEK",
+        notes: "Copilot action from mock do-now rank."
+      }
+    }
+  },
+  decisionAccelerationMeta: {
+    computedAtIso: "2026-03-04T00:00:00.000Z",
+    dataQuality: "HIGH",
+    invariantViolations: [],
+    fallbackUsed: false,
+    protocolState: "WATCH"
+  },
+  tripwire: {
+    state: "WATCH",
+    reason: "Fragility pressure elevated.",
+    recoveryAction: "Stabilize top affair before new speculative allocation.",
+    riskyActionBlocked: false
+  },
+  ruinLedger: [
+    {
+      id: "risk-health-1",
+      title: "Health debt cascade",
+      domainId: "domain-health",
+      sourceId: "src-bio",
+      irreversibility: 78,
+      fragilityScore: 84,
+      timeToImpactDays: 14,
+      hedgeStatus: "PARTIAL"
+    }
+  ],
+  violationFeed: [],
+  latency: {
+    signalToQueueMinutes: 9,
+    signalToQueueBand: "NORMAL"
+  },
+  counterfactual: {
+    preparedDelta: 52,
+    unpreparedDelta: 38,
+    netGain: 14,
+    note: "Prepared path improves expected survival."
+  },
+  confidence: {
+    confidence: "MEDIUM",
+    evidenceCount: 3,
+    recencyMinutes: 4
+  },
+  optionalityBudget: {
+    usedPct: 58,
+    redlinePct: 80,
+    canAllocate: true,
+    rationale: "Budget has room for capped-downside options."
+  },
+  fragilityTimeline: [
+    { atIso: "2026-02-26T00:00:00.000Z", fragility: 70, convexity: 40 },
+    { atIso: "2026-02-27T00:00:00.000Z", fragility: 68, convexity: 43 },
+    { atIso: "2026-02-28T00:00:00.000Z", fragility: 66, convexity: 45 },
+    { atIso: "2026-03-01T00:00:00.000Z", fragility: 64, convexity: 47 },
+    { atIso: "2026-03-02T00:00:00.000Z", fragility: 63, convexity: 50 },
+    { atIso: "2026-03-03T00:00:00.000Z", fragility: 61, convexity: 53 },
+    { atIso: "2026-03-04T00:00:00.000Z", fragility: 60, convexity: 56 }
+  ],
+  decisionReplay: [
+    { id: "r1", atIso: "2026-03-04T00:01:00.000Z", state: "watch", action: "Queue affair", outcome: "risk reduced" }
+  ],
+  blastRadius: {
+    nodes: [
+      { id: "task-a", label: "Stabilize Sleep + Recovery", kind: "TASK", risk: 72 },
+      { id: "task-b", label: "Schedule diagnostics", kind: "TASK", risk: 51 }
+    ],
+    edges: [{ id: "edge-a-b", from: "task-a", to: "task-b", weight: 1 }],
+    criticalNodeId: "task-a"
+  },
+  missionBottlenecks: [
+    { id: "affair-health-baseline", title: "Stabilize Sleep + Recovery", domainId: "domain-health", backlog: 3, blockingLoad: 2, bottleneckScore: 71 }
+  ],
+  hedgeCoverage: [{ riskId: "risk-health-1", affairId: "affair-health-baseline", covered: true }],
+  convexityPipeline: [
+    { id: "IDEAS", label: "Ideas", count: 5 },
+    { id: "INTERESTS", label: "Interests", count: 3 },
+    { id: "QUEUED", label: "Queued", count: 2 },
+    { id: "EXECUTING", label: "Executing", count: 1 },
+    { id: "OUTCOMES", label: "Outcomes", count: 1 }
+  ],
+  outcomeAttribution: {
+    skillPct: 46,
+    luckPct: 29,
+    regimePct: 25
+  },
+  assumptions: [
+    { id: "a1", statement: "Fragility will keep trending down.", stale: false },
+    { id: "a2", statement: "Execution velocity remains above threshold.", stale: false }
+  ],
+  recoveryPlaybooks: [
+    { id: "p1", trigger: "WATCH", firstAction: "Stabilize top affair.", owner: "Mission Command" }
+  ]
 };

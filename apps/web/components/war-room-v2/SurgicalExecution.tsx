@@ -51,16 +51,23 @@ import {
 import { cn } from './utils';
 import { AppData, Law, Domain, Craft, Interest, Affair, Entity, Perspective, Task } from './types';
 import { TaskCard } from './TaskCard';
+import { ConvexityPipelinePanel, DecisionLatencyMeterPanel, NoRuinTripwirePanel } from './panels/RobustnessPanels';
 export const SurgicalExecution = ({
   tasks,
   affairs = [],
   interests = [],
+  tripwire,
+  latency,
+  convexityPipeline,
   onUpdateTask,
   onCreateTask
 }: {
   tasks: Task[];
   affairs?: Affair[];
   interests?: Interest[];
+  tripwire?: AppData["tripwire"];
+  latency?: AppData["latency"];
+  convexityPipeline?: AppData["convexityPipeline"];
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
   onCreateTask: (task: {
     title: string;
@@ -80,6 +87,7 @@ export const SurgicalExecution = ({
   const [subtaskHorizon, setSubtaskHorizon] = useState<'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR'>('WEEK');
   const [creatingSubtask, setCreatingSubtask] = useState(false);
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
+  const tripwireBlocked = Boolean(tripwire?.riskyActionBlocked);
   const doneTasks = tasks.filter((t) => t.status === 'done').length;
   const activeTasks = tasks.filter((t) => t.status === 'in_progress').length;
   const velocityPerWeek = (doneTasks + activeTasks).toFixed(1);
@@ -207,6 +215,7 @@ export const SurgicalExecution = ({
                     onClick={async () => {
                       setCreatingSubtask(true);
                       try {
+                        if (tripwireBlocked) return;
                         await onCreateTask({
                           title: subtaskTitle.trim(),
                           sourceType: selectedTask.sourceType ?? String(selectedTask.type ?? 'PLAN').toUpperCase(),
@@ -255,6 +264,12 @@ export const SurgicalExecution = ({
             <div className="text-lg font-mono font-bold text-blue-400">{efficiencyPct}%</div>
           </div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <NoRuinTripwirePanel tripwire={tripwire} />
+        <DecisionLatencyMeterPanel data={{ latency } as AppData} />
+        <ConvexityPipelinePanel data={{ convexityPipeline } as AppData} />
       </div>
 
       <div className="glass p-4 rounded-xl border border-white/10 mb-6">
