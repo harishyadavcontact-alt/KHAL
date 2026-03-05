@@ -1,15 +1,19 @@
+import React from "react";
 import type {
   AppData,
   AssumptionItem,
   BlastRadiusSnapshot,
+  BlackSwanReadinessSnapshot,
   ConfidenceEvidenceMeta,
   DoctrineViolationEvent,
+  ExecutionDistributionSnapshot,
   FragilityTimelinePoint,
   HedgeCoverageCell,
   MissionBottleneck,
   OptionalityBudgetState,
   RecoveryPlaybook,
-  RuinLedgerItem
+  RuinLedgerItem,
+  ViaNegativaItem
 } from "../types";
 
 function badgeClass(confidence?: "HIGH" | "MEDIUM" | "LOW"): string {
@@ -171,6 +175,78 @@ export function CorrelationRiskCard({
         concentration {concentrationPct.toFixed(1)}% | {band}
       </div>
       <div className="mt-2 text-xs text-zinc-500">Detects hidden same-source concentration across interests.</div>
+    </section>
+  );
+}
+
+export function ViaNegativaPanel({ items }: { items: ViaNegativaItem[] }) {
+  return (
+    <section className="glass p-4 rounded-xl border border-white/10">
+      <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Via Negativa Queue</div>
+      <div className="space-y-2">
+        {items.slice(0, 6).map((item) => (
+          <div key={item.id} className="rounded border border-white/10 bg-zinc-950/55 px-2.5 py-2 text-xs">
+            <div className="flex items-center justify-between gap-2">
+              <div className="font-semibold text-zinc-100">{item.title}</div>
+              <span className="text-red-300">P {item.pressure}</span>
+            </div>
+            <div className="text-zinc-400">{item.reason}</div>
+            <div className="text-zinc-500">{item.source}</div>
+          </div>
+        ))}
+      </div>
+      {!items.length && <div className="text-xs text-zinc-500">No high-pressure fragility items to prune.</div>}
+    </section>
+  );
+}
+
+export function BlackSwanReadinessPanel({ snapshot }: { snapshot: BlackSwanReadinessSnapshot }) {
+  const tone =
+    snapshot.crisisMode === "CRISIS"
+      ? "text-red-300 border-red-500/35 bg-red-500/10"
+      : snapshot.crisisMode === "WATCH"
+        ? "text-amber-300 border-amber-500/35 bg-amber-500/10"
+        : "text-emerald-300 border-emerald-500/35 bg-emerald-500/10";
+
+  return (
+    <section className="glass p-4 rounded-xl border border-white/10">
+      <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Black Swan Readiness</div>
+      <div className={`rounded border px-2.5 py-2 text-xs ${tone}`}>
+        <div className="font-semibold uppercase tracking-widest">{snapshot.crisisMode}</div>
+        <div className="mt-1">readiness {snapshot.readinessScore} | critical risks {snapshot.openCriticalRisks}</div>
+      </div>
+      <div className="mt-2 text-xs text-zinc-300">{snapshot.trigger}</div>
+      <div className="mt-1 text-xs text-zinc-500">Next: {snapshot.nextAction}</div>
+    </section>
+  );
+}
+
+export function ExecutionDistributionPanel({ snapshot }: { snapshot: ExecutionDistributionSnapshot }) {
+  const barWidth = (part: number, total: number) => `${Math.max(0, Math.min(100, total ? (part / total) * 100 : 0))}%`;
+
+  return (
+    <section className="glass p-4 rounded-xl border border-white/10">
+      <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Execution Distribution</div>
+      <div className="space-y-3">
+        <div>
+          <div className="flex items-center justify-between text-xs text-zinc-300 mb-1">
+            <span>Defense (Affairs)</span>
+            <span>{snapshot.defense.done}/{snapshot.defense.total} done</span>
+          </div>
+          <div className="h-2 rounded-full border border-white/10 bg-zinc-900 overflow-hidden">
+            <div className="h-full bg-blue-400/85" style={{ width: barWidth(snapshot.defense.done, snapshot.defense.total) }} />
+          </div>
+        </div>
+        <div>
+          <div className="flex items-center justify-between text-xs text-zinc-300 mb-1">
+            <span>Offense (Interests)</span>
+            <span>{snapshot.offense.done}/{snapshot.offense.total} done</span>
+          </div>
+          <div className="h-2 rounded-full border border-white/10 bg-zinc-900 overflow-hidden">
+            <div className="h-full bg-emerald-400/85" style={{ width: barWidth(snapshot.offense.done, snapshot.offense.total) }} />
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

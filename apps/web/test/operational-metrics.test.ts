@@ -7,10 +7,17 @@ import {
   computeExecutionSplit,
   computeFragilistaWatchlist,
   computeHarmSignalSnapshot,
+  computeHudStatusSnapshot,
   computeInterestAsymmetryScore,
   computeInterestProtocolChecks,
+  computeLifeClockSnapshot,
   computeLabSummary,
+  computeAlertQueue,
+  computeBlackSwanReadiness,
+  computeExecutionDistribution,
+  computeSystemAnatomySnapshot,
   computeStakeTriad,
+  computeViaNegativaQueue,
   withLabDerivedFields
 } from "../lib/war-room/operational-metrics";
 
@@ -268,5 +275,131 @@ describe("operational metrics", () => {
     expect(derived.interests[0]?.protocolReady).toBe(false);
     const summary = computeLabSummary(derived);
     expect(summary.blockedExperiments).toBe(1);
+  });
+
+  it("derives HUD status deterministically from protocol and alerts", () => {
+    const data = makeBaseData();
+    data.decisionAccelerationMeta = {
+      computedAtIso: "2026-01-01T00:00:00.000Z",
+      dataQuality: "MEDIUM",
+      invariantViolations: ["INV-1"],
+      fallbackUsed: true,
+      protocolState: "WATCH"
+    };
+    data.tripwire = {
+      state: "WATCH",
+      reason: "Elevated fragility.",
+      recoveryAction: "Resolve top risk.",
+      riskyActionBlocked: false
+    };
+    data.violationFeed = [
+      {
+        id: "v1",
+        severity: "HARD_GATE",
+        message: "No-ruin threshold breached",
+        source: "Tripwire",
+        detectedAtIso: "2026-01-01T00:00:00.000Z"
+      }
+    ];
+    data.lineageRisks = [makeLineageRisk("risk-1", "domain-1", "source-1")];
+
+    const snapshot = computeHudStatusSnapshot(data);
+    expect(snapshot.protocolState).toBe("WATCH");
+    expect(snapshot.invariantViolationCount).toBe(1);
+    expect(snapshot.activeAlertCount).toBeGreaterThanOrEqual(2);
+    expect(["watch", "critical"]).toContain(snapshot.volatilityBand);
+  });
+
+  it("computes life clock with non-negative values", () => {
+    const data = makeBaseData();
+    data.tasks = [makeTask("t1", "domain-1", "WEEK", "2099-01-01T00:00:00.000Z")];
+    const snapshot = computeLifeClockSnapshot(data);
+    expect(snapshot.ageYears).toBeGreaterThanOrEqual(0);
+    expect(snapshot.yearsRemaining).toBeGreaterThanOrEqual(0);
+    expect(snapshot.progressPct).toBeGreaterThanOrEqual(0);
+    expect(snapshot.progressPct).toBeLessThanOrEqual(100);
+    expect(snapshot.runwayDays).toBeGreaterThanOrEqual(0);
+  });
+
+  it("builds deterministic via-negativa queue by pressure", () => {
+    const data = makeBaseData();
+    data.affairs = [makeAffair("affair-a", "domain-1", 9, 9)];
+    data.lineageRisks = [makeLineageRisk("risk-a", "domain-1", "source-1", { fragilityScore: 95, status: "OPEN" })];
+
+    const first = computeViaNegativaQueue(data, 5);
+    const second = computeViaNegativaQueue({ ...data, affairs: [...data.affairs], lineageRisks: [...(data.lineageRisks ?? [])] }, 5);
+    expect(first).toEqual(second);
+    expect(first[0]?.title).toBe("risk-a");
+  });
+
+  it("computes black-swan readiness with explicit crisis trigger", () => {
+    const data = makeBaseData();
+    data.lineageRisks = [makeLineageRisk("risk-a", "domain-1", "source-1", { fragilityScore: 90, status: "OPEN" })];
+    data.tripwire = {
+      state: "BLOCK",
+      reason: "No-ruin threshold breached",
+      recoveryAction: "Hedge immediately",
+      riskyActionBlocked: true
+    };
+    const snapshot = computeBlackSwanReadiness(data);
+    expect(snapshot.crisisMode).toBe("CRISIS");
+    expect(snapshot.readinessScore).toBeGreaterThanOrEqual(0);
+    expect(snapshot.readinessScore).toBeLessThanOrEqual(100);
+  });
+
+  it("computes defense/offense execution distribution from task source type", () => {
+    const data = makeBaseData();
+    data.tasks = [
+      { ...makeTask("a-1", "domain-1", "WEEK"), sourceType: "AFFAIR", status: "done" },
+      { ...makeTask("a-2", "domain-1", "WEEK"), sourceType: "AFFAIR", status: "in_progress" },
+      { ...makeTask("i-1", "domain-1", "WEEK"), sourceType: "INTEREST", status: "not_started" }
+    ];
+    const snapshot = computeExecutionDistribution(data);
+    expect(snapshot.defense.total).toBe(2);
+    expect(snapshot.defense.done).toBe(1);
+    expect(snapshot.offense.total).toBe(1);
+  });
+
+  it("orders alert queue by severity then id", () => {
+    const data = makeBaseData();
+    data.tripwire = {
+      state: "BLOCK",
+      reason: "Critical block.",
+      recoveryAction: "Do no-ruin recovery.",
+      riskyActionBlocked: true
+    };
+    data.violationFeed = [
+      {
+        id: "v-soft",
+        severity: "SOFT",
+        message: "Soft warning",
+        source: "Doctrine",
+        detectedAtIso: "2026-01-01T00:00:00.000Z"
+      }
+    ];
+    data.lineageRisks = [makeLineageRisk("risk-critical", "domain-1", "source-1", { fragilityScore: 88 })];
+
+    const queue = computeAlertQueue(data);
+    expect(queue[0]?.severity).toBe("CRITICAL");
+    expect(queue.some((item) => item.id === "tripwire-block")).toBe(true);
+  });
+
+  it("builds anatomy snapshot from blast radius and fallback path", () => {
+    const data = makeBaseData();
+    data.blastRadius = {
+      nodes: [
+        { id: "n1", label: "Node 1", kind: "DOMAIN", risk: 80 },
+        { id: "n2", label: "Node 2", kind: "AFFAIR", risk: 40 }
+      ],
+      edges: [{ id: "e1", from: "n1", to: "n2", weight: 70 }],
+      criticalNodeId: "n1"
+    };
+    const direct = computeSystemAnatomySnapshot(data);
+    expect(direct.nodes.length).toBe(2);
+    expect(direct.edges.length).toBe(1);
+
+    const fallback = computeSystemAnatomySnapshot({ ...data, blastRadius: undefined, lineageRisks: [makeLineageRisk("r1", "domain-1", "source-1")] });
+    expect(fallback.nodes.length).toBeGreaterThan(0);
+    expect(fallback.edges.length).toBeGreaterThanOrEqual(0);
   });
 });

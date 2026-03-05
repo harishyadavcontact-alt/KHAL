@@ -22,6 +22,9 @@ export default function SurgicalExecutionPage() {
           tripwire={data.tripwire}
           latency={data.latency}
           convexityPipeline={data.convexityPipeline}
+          lineageRisks={data.lineageRisks}
+          violationFeed={data.violationFeed}
+          user={data.user}
           onCreateTask={async (payload) => {
             await createExecutionTask(payload);
             await refresh();

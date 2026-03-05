@@ -3,6 +3,6 @@ export const v03Flags = {
   blastRadius: process.env.NEXT_PUBLIC_V03_BLAST_RADIUS !== "0",
   optionality: process.env.NEXT_PUBLIC_V03_OPTIONALITY !== "0",
   replay: process.env.NEXT_PUBLIC_V03_REPLAY !== "0",
-  confidence: process.env.NEXT_PUBLIC_V03_CONFIDENCE !== "0"
+  confidence: process.env.NEXT_PUBLIC_V03_CONFIDENCE !== "0",
+  hud: process.env.NEXT_PUBLIC_V044_HUD === "1"
 } as const;
-

@@ -51,8 +51,22 @@ import {
 import { cn } from './utils';
 import { AppData, Law, Domain, Craft, Interest, Affair, Entity, Perspective, Task } from './types';
 import { TaskCard } from './TaskCard';
-import { ConvexityPipelinePanel, DecisionLatencyMeterPanel, NoRuinTripwirePanel } from './panels/RobustnessPanels';
-import { isInterestProtocolReady } from '../../lib/war-room/operational-metrics';
+import {
+  BlackSwanReadinessPanel,
+  ConvexityPipelinePanel,
+  DecisionLatencyMeterPanel,
+  ExecutionDistributionPanel,
+  NoRuinTripwirePanel,
+  ViaNegativaPanel
+} from './panels/RobustnessPanels';
+import {
+  computeBlackSwanReadiness,
+  computeExecutionDistribution,
+  computeViaNegativaQueue,
+  isInterestProtocolReady
+} from '../../lib/war-room/operational-metrics';
+import { AlertQueuePanel } from './hud/AlertQueuePanel';
+import { v03Flags } from '../../lib/war-room/feature-flags';
 export const SurgicalExecution = ({
   tasks,
   affairs = [],
@@ -60,6 +74,9 @@ export const SurgicalExecution = ({
   tripwire,
   latency,
   convexityPipeline,
+  lineageRisks = [],
+  violationFeed = [],
+  user,
   onUpdateTask,
   onCreateTask
 }: {
@@ -69,6 +86,9 @@ export const SurgicalExecution = ({
   tripwire?: AppData["tripwire"];
   latency?: AppData["latency"];
   convexityPipeline?: AppData["convexityPipeline"];
+  lineageRisks?: AppData["lineageRisks"];
+  violationFeed?: AppData["violationFeed"];
+  user?: AppData["user"];
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
   onCreateTask: (task: {
     title: string;
@@ -129,6 +149,38 @@ export const SurgicalExecution = ({
     return map;
   }, [tasks]);
   const rootTasks = useMemo(() => tasks.filter((task) => !task.parentTaskId), [tasks]);
+  const alertData = useMemo(
+    () =>
+      ({
+        user: user ?? { birthDate: "2000-01-01T00:00:00.000Z", lifeExpectancy: 80, name: "Operator", location: "Local" },
+        strategyMatrix: { allies: 0, enemies: 0, overt: 0, covert: 0, offense: 0, defense: 0, conventional: 0, unconventional: 0 },
+        laws: [],
+        domains: [],
+        crafts: [],
+        interests,
+        affairs,
+        tasks,
+        sources: [],
+        missionGraph: { nodes: [], dependencies: [] },
+        lineages: { nodes: [], entities: [] },
+        lineageRisks: lineageRisks ?? [],
+        doctrine: { rulebooks: [], rules: [], domainPnLLadders: [] },
+        tripwire,
+        violationFeed,
+        decisionAccelerationMeta: {
+          computedAtIso: new Date().toISOString(),
+          dataQuality: "MEDIUM" as const,
+          invariantViolations: [],
+          fallbackUsed: false,
+          protocolState:
+            tripwire?.state === "BLOCK" ? "CRITICAL" : tripwire?.state === "WATCH" ? "WATCH" : "NOMINAL"
+        }
+      }) as AppData,
+    [affairs, interests, lineageRisks, tasks, tripwire, user, violationFeed]
+  );
+  const viaNegativaQueue = useMemo(() => computeViaNegativaQueue(alertData, 5), [alertData]);
+  const blackSwanReadiness = useMemo(() => computeBlackSwanReadiness(alertData), [alertData]);
+  const executionDistribution = useMemo(() => computeExecutionDistribution(alertData), [alertData]);
 
   useEffect(() => {
     setSubtaskTitle('');
@@ -285,6 +337,24 @@ export const SurgicalExecution = ({
         <DecisionLatencyMeterPanel data={{ latency } as AppData} />
         <ConvexityPipelinePanel data={{ convexityPipeline } as AppData} />
       </div>
+      {v03Flags.hud && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          <div className="lg:col-span-1">
+            <AlertQueuePanel data={alertData} />
+          </div>
+          <section className="glass p-4 rounded-xl border border-white/10 lg:col-span-2">
+            <div className="text-[10px] uppercase text-zinc-500 tracking-widest mb-2">Execution Cue</div>
+            <p className="text-xs text-zinc-400">
+              Prioritize Affairs actions that remove near-term fragility first, then execute Interests with protocol-ready optionality.
+            </p>
+          </section>
+        </div>
+      )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <ExecutionDistributionPanel snapshot={executionDistribution} />
+        <ViaNegativaPanel items={viaNegativaQueue} />
+        <BlackSwanReadinessPanel snapshot={blackSwanReadiness} />
+      </div>
 
       <div className="glass p-4 rounded-xl border border-white/10 mb-6">
         <div className="text-[10px] uppercase text-zinc-500 tracking-widest mb-2">Execution Readiness Aggregate</div>
@@ -296,7 +366,7 @@ export const SurgicalExecution = ({
               <div className="text-xs text-zinc-300">{row.interest}</div>
               <div className="text-[10px] text-zinc-500 uppercase mt-1">Means / Strategy</div>
               <div className="text-xs text-zinc-300">
-                Craft: {row.craftId} • Posture: {row.posture}
+                Craft: {row.craftId} | Posture: {row.posture}
               </div>
               <div className="text-[10px] text-zinc-500 uppercase mt-1">Ends</div>
               <div className="text-xs text-zinc-300">{row.ends}</div>

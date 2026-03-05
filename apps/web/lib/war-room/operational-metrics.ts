@@ -6,17 +6,24 @@ import {
   type Task as DomainTask
 } from "@khal/domain";
 import type {
+  AlertQueueItem,
   AppData,
   AsymmetrySnapshot,
   BarbellGuardrailMetrics,
+  BlackSwanReadinessSnapshot,
+  ExecutionDistributionSnapshot,
   ExecutionSplitMetrics,
   FragilistaWatchItem,
   HarmSignalSnapshot,
+  HudStatusSnapshot,
   Interest,
   LabProtocolCheck,
   LabSummaryMetrics,
+  LifeClockSnapshot,
   OperationalNowItem,
-  StakeTriadMetrics
+  StakeTriadMetrics,
+  SystemAnatomySnapshot,
+  ViaNegativaItem
 } from "../../components/war-room-v2/types";
 import { routeForView } from "./routes";
 
@@ -496,6 +503,265 @@ export function computeExecutionSplit(input: AppData): ExecutionSplitMetrics {
     interestsActiveCount: activeInterests.length,
     imbalanceBand
   };
+}
+
+export function computeHudStatusSnapshot(input: AppData): HudStatusSnapshot {
+  const protocolState = (input.decisionAccelerationMeta?.protocolState ?? "WATCH") as HudStatusSnapshot["protocolState"];
+  const confidence = input.confidence?.confidence ?? "LOW";
+  const dataQuality = input.decisionAccelerationMeta?.dataQuality ?? "LOW";
+  const fallbackUsed = Boolean(input.decisionAccelerationMeta?.fallbackUsed);
+  const invariantViolationCount = input.decisionAccelerationMeta?.invariantViolations?.length ?? 0;
+  const openRiskCount = (input.lineageRisks ?? []).filter((risk) => isOpenRiskStatus(risk.status)).length;
+  const violationCount = input.violationFeed?.length ?? 0;
+  const activeAlertCount = openRiskCount + violationCount + (input.tripwire?.riskyActionBlocked ? 1 : 0);
+  const volatilityBand: HudStatusSnapshot["volatilityBand"] =
+    protocolState === "CRITICAL" || activeAlertCount >= 6 || invariantViolationCount > 0
+      ? "critical"
+      : protocolState === "WATCH" || activeAlertCount >= 2
+        ? "watch"
+        : "stable";
+
+  return {
+    protocolState,
+    confidence,
+    dataQuality,
+    volatilityBand,
+    fallbackUsed,
+    invariantViolationCount,
+    activeAlertCount,
+    computedAtIso: input.decisionAccelerationMeta?.computedAtIso ?? new Date().toISOString()
+  };
+}
+
+export function computeLifeClockSnapshot(input: AppData): LifeClockSnapshot {
+  const now = Date.now();
+  const birthTs = safeDateTs(input.user.birthDate) ?? now;
+  const expectancyYears = clamp(asNumber(input.user.lifeExpectancy, 80), 1, 130);
+  const expectedEndTs = birthTs + expectancyYears * 365.25 * 24 * 60 * 60 * 1000;
+  const ageYears = clamp((now - birthTs) / (365.25 * 24 * 60 * 60 * 1000), 0, 130);
+  const yearsRemaining = clamp((expectedEndTs - now) / (365.25 * 24 * 60 * 60 * 1000), 0, expectancyYears);
+  const progressPct = round1(clamp((ageYears / expectancyYears) * 100, 0, 100));
+
+  const taskDueDates = (input.tasks ?? [])
+    .map((task) => safeDateTs(task.dueDate))
+    .filter((value): value is number => value !== null)
+    .sort((left, right) => left - right);
+  const firstDueTs = taskDueDates[0] ?? now + 30 * 24 * 60 * 60 * 1000;
+  const runwayDays = Math.max(0, Math.round((firstDueTs - now) / (24 * 60 * 60 * 1000)));
+  const runwayBand: LifeClockSnapshot["runwayBand"] = runwayDays <= 7 ? "critical" : runwayDays <= 30 ? "watch" : "stable";
+
+  return {
+    ageYears: round1(ageYears),
+    lifeExpectancyYears: round1(expectancyYears),
+    yearsRemaining: round1(yearsRemaining),
+    progressPct,
+    runwayDays,
+    runwayBand
+  };
+}
+
+export function computeAlertQueue(input: AppData): AlertQueueItem[] {
+  const items: AlertQueueItem[] = [];
+  if (input.tripwire?.riskyActionBlocked) {
+    items.push({
+      id: "tripwire-block",
+      title: "No-Ruin gate blocking risky actions",
+      severity: "CRITICAL",
+      source: "Tripwire",
+      reason: input.tripwire.reason,
+      nextAction: input.tripwire.recoveryAction
+    });
+  }
+
+  for (const event of input.violationFeed ?? []) {
+    items.push({
+      id: `violation-${event.id}`,
+      title: event.message,
+      severity: event.severity === "HARD_GATE" ? "CRITICAL" : "WATCH",
+      source: event.source,
+      reason: "Doctrine violation requires correction before execution.",
+      nextAction: "Resolve doctrine check and re-evaluate readiness."
+    });
+  }
+
+  const sortedRisks = [...(input.lineageRisks ?? [])]
+    .filter((risk) => isOpenRiskStatus(risk.status))
+    .sort((left, right) => asNumber(right.fragilityScore, 0) - asNumber(left.fragilityScore, 0))
+    .slice(0, 5);
+  for (const risk of sortedRisks) {
+    const score = clamp(asNumber(risk.fragilityScore, 0), 0, 100);
+    items.push({
+      id: `risk-${risk.id}`,
+      title: risk.title,
+      severity: score >= 75 ? "CRITICAL" : score >= 45 ? "WATCH" : "INFO",
+      source: risk.domainId,
+      reason: `Fragility score ${score} with status ${risk.status}.`,
+      nextAction: "Create/queue a mitigating affair task."
+    });
+  }
+
+  const rank = { CRITICAL: 0, WATCH: 1, INFO: 2 } as const;
+  return items
+    .sort((left, right) => {
+      const severityDelta = rank[left.severity] - rank[right.severity];
+      if (severityDelta !== 0) return severityDelta;
+      return left.id.localeCompare(right.id);
+    })
+    .slice(0, 8);
+}
+
+export function computeSystemAnatomySnapshot(input: AppData): SystemAnatomySnapshot {
+  if (input.blastRadius?.nodes?.length) {
+    const nodes: SystemAnatomySnapshot["nodes"] = [...input.blastRadius.nodes]
+      .sort((left, right) => left.id.localeCompare(right.id))
+      .slice(0, 18)
+      .map((node) => ({
+        id: node.id,
+        label: node.label,
+        lane: (node.risk >= 67 ? "risk" : node.risk >= 34 ? "robust" : "optionality") as "risk" | "robust" | "optionality",
+        score: round1(clamp(asNumber(node.risk, 0), 0, 100))
+      }));
+    const includedNodeIds = new Set(nodes.map((node) => node.id));
+    const edges = (input.blastRadius.edges ?? [])
+      .filter((edge) => includedNodeIds.has(edge.from) && includedNodeIds.has(edge.to))
+      .sort((left, right) => left.id.localeCompare(right.id))
+      .slice(0, 24)
+      .map((edge) => ({
+        id: edge.id,
+        from: edge.from,
+        to: edge.to,
+        weight: round1(clamp(asNumber(edge.weight, 1), 0, 100))
+      }));
+    return {
+      nodes,
+      edges,
+      criticalNodeId: input.blastRadius.criticalNodeId
+    };
+  }
+
+  const riskNodeIds = [...(input.lineageRisks ?? [])]
+    .filter((risk) => isOpenRiskStatus(risk.status))
+    .sort((left, right) => asNumber(right.fragilityScore, 0) - asNumber(left.fragilityScore, 0))
+    .slice(0, 6)
+    .map((risk) => `risk-${risk.id}`);
+
+  const domainNodes = input.domains.slice(0, 6).map((domain, index) => ({
+    id: `domain-${domain.id}`,
+    label: domain.name,
+    lane: (index % 2 === 0 ? "robust" : "optionality") as "robust" | "optionality",
+    score: index % 2 === 0 ? 55 : 45
+  })) as SystemAnatomySnapshot["nodes"];
+  const riskNodes = [...(input.lineageRisks ?? [])]
+    .filter((risk) => isOpenRiskStatus(risk.status))
+    .sort((left, right) => asNumber(right.fragilityScore, 0) - asNumber(left.fragilityScore, 0))
+    .slice(0, 6)
+    .map((risk) => ({
+      id: `risk-${risk.id}`,
+      label: risk.title,
+      lane: "risk" as const,
+      score: round1(clamp(asNumber(risk.fragilityScore, 0), 0, 100))
+    }));
+  const nodes = [...domainNodes, ...riskNodes].slice(0, 12);
+  const edges = riskNodes.map((riskNode, index) => ({
+    id: `edge-${riskNode.id}-${index}`,
+    from: riskNode.id,
+    to: domainNodes[index % Math.max(1, domainNodes.length)]?.id ?? riskNode.id,
+    weight: 50
+  }));
+
+  return {
+    nodes,
+    edges,
+    criticalNodeId: riskNodeIds[0]
+  };
+}
+
+export function computeViaNegativaQueue(input: AppData, limit = 5): ViaNegativaItem[] {
+  const fromRisks: ViaNegativaItem[] = (input.lineageRisks ?? [])
+    .filter((risk) => isOpenRiskStatus(risk.status))
+    .map((risk) => {
+      const pressure = round1(clamp(asNumber(risk.fragilityScore, 0), 0, 100));
+      return {
+        id: `risk-${risk.id}`,
+        title: risk.title,
+        pressure,
+        source: risk.domainId,
+        reason: `Fragility ${pressure} and unresolved downside exposure.`
+      };
+    });
+
+  const fromAffairs: ViaNegativaItem[] = input.affairs
+    .filter((affair) => isActiveStatus(affair.status))
+    .map((affair) => {
+      const pressure = round1(clamp(affairFragilityMass(affair.stakes, affair.risk), 0, 100));
+      return {
+        id: `affair-${affair.id}`,
+        title: affair.title,
+        pressure,
+        source: affair.domainId,
+        reason: "Open affair with unresolved fragility pressure."
+      };
+    });
+
+  return [...fromRisks, ...fromAffairs]
+    .sort((left, right) => {
+      const delta = right.pressure - left.pressure;
+      if (delta !== 0) return delta;
+      return left.id.localeCompare(right.id);
+    })
+    .slice(0, Math.max(1, limit));
+}
+
+export function computeBlackSwanReadiness(input: AppData): BlackSwanReadinessSnapshot {
+  const criticalRisks = (input.lineageRisks ?? []).filter((risk) => isOpenRiskStatus(risk.status) && asNumber(risk.fragilityScore, 0) >= 75).length;
+  const blocked = Boolean(input.tripwire?.riskyActionBlocked);
+  const hardViolations = (input.violationFeed ?? []).filter((event) => event.severity === "HARD_GATE").length;
+  const executionHealth = computeExecutionSplit(input);
+  const preparedness = clamp(
+    100 - criticalRisks * 12 - hardViolations * 15 - (blocked ? 20 : 0) + executionHealth.affairsScore * 0.15,
+    0,
+    100
+  );
+  const readinessScore = round1(preparedness);
+  const crisisMode: BlackSwanReadinessSnapshot["crisisMode"] =
+    blocked || hardViolations > 0 || criticalRisks >= 2 ? "CRISIS" : criticalRisks > 0 ? "WATCH" : "CALM";
+  const trigger = blocked
+    ? input.tripwire?.reason ?? "No-ruin gate blocked."
+    : hardViolations > 0
+      ? "Doctrine hard-gate violations unresolved."
+      : criticalRisks > 0
+        ? `${criticalRisks} critical fragility signals active.`
+        : "No immediate tail-risk trigger.";
+  const nextAction =
+    crisisMode === "CRISIS"
+      ? "Resolve no-ruin blockers and execute first defense hedge."
+      : crisisMode === "WATCH"
+        ? "Reduce top fragility item before adding new optionality."
+        : "Run next simulation drill and keep hedge posture current.";
+
+  return {
+    crisisMode,
+    readinessScore,
+    openCriticalRisks: criticalRisks,
+    trigger,
+    nextAction
+  };
+}
+
+export function computeExecutionDistribution(input: AppData): ExecutionDistributionSnapshot {
+  const defense = { total: 0, done: 0, inProgress: 0 };
+  const offense = { total: 0, done: 0, inProgress: 0 };
+
+  for (const task of input.tasks ?? []) {
+    const sourceType = normalizeSourceType(task.sourceType);
+    const bucket = sourceType === "INTEREST" ? offense : defense;
+    bucket.total += 1;
+    const status = normalizeStatus(task.status);
+    if (status === "DONE") bucket.done += 1;
+    if (status === "IN_PROGRESS") bucket.inProgress += 1;
+  }
+
+  return { defense, offense };
 }
 
 export function computeInterestAsymmetryScore(interest: Interest): number {

@@ -745,6 +745,9 @@ const App = () => {
                     tripwire={data.tripwire}
                     latency={data.latency}
                     convexityPipeline={data.convexityPipeline}
+                    lineageRisks={data.lineageRisks}
+                    violationFeed={data.violationFeed}
+                    user={data.user}
                     onCreateTask={createExecutionTask}
                     onUpdateTask={(id: string, updates: Partial<Task>) => {
                       const payload: Record<string, unknown> = { ...updates };
