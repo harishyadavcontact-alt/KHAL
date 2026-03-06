@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Cpu, Database, Layers, Scale, Zap } from 'lucide-react';
+import { Box, Cpu, Database, Layers, Scale, Zap, Network, ShieldAlert, Swords, Milestone } from 'lucide-react';
 import { AppData, WarRoomViewState } from './types';
 import { CraftDetail } from './CraftDetail';
 
@@ -61,13 +61,17 @@ export function CraftsView({
                 <p className="text-sm text-zinc-500">{craft.description}</p>
               </div>
             </div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
               {[
                 { label: 'Heaps', count: craft.heaps.length, icon: Database },
                 { label: 'Models', count: craft.models.length, icon: Cpu },
                 { label: 'Frameworks', count: craft.frameworks.length, icon: Layers },
                 { label: 'Barbells', count: craft.barbellStrategies.length, icon: Scale },
-                { label: 'Heuristics', count: craft.heuristics.length, icon: Zap }
+                { label: 'Heuristics', count: craft.heuristics.length, icon: Zap },
+                { label: 'Stacks', count: craft.knowledge?.stacks.length ?? 0, icon: Milestone },
+                { label: 'Protocols', count: craft.knowledge?.protocols.length ?? 0, icon: Network },
+                { label: 'Rules', count: craft.knowledge?.rules.length ?? 0, icon: ShieldAlert },
+                { label: 'Wargames', count: craft.knowledge?.wargames.length ?? 0, icon: Swords }
               ].map((stat) => (
                 <div key={stat.label} className="text-center p-2 bg-zinc-800/50 rounded-xl border border-white/5">
                   <stat.icon size={12} className="mx-auto mb-1 text-zinc-500" />
