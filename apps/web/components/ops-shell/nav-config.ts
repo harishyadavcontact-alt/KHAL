@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Map as MapIcon,
   Network,
+  NotebookPen,
   Sword,
   Zap
 } from "lucide-react";
@@ -37,7 +38,8 @@ export const KHAL_OPS_NAV_ITEMS: KhalOpsNavItem[] = [
   { href: "/surgical-execution", label: "Surgical Execution", icon: Crosshair },
   { href: "/crafts-library", label: "Crafts Library", icon: Database, matchPrefixes: ["/crafts"] },
   { href: "/time-horizon", label: "Time Horizon", icon: Clock3 },
-  { href: "/lineage-map", label: "Lineage Map", icon: Network, matchPrefixes: ["/lineages"] }
+  { href: "/lineage-map", label: "Lineage Map", icon: Network, matchPrefixes: ["/lineages"] },
+  { href: "/drafts", label: "Drafts", icon: NotebookPen }
 ];
 
 export const KHAL_OPS_BYPASS_PREFIXES = [
@@ -58,6 +60,7 @@ export const KHAL_OPS_BYPASS_PREFIXES = [
   "/time-horizon",
   "/lineage-map",
   "/lineages",
+  "/drafts",
   "/brand",
   "/khal",
   "/home"

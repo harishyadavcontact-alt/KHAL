@@ -5,6 +5,19 @@ import Database from "better-sqlite3";
 import { initDatabase, resolveDbPath } from "@khal/sqlite-core";
 import { randomUUID } from "node:crypto";
 import { readSettings } from "./settings";
+import {
+  craftKnowledgeSchema,
+  entityLinkSchema,
+  heuristicSchema,
+  knowledgeEntityTypeSchema,
+  protocolSchema,
+  responseSchema,
+  ruleSchema,
+  scenarioSchema,
+  stackSchema,
+  threatSchema,
+  wargameSchema
+} from "./knowledge/models";
 
 type AnyRow = Record<string, unknown>;
 
@@ -326,6 +339,59 @@ function mapCraft(db: Database.Database, craftId: string) {
   const barbellFrameworkLinks = db.prepare("SELECT barbell_id, framework_id FROM craft_barbell_framework_links").all() as Array<{ barbell_id: string; framework_id: string }>;
   const heuristicBarbellLinks = db.prepare("SELECT heuristic_id, barbell_id FROM craft_heuristic_barbell_links").all() as Array<{ heuristic_id: string; barbell_id: string }>;
 
+  const knowledgeStacks = db
+    .prepare("SELECT * FROM knowledge_stacks WHERE craft_id=? ORDER BY sort_order, created_at")
+    .all(craftId) as any[];
+  const knowledgeProtocols = db
+    .prepare("SELECT * FROM knowledge_protocols WHERE craft_id=? ORDER BY sort_order, created_at")
+    .all(craftId) as any[];
+  const knowledgeRules = db
+    .prepare("SELECT * FROM knowledge_rules WHERE craft_id=? ORDER BY sort_order, created_at")
+    .all(craftId) as any[];
+  const knowledgeHeuristics = db
+    .prepare("SELECT * FROM knowledge_heuristics WHERE craft_id=? ORDER BY sort_order, created_at")
+    .all(craftId) as any[];
+  const knowledgeWargames = db
+    .prepare("SELECT * FROM knowledge_wargames WHERE craft_id=? ORDER BY created_at")
+    .all(craftId) as any[];
+
+  const wargameIds = knowledgeWargames.map((row) => String(row.id));
+  const knowledgeScenarios = wargameIds.length
+    ? (db
+        .prepare(`SELECT * FROM knowledge_scenarios WHERE wargame_id IN (${wargameIds.map(() => "?").join(",")}) ORDER BY sort_order, created_at`)
+        .all(...wargameIds) as any[])
+    : [];
+
+  const scenarioIds = knowledgeScenarios.map((row) => String(row.id));
+  const knowledgeThreats = scenarioIds.length
+    ? (db
+        .prepare(`SELECT * FROM knowledge_threats WHERE scenario_id IN (${scenarioIds.map(() => "?").join(",")}) ORDER BY severity DESC, created_at`)
+        .all(...scenarioIds) as any[])
+    : [];
+
+  const threatIds = knowledgeThreats.map((row) => String(row.id));
+  const knowledgeResponses = threatIds.length
+    ? (db
+        .prepare(`SELECT * FROM knowledge_responses WHERE threat_id IN (${threatIds.map(() => "?").join(",")}) ORDER BY created_at`)
+        .all(...threatIds) as any[])
+    : [];
+
+  const linkedIds = new Set<string>([
+    ...knowledgeStacks.map((row) => String(row.id)),
+    ...knowledgeProtocols.map((row) => String(row.id)),
+    ...knowledgeRules.map((row) => String(row.id)),
+    ...knowledgeHeuristics.map((row) => String(row.id)),
+    ...knowledgeWargames.map((row) => String(row.id)),
+    ...knowledgeScenarios.map((row) => String(row.id)),
+    ...knowledgeThreats.map((row) => String(row.id)),
+    ...knowledgeResponses.map((row) => String(row.id))
+  ]);
+
+  const knowledgeLinks = db
+    .prepare("SELECT * FROM knowledge_entity_links ORDER BY source_type, source_id, sort_order, created_at")
+    .all()
+    .filter((row: any) => linkedIds.has(String(row.source_id)) || linkedIds.has(String(row.target_id)));
+
   const map = (rows: Array<{ source: string; target: string }>) => {
     const out = new Map<string, string[]>();
     for (const row of rows) {
@@ -360,7 +426,79 @@ function mapCraft(db: Database.Database, craftId: string) {
       title: row.title,
       content: row.content ?? undefined,
       barbellStrategyIds: barbellsByHeuristic.get(row.id) ?? []
-    }))
+    })),
+    knowledge: {
+      stacks: knowledgeStacks.map((row) => ({
+        id: row.id,
+        craftId: row.craft_id,
+        name: row.name,
+        description: row.description ?? undefined,
+        sortOrder: row.sort_order
+      })),
+      protocols: knowledgeProtocols.map((row) => ({
+        id: row.id,
+        craftId: row.craft_id,
+        stackId: row.stack_id ?? undefined,
+        name: row.name,
+        description: row.description ?? undefined,
+        sortOrder: row.sort_order
+      })),
+      rules: knowledgeRules.map((row) => ({
+        id: row.id,
+        craftId: row.craft_id,
+        protocolId: row.protocol_id ?? undefined,
+        statement: row.statement,
+        rationale: row.rationale ?? undefined,
+        sortOrder: row.sort_order
+      })),
+      heuristics: knowledgeHeuristics.map((row) => ({
+        id: row.id,
+        craftId: row.craft_id,
+        protocolId: row.protocol_id ?? undefined,
+        ruleId: row.rule_id ?? undefined,
+        statement: row.statement,
+        explanation: row.explanation ?? undefined,
+        sortOrder: row.sort_order
+      })),
+      wargames: knowledgeWargames.map((row) => ({
+        id: row.id,
+        craftId: row.craft_id,
+        name: row.name,
+        description: row.description ?? undefined,
+        objective: row.objective ?? undefined
+      })),
+      scenarios: knowledgeScenarios.map((row) => ({
+        id: row.id,
+        wargameId: row.wargame_id,
+        name: row.name,
+        description: row.description ?? undefined,
+        sortOrder: row.sort_order
+      })),
+      threats: knowledgeThreats.map((row) => ({
+        id: row.id,
+        scenarioId: row.scenario_id,
+        name: row.name,
+        description: row.description ?? undefined,
+        severity: row.severity
+      })),
+      responses: knowledgeResponses.map((row) => ({
+        id: row.id,
+        threatId: row.threat_id,
+        name: row.name,
+        description: row.description ?? undefined,
+        responseType: row.response_type
+      })),
+      links: knowledgeLinks.map((row: any) => ({
+        id: row.id,
+        sourceType: row.source_type,
+        sourceId: row.source_id,
+        targetType: row.target_type,
+        targetId: row.target_id,
+        linkType: row.link_type,
+        notes: row.notes ?? undefined,
+        sortOrder: row.sort_order
+      }))
+    }
   };
 }
 
@@ -1414,5 +1552,271 @@ export async function handleMissionHierarchyPut(missionId: string, rawBody: unkn
     }
 
     return handleMissionHierarchyGet(parsed.missionId);
+  });
+}
+
+
+function parseEntityType(entityType: string) {
+  return knowledgeEntityTypeSchema.parse(entityType);
+}
+
+export async function handleKnowledgeCollection(entityType: string) {
+  const normalized = parseEntityType(entityType);
+  return withDb((db) => {
+    if (normalized === "craft") {
+      const rows = db.prepare("SELECT id, name, description, created_at, updated_at FROM crafts ORDER BY name").all();
+      return ok(rows);
+    }
+
+    if (normalized === "stack") return ok(db.prepare("SELECT * FROM knowledge_stacks ORDER BY sort_order, created_at").all());
+    if (normalized === "protocol") return ok(db.prepare("SELECT * FROM knowledge_protocols ORDER BY sort_order, created_at").all());
+    if (normalized === "rule") return ok(db.prepare("SELECT * FROM knowledge_rules ORDER BY sort_order, created_at").all());
+    if (normalized === "heuristic") return ok(db.prepare("SELECT * FROM knowledge_heuristics ORDER BY sort_order, created_at").all());
+    if (normalized === "wargame") return ok(db.prepare("SELECT * FROM knowledge_wargames ORDER BY created_at").all());
+    if (normalized === "scenario") return ok(db.prepare("SELECT * FROM knowledge_scenarios ORDER BY sort_order, created_at").all());
+    if (normalized === "threat") return ok(db.prepare("SELECT * FROM knowledge_threats ORDER BY severity DESC, created_at").all());
+    if (normalized === "response") return ok(db.prepare("SELECT * FROM knowledge_responses ORDER BY created_at").all());
+    return ok(db.prepare("SELECT * FROM knowledge_entity_links ORDER BY source_type, source_id, sort_order, created_at").all());
+  });
+}
+
+export async function handleKnowledgeCreate(entityType: string, rawBody: unknown) {
+  const normalized = parseEntityType(entityType);
+  return withDb((db) => {
+    if (normalized === "craft") {
+      const parsed = craftKnowledgeSchema.parse(rawBody);
+      const id = parsed.id ?? randomUUID();
+      db.prepare("INSERT INTO crafts (id, name, description) VALUES (?, ?, ?)").run(id, parsed.name, parsed.description ?? null);
+      return ok({ id, ...parsed }, 201);
+    }
+
+    if (normalized === "stack") {
+      const parsed = stackSchema.parse(rawBody);
+      const id = parsed.id ?? randomUUID();
+      db.prepare("INSERT INTO knowledge_stacks (id, craft_id, name, description, sort_order) VALUES (?, ?, ?, ?, ?)").run(
+        id,
+        parsed.craftId,
+        parsed.name,
+        parsed.description ?? null,
+        parsed.sortOrder ?? 0
+      );
+      return ok({ id, ...parsed }, 201);
+    }
+
+    if (normalized === "protocol") {
+      const parsed = protocolSchema.parse(rawBody);
+      const id = parsed.id ?? randomUUID();
+      db.prepare("INSERT INTO knowledge_protocols (id, craft_id, stack_id, name, description, sort_order) VALUES (?, ?, ?, ?, ?, ?)").run(
+        id,
+        parsed.craftId,
+        parsed.stackId ?? null,
+        parsed.name,
+        parsed.description ?? null,
+        parsed.sortOrder ?? 0
+      );
+      return ok({ id, ...parsed }, 201);
+    }
+
+    if (normalized === "rule") {
+      const parsed = ruleSchema.parse(rawBody);
+      const id = parsed.id ?? randomUUID();
+      db.prepare("INSERT INTO knowledge_rules (id, craft_id, protocol_id, statement, rationale, sort_order) VALUES (?, ?, ?, ?, ?, ?)").run(
+        id,
+        parsed.craftId,
+        parsed.protocolId ?? null,
+        parsed.statement,
+        parsed.rationale ?? null,
+        parsed.sortOrder ?? 0
+      );
+      return ok({ id, ...parsed }, 201);
+    }
+
+    if (normalized === "heuristic") {
+      const parsed = heuristicSchema.parse(rawBody);
+      const id = parsed.id ?? randomUUID();
+      db.prepare(
+        "INSERT INTO knowledge_heuristics (id, craft_id, protocol_id, rule_id, statement, explanation, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)"
+      ).run(id, parsed.craftId, parsed.protocolId ?? null, parsed.ruleId ?? null, parsed.statement, parsed.explanation ?? null, parsed.sortOrder ?? 0);
+      return ok({ id, ...parsed }, 201);
+    }
+
+    if (normalized === "wargame") {
+      const parsed = wargameSchema.parse(rawBody);
+      const id = parsed.id ?? randomUUID();
+      db.prepare("INSERT INTO knowledge_wargames (id, craft_id, name, description, objective) VALUES (?, ?, ?, ?, ?)").run(
+        id,
+        parsed.craftId,
+        parsed.name,
+        parsed.description ?? null,
+        parsed.objective ?? null
+      );
+      return ok({ id, ...parsed }, 201);
+    }
+
+    if (normalized === "scenario") {
+      const parsed = scenarioSchema.parse(rawBody);
+      const id = parsed.id ?? randomUUID();
+      db.prepare("INSERT INTO knowledge_scenarios (id, wargame_id, name, description, sort_order) VALUES (?, ?, ?, ?, ?)").run(
+        id,
+        parsed.wargameId,
+        parsed.name,
+        parsed.description ?? null,
+        parsed.sortOrder ?? 0
+      );
+      return ok({ id, ...parsed }, 201);
+    }
+
+    if (normalized === "threat") {
+      const parsed = threatSchema.parse(rawBody);
+      const id = parsed.id ?? randomUUID();
+      db.prepare("INSERT INTO knowledge_threats (id, scenario_id, name, description, severity) VALUES (?, ?, ?, ?, ?)").run(
+        id,
+        parsed.scenarioId,
+        parsed.name,
+        parsed.description ?? null,
+        parsed.severity ?? 5
+      );
+      return ok({ id, ...parsed }, 201);
+    }
+
+    if (normalized === "response") {
+      const parsed = responseSchema.parse(rawBody);
+      const id = parsed.id ?? randomUUID();
+      db.prepare("INSERT INTO knowledge_responses (id, threat_id, name, description, response_type) VALUES (?, ?, ?, ?, ?)").run(
+        id,
+        parsed.threatId,
+        parsed.name,
+        parsed.description ?? null,
+        parsed.responseType ?? "MITIGATE"
+      );
+      return ok({ id, ...parsed }, 201);
+    }
+
+    const parsed = entityLinkSchema.parse(rawBody);
+    const id = parsed.id ?? randomUUID();
+    db.prepare(
+      "INSERT INTO knowledge_entity_links (id, source_type, source_id, target_type, target_id, link_type, notes, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    ).run(id, parsed.sourceType, parsed.sourceId, parsed.targetType, parsed.targetId, parsed.linkType ?? "REFERENCES", parsed.notes ?? null, parsed.sortOrder ?? 0);
+    return ok({ id, ...parsed }, 201);
+  });
+}
+
+export async function handleKnowledgeById(entityType: string, id: string) {
+  const normalized = parseEntityType(entityType);
+  return withDb((db) => {
+    if (normalized === "craft") return ok(db.prepare("SELECT id, name, description, created_at, updated_at FROM crafts WHERE id=?").get(id) ?? { error: "Not found" }, db.prepare("SELECT 1 FROM crafts WHERE id=?").get(id) ? 200 : 404);
+    const tableMap: Record<Exclude<typeof normalized, "craft">, string> = {
+      stack: "knowledge_stacks",
+      protocol: "knowledge_protocols",
+      rule: "knowledge_rules",
+      heuristic: "knowledge_heuristics",
+      wargame: "knowledge_wargames",
+      scenario: "knowledge_scenarios",
+      threat: "knowledge_threats",
+      response: "knowledge_responses",
+      link: "knowledge_entity_links"
+    };
+    const table = tableMap[normalized as Exclude<typeof normalized, "craft">];
+    const row = db.prepare(`SELECT * FROM ${table} WHERE id=?`).get(id);
+    if (!row) return ok({ error: "Not found" }, 404);
+    return ok(row);
+  });
+}
+
+export async function handleKnowledgePatch(entityType: string, id: string, rawBody: unknown) {
+  const normalized = parseEntityType(entityType);
+  return withDb((db) => {
+    if (normalized === "craft") {
+      const parsed = craftKnowledgeSchema.partial().parse(rawBody);
+      db.prepare("UPDATE crafts SET name=COALESCE(?, name), description=COALESCE(?, description), updated_at=datetime('now') WHERE id=?").run(parsed.name ?? null, parsed.description ?? null, id);
+      return handleKnowledgeById(normalized, id);
+    }
+
+    if (normalized === "stack") {
+      const parsed = stackSchema.partial().parse(rawBody);
+      db.prepare("UPDATE knowledge_stacks SET craft_id=COALESCE(?, craft_id), name=COALESCE(?, name), description=COALESCE(?, description), sort_order=COALESCE(?, sort_order), updated_at=datetime('now') WHERE id=?").run(parsed.craftId ?? null, parsed.name ?? null, parsed.description ?? null, parsed.sortOrder ?? null, id);
+      return handleKnowledgeById(normalized, id);
+    }
+
+    if (normalized === "protocol") {
+      const parsed = protocolSchema.partial().parse(rawBody);
+      db.prepare("UPDATE knowledge_protocols SET craft_id=COALESCE(?, craft_id), stack_id=COALESCE(?, stack_id), name=COALESCE(?, name), description=COALESCE(?, description), sort_order=COALESCE(?, sort_order), updated_at=datetime('now') WHERE id=?").run(parsed.craftId ?? null, parsed.stackId ?? null, parsed.name ?? null, parsed.description ?? null, parsed.sortOrder ?? null, id);
+      return handleKnowledgeById(normalized, id);
+    }
+
+    if (normalized === "rule") {
+      const parsed = ruleSchema.partial().parse(rawBody);
+      db.prepare("UPDATE knowledge_rules SET craft_id=COALESCE(?, craft_id), protocol_id=COALESCE(?, protocol_id), statement=COALESCE(?, statement), rationale=COALESCE(?, rationale), sort_order=COALESCE(?, sort_order), updated_at=datetime('now') WHERE id=?").run(parsed.craftId ?? null, parsed.protocolId ?? null, parsed.statement ?? null, parsed.rationale ?? null, parsed.sortOrder ?? null, id);
+      return handleKnowledgeById(normalized, id);
+    }
+
+    if (normalized === "heuristic") {
+      const parsed = heuristicSchema.partial().parse(rawBody);
+      db.prepare("UPDATE knowledge_heuristics SET craft_id=COALESCE(?, craft_id), protocol_id=COALESCE(?, protocol_id), rule_id=COALESCE(?, rule_id), statement=COALESCE(?, statement), explanation=COALESCE(?, explanation), sort_order=COALESCE(?, sort_order), updated_at=datetime('now') WHERE id=?").run(parsed.craftId ?? null, parsed.protocolId ?? null, parsed.ruleId ?? null, parsed.statement ?? null, parsed.explanation ?? null, parsed.sortOrder ?? null, id);
+      return handleKnowledgeById(normalized, id);
+    }
+
+    if (normalized === "wargame") {
+      const parsed = wargameSchema.partial().parse(rawBody);
+      db.prepare("UPDATE knowledge_wargames SET craft_id=COALESCE(?, craft_id), name=COALESCE(?, name), description=COALESCE(?, description), objective=COALESCE(?, objective), updated_at=datetime('now') WHERE id=?").run(parsed.craftId ?? null, parsed.name ?? null, parsed.description ?? null, parsed.objective ?? null, id);
+      return handleKnowledgeById(normalized, id);
+    }
+
+    if (normalized === "scenario") {
+      const parsed = scenarioSchema.partial().parse(rawBody);
+      db.prepare("UPDATE knowledge_scenarios SET wargame_id=COALESCE(?, wargame_id), name=COALESCE(?, name), description=COALESCE(?, description), sort_order=COALESCE(?, sort_order), updated_at=datetime('now') WHERE id=?").run(parsed.wargameId ?? null, parsed.name ?? null, parsed.description ?? null, parsed.sortOrder ?? null, id);
+      return handleKnowledgeById(normalized, id);
+    }
+
+    if (normalized === "threat") {
+      const parsed = threatSchema.partial().parse(rawBody);
+      db.prepare("UPDATE knowledge_threats SET scenario_id=COALESCE(?, scenario_id), name=COALESCE(?, name), description=COALESCE(?, description), severity=COALESCE(?, severity), updated_at=datetime('now') WHERE id=?").run(parsed.scenarioId ?? null, parsed.name ?? null, parsed.description ?? null, parsed.severity ?? null, id);
+      return handleKnowledgeById(normalized, id);
+    }
+
+    if (normalized === "response") {
+      const parsed = responseSchema.partial().parse(rawBody);
+      db.prepare("UPDATE knowledge_responses SET threat_id=COALESCE(?, threat_id), name=COALESCE(?, name), description=COALESCE(?, description), response_type=COALESCE(?, response_type), updated_at=datetime('now') WHERE id=?").run(parsed.threatId ?? null, parsed.name ?? null, parsed.description ?? null, parsed.responseType ?? null, id);
+      return handleKnowledgeById(normalized, id);
+    }
+
+    const parsed = entityLinkSchema.partial().parse(rawBody);
+    db.prepare("UPDATE knowledge_entity_links SET source_type=COALESCE(?, source_type), source_id=COALESCE(?, source_id), target_type=COALESCE(?, target_type), target_id=COALESCE(?, target_id), link_type=COALESCE(?, link_type), notes=COALESCE(?, notes), sort_order=COALESCE(?, sort_order) WHERE id=?").run(
+      parsed.sourceType ?? null,
+      parsed.sourceId ?? null,
+      parsed.targetType ?? null,
+      parsed.targetId ?? null,
+      parsed.linkType ?? null,
+      parsed.notes ?? null,
+      parsed.sortOrder ?? null,
+      id
+    );
+    return handleKnowledgeById(normalized, id);
+  });
+}
+
+
+export async function handleKnowledgeDelete(entityType: string, id: string) {
+  const normalized = parseEntityType(entityType);
+  return withDb((db) => {
+    if (normalized === "craft") {
+      db.prepare("DELETE FROM crafts WHERE id=?").run(id);
+      return ok({ id, deleted: true });
+    }
+
+    const tableMap: Record<string, string> = {
+      stack: "knowledge_stacks",
+      protocol: "knowledge_protocols",
+      rule: "knowledge_rules",
+      heuristic: "knowledge_heuristics",
+      wargame: "knowledge_wargames",
+      scenario: "knowledge_scenarios",
+      threat: "knowledge_threats",
+      response: "knowledge_responses",
+      link: "knowledge_entity_links"
+    };
+
+    db.prepare(`DELETE FROM ${tableMap[normalized]} WHERE id=?`).run(id);
+    return ok({ id, deleted: true });
   });
 }

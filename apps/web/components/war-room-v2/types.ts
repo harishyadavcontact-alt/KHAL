@@ -93,6 +93,97 @@ export interface CraftBarbellStrategy {
   frameworkIds: string[];
 }
 
+export interface CraftKnowledgeStack {
+  id: string;
+  craftId: string;
+  name: string;
+  description?: string;
+  sortOrder?: number;
+}
+
+export interface CraftKnowledgeProtocol {
+  id: string;
+  craftId: string;
+  stackId?: string;
+  name: string;
+  description?: string;
+  sortOrder?: number;
+}
+
+export interface CraftKnowledgeRule {
+  id: string;
+  craftId: string;
+  protocolId?: string;
+  statement: string;
+  rationale?: string;
+  sortOrder?: number;
+}
+
+export interface CraftKnowledgeHeuristic {
+  id: string;
+  craftId: string;
+  protocolId?: string;
+  ruleId?: string;
+  statement: string;
+  explanation?: string;
+  sortOrder?: number;
+}
+
+export interface CraftKnowledgeWargame {
+  id: string;
+  craftId: string;
+  name: string;
+  description?: string;
+  objective?: string;
+}
+
+export interface CraftKnowledgeScenario {
+  id: string;
+  wargameId: string;
+  name: string;
+  description?: string;
+  sortOrder?: number;
+}
+
+export interface CraftKnowledgeThreat {
+  id: string;
+  scenarioId: string;
+  name: string;
+  description?: string;
+  severity?: number;
+}
+
+export interface CraftKnowledgeResponse {
+  id: string;
+  threatId: string;
+  name: string;
+  description?: string;
+  responseType?: string;
+}
+
+export interface CraftKnowledgeLink {
+  id: string;
+  sourceType: string;
+  sourceId: string;
+  targetType: string;
+  targetId: string;
+  linkType?: string;
+  notes?: string;
+  sortOrder?: number;
+}
+
+export interface CraftKnowledge {
+  stacks: CraftKnowledgeStack[];
+  protocols: CraftKnowledgeProtocol[];
+  rules: CraftKnowledgeRule[];
+  heuristics: CraftKnowledgeHeuristic[];
+  wargames: CraftKnowledgeWargame[];
+  scenarios: CraftKnowledgeScenario[];
+  threats: CraftKnowledgeThreat[];
+  responses: CraftKnowledgeResponse[];
+  links: CraftKnowledgeLink[];
+}
+
 export interface Means {
   craftId: string;
   selectedHeuristicIds: string[];
@@ -114,6 +205,7 @@ export interface Craft {
   frameworks: CraftFramework[];
   barbellStrategies: CraftBarbellStrategy[];
   heuristics: CraftHeuristic[];
+  knowledge?: CraftKnowledge;
 }
 
 export interface Entity {
