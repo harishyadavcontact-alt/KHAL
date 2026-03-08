@@ -29,7 +29,7 @@ type DraftPromoteBody = DraftSaveBody & {
 
 type AnyRow = Record<string, unknown>;
 
-type PersistedDraftBundle = {
+export type PersistedDraftBundle = {
   draft: {
     id: string;
     title: string;
@@ -52,6 +52,15 @@ type PersistedDraftBundle = {
   anchors: StructuralAnchor[];
   entityLinks: DraftEntityLink[];
   promotionEvents: PromotionEvent[];
+};
+
+export type DraftSummary = {
+  id: string;
+  title: string;
+  preview: string;
+  updatedAt: string;
+  anchorCount: number;
+  promotionCount: number;
 };
 
 function parseJson<T>(value: unknown, fallback: T): T {
@@ -82,13 +91,96 @@ function anchorSignals(anchor: StructuralAnchor): string[] {
     .filter(Boolean);
 }
 
+function getEntityLabelAndRoute(db: Database.Database, entityType: DraftLinkEntityType, entityId: string): { label?: string; route?: string } {
+  if (entityType === "domain") {
+    const row = db.prepare("SELECT name FROM domains WHERE id=?").get(entityId) as AnyRow | undefined;
+    return { label: row?.name ? String(row.name) : undefined, route: `/war-room?domainId=${encodeURIComponent(entityId)}` };
+  }
+  if (entityType === "law") {
+    const row = db.prepare("SELECT name FROM laws WHERE id=?").get(entityId) as AnyRow | undefined;
+    return { label: row?.name ? String(row.name) : undefined, route: `/laws?lawId=${encodeURIComponent(entityId)}` };
+  }
+  if (entityType === "lineage_node") {
+    const row = db.prepare("SELECT name FROM lineage_nodes WHERE id=?").get(entityId) as AnyRow | undefined;
+    return { label: row?.name ? String(row.name) : undefined, route: `/lineage-map?nodeId=${encodeURIComponent(entityId)}` };
+  }
+  if (entityType === "lineage_entity") {
+    const row = db.prepare("SELECT label FROM lineage_entities WHERE id=?").get(entityId) as AnyRow | undefined;
+    return { label: row?.label ? String(row.label) : undefined, route: `/lineage-map?entityId=${encodeURIComponent(entityId)}` };
+  }
+  if (entityType === "affair") {
+    const row = db.prepare("SELECT title FROM affairs WHERE id=?").get(entityId) as AnyRow | undefined;
+    return { label: row?.title ? String(row.title) : undefined, route: `/affairs?affairId=${encodeURIComponent(entityId)}` };
+  }
+  if (entityType === "interest") {
+    const row = db.prepare("SELECT title FROM interests WHERE id=?").get(entityId) as AnyRow | undefined;
+    return { label: row?.title ? String(row.title) : undefined, route: `/interests?interestId=${encodeURIComponent(entityId)}` };
+  }
+  if (entityType === "craft") {
+    const row = db.prepare("SELECT name FROM crafts WHERE id=?").get(entityId) as AnyRow | undefined;
+    return { label: row?.name ? String(row.name) : undefined, route: `/crafts-library?craftId=${encodeURIComponent(entityId)}` };
+  }
+  if (entityType === "stack") {
+    const row = db.prepare("SELECT name, craft_id FROM knowledge_stacks WHERE id=?").get(entityId) as AnyRow | undefined;
+    const craftId = row?.craft_id ? String(row.craft_id) : undefined;
+    return { label: row?.name ? String(row.name) : undefined, route: craftId ? `/crafts-library?craftId=${encodeURIComponent(craftId)}` : "/crafts-library" };
+  }
+  if (entityType === "protocol") {
+    const row = db.prepare("SELECT name, craft_id FROM knowledge_protocols WHERE id=?").get(entityId) as AnyRow | undefined;
+    const craftId = row?.craft_id ? String(row.craft_id) : undefined;
+    return { label: row?.name ? String(row.name) : undefined, route: craftId ? `/crafts-library?craftId=${encodeURIComponent(craftId)}` : "/crafts-library" };
+  }
+  if (entityType === "rule") {
+    const row = db.prepare("SELECT statement, craft_id FROM knowledge_rules WHERE id=?").get(entityId) as AnyRow | undefined;
+    const craftId = row?.craft_id ? String(row.craft_id) : undefined;
+    return { label: row?.statement ? String(row.statement) : undefined, route: craftId ? `/crafts-library?craftId=${encodeURIComponent(craftId)}` : "/crafts-library" };
+  }
+  if (entityType === "heuristic") {
+    const row = db.prepare("SELECT statement, craft_id FROM knowledge_heuristics WHERE id=?").get(entityId) as AnyRow | undefined;
+    const craftId = row?.craft_id ? String(row.craft_id) : undefined;
+    return { label: row?.statement ? String(row.statement) : undefined, route: craftId ? `/crafts-library?craftId=${encodeURIComponent(craftId)}` : "/crafts-library" };
+  }
+  if (entityType === "wargame") {
+    const row = db.prepare("SELECT name, craft_id FROM knowledge_wargames WHERE id=?").get(entityId) as AnyRow | undefined;
+    const craftId = row?.craft_id ? String(row.craft_id) : undefined;
+    return { label: row?.name ? String(row.name) : undefined, route: craftId ? `/war-gaming/craft?craftId=${encodeURIComponent(craftId)}` : "/war-gaming" };
+  }
+  if (entityType === "scenario") {
+    const row = db.prepare("SELECT name FROM knowledge_scenarios WHERE id=?").get(entityId) as AnyRow | undefined;
+    return { label: row?.name ? String(row.name) : undefined, route: "/war-gaming" };
+  }
+  if (entityType === "threat") {
+    const row = db.prepare("SELECT name FROM knowledge_threats WHERE id=?").get(entityId) as AnyRow | undefined;
+    return { label: row?.name ? String(row.name) : undefined, route: "/war-gaming" };
+  }
+  if (entityType === "response") {
+    const row = db.prepare("SELECT name FROM knowledge_responses WHERE id=?").get(entityId) as AnyRow | undefined;
+    return { label: row?.name ? String(row.name) : undefined, route: "/war-gaming" };
+  }
+  return {};
+}
+
+function mapDraftSummary(db: Database.Database, row: AnyRow): DraftSummary {
+  const anchorCount = Number((db.prepare("SELECT COUNT(*) AS count FROM structural_anchors WHERE draft_id=?").get(String(row.id)) as AnyRow | undefined)?.count ?? 0);
+  const promotionCount = Number((db.prepare("SELECT COUNT(*) AS count FROM promotion_events WHERE draft_id=?").get(String(row.id)) as AnyRow | undefined)?.count ?? 0);
+  const preview = String(row.raw_text ?? "").split(/\r?\n/).map((line) => line.trim()).find(Boolean) ?? "";
+  return {
+    id: String(row.id),
+    title: String(row.title ?? "Untitled draft"),
+    preview: preview.slice(0, 140),
+    updatedAt: String(row.updated_at ?? row.created_at ?? ""),
+    anchorCount,
+    promotionCount
+  };
+}
+
 function mapDraftBundle(db: Database.Database, draftId: string): PersistedDraftBundle | null {
   const draft = db.prepare("SELECT * FROM drafts WHERE id=?").get(draftId) as AnyRow | undefined;
   if (!draft) return null;
 
   const blocks = db.prepare("SELECT * FROM draft_blocks WHERE draft_id=? ORDER BY start_position, created_at").all(draftId) as AnyRow[];
   const anchors = db.prepare("SELECT * FROM structural_anchors WHERE draft_id=? ORDER BY created_at").all(draftId) as AnyRow[];
-  const entityLinks = db.prepare("SELECT * FROM draft_entity_links WHERE draft_id=? ORDER BY link_status, updated_at DESC, created_at DESC").all(draftId) as AnyRow[];
+  const entityLinks = db.prepare("SELECT * FROM draft_entity_links WHERE draft_id=? ORDER BY CASE link_status WHEN 'linked' THEN 0 WHEN 'suggested' THEN 1 ELSE 2 END, updated_at DESC, created_at DESC").all(draftId) as AnyRow[];
   const promotionEvents = db.prepare("SELECT * FROM promotion_events WHERE draft_id=? ORDER BY timestamp DESC, created_at DESC").all(draftId) as AnyRow[];
 
   return {
@@ -102,14 +194,14 @@ function mapDraftBundle(db: Database.Database, draftId: string): PersistedDraftB
       createdAt: String(draft.created_at),
       updatedAt: String(draft.updated_at)
     },
-    blocks: blocks.map((row) => ({
-      id: String(row.id),
-      draftId: String(row.draft_id),
-      rawText: String(row.raw_text ?? ""),
-      blockKind: String(row.block_kind ?? "paragraph"),
-      startPosition: Number(row.start_position ?? 0),
-      endPosition: Number(row.end_position ?? 0),
-      inferenceMetadata: parseJson<Record<string, unknown>>(row.inference_metadata_json, {})
+    blocks: blocks.map((block) => ({
+      id: String(block.id),
+      draftId: String(block.draft_id),
+      rawText: String(block.raw_text ?? ""),
+      blockKind: String(block.block_kind ?? "paragraph"),
+      startPosition: Number(block.start_position ?? 0),
+      endPosition: Number(block.end_position ?? 0),
+      inferenceMetadata: parseJson<Record<string, unknown>>(block.inference_metadata_json, {})
     })),
     anchors: anchors.map((row) => ({
       id: String(row.id),
@@ -126,15 +218,22 @@ function mapDraftBundle(db: Database.Database, draftId: string): PersistedDraftB
       relatedValues: parseJson<string[]>(row.related_values_json, []),
       linkedParentCandidate: row.linked_parent_candidate ? String(row.linked_parent_candidate) : undefined
     })),
-    entityLinks: entityLinks.map((row) => ({
-      id: String(row.id),
-      anchorId: String(row.anchor_id),
-      entityType: String(row.entity_type) as DraftLinkEntityType,
-      entityId: String(row.entity_id),
-      linkStatus: String(row.link_status) as DraftEntityLink["linkStatus"],
-      sourceText: String(row.source_text ?? ""),
-      matchReason: row.match_reason ? String(row.match_reason) : undefined
-    })),
+    entityLinks: entityLinks.map((row) => {
+      const entityType = String(row.entity_type) as DraftLinkEntityType;
+      const entityId = String(row.entity_id);
+      const meta = getEntityLabelAndRoute(db, entityType, entityId);
+      return {
+        id: String(row.id),
+        anchorId: String(row.anchor_id),
+        entityType,
+        entityId,
+        entityLabel: meta.label,
+        entityRoute: meta.route,
+        linkStatus: String(row.link_status) as DraftEntityLink["linkStatus"],
+        sourceText: String(row.source_text ?? ""),
+        matchReason: row.match_reason ? String(row.match_reason) : undefined
+      } satisfies DraftEntityLink;
+    }),
     promotionEvents: promotionEvents.map((row) => ({
       id: String(row.id),
       anchorId: String(row.anchor_id),
@@ -144,6 +243,11 @@ function mapDraftBundle(db: Database.Database, draftId: string): PersistedDraftB
       timestamp: String(row.timestamp)
     }))
   };
+}
+
+function listDraftSummaries(db: Database.Database): DraftSummary[] {
+  const rows = db.prepare("SELECT id, title, raw_text, created_at, updated_at FROM drafts ORDER BY updated_at DESC, created_at DESC LIMIT 12").all() as AnyRow[];
+  return rows.map((row) => mapDraftSummary(db, row));
 }
 
 function upsertDraftEntityLink(db: Database.Database, draftId: string, link: DraftEntityLink) {
@@ -160,7 +264,7 @@ function createSuggestedLinks(db: Database.Database, draftId: string, anchors: S
 
   const domains = db.prepare("SELECT id, name FROM domains ORDER BY name").all() as AnyRow[];
   const laws = db.prepare("SELECT id, name FROM laws ORDER BY name").all() as AnyRow[];
-  const lineageNodes = db.prepare("SELECT id, name, level FROM lineage_nodes ORDER BY sort_order, name").all() as AnyRow[];
+  const lineageNodes = db.prepare("SELECT id, name FROM lineage_nodes ORDER BY sort_order, name").all() as AnyRow[];
   const crafts = db.prepare("SELECT id, name FROM crafts ORDER BY name").all() as AnyRow[];
   const affairs = db.prepare("SELECT id, title FROM affairs ORDER BY title").all() as AnyRow[];
   const interests = db.prepare("SELECT id, title FROM interests ORDER BY title").all() as AnyRow[];
@@ -198,10 +302,7 @@ function persistDraft(db: Database.Database, body: DraftSaveBody) {
   const input = body.input ?? "";
   const draftId = body.id ?? randomUUID();
   const inference = inferDraftStructure(input);
-  const resolvedAnchors = inference.anchors.map((anchor) => ({
-    ...anchor,
-    status: body.anchorState?.[anchor.id] ?? anchor.status
-  }));
+  const resolvedAnchors = inference.anchors.map((anchor) => ({ ...anchor, status: body.anchorState?.[anchor.id] ?? anchor.status }));
   const title = titleFromInput(body.title, input);
 
   db.prepare(
@@ -210,14 +311,7 @@ function persistDraft(db: Database.Database, body: DraftSaveBody) {
      ON CONFLICT(id)
      DO UPDATE SET title=excluded.title, raw_text=excluded.raw_text, inferred_structure_json=excluded.inferred_structure_json,
        selected_anchor_id=excluded.selected_anchor_id, ui_state_json=excluded.ui_state_json, updated_at=datetime('now')`
-  ).run(
-    draftId,
-    title,
-    input,
-    JSON.stringify(inference.inferred),
-    body.selectedAnchorId ?? null,
-    JSON.stringify({ anchorState: body.anchorState ?? {}, showDebug: Boolean(body.showDebug) })
-  );
+  ).run(draftId, title, input, JSON.stringify(inference.inferred), body.selectedAnchorId ?? null, JSON.stringify({ anchorState: body.anchorState ?? {}, showDebug: Boolean(body.showDebug) }));
 
   db.prepare("DELETE FROM draft_blocks WHERE draft_id=?").run(draftId);
   db.prepare("DELETE FROM structural_anchors WHERE draft_id=?").run(draftId);
@@ -228,15 +322,7 @@ function persistDraft(db: Database.Database, body: DraftSaveBody) {
   );
   inference.blocks.forEach((block) => {
     const lens = inference.blockLenses.find((item) => item.blockId === block.id);
-    insertBlock.run(
-      `${draftId}_${block.id}`,
-      draftId,
-      block.rawText,
-      block.blockKind,
-      block.startLine,
-      block.endLine,
-      JSON.stringify({ lens })
-    );
+    insertBlock.run(`${draftId}_${block.id}`, draftId, block.rawText, block.blockKind, block.startLine, block.endLine, JSON.stringify({ lens }));
   });
 
   const insertAnchor = db.prepare(
@@ -244,61 +330,30 @@ function persistDraft(db: Database.Database, body: DraftSaveBody) {
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
   );
   resolvedAnchors.forEach((anchor) => {
-    insertAnchor.run(
-      anchor.id,
-      draftId,
-      anchor.blockId ? `${draftId}_${anchor.blockId}` : null,
-      anchor.anchorType,
-      anchor.candidateEntityType,
-      anchor.confidence,
-      anchor.status,
-      anchor.title,
-      anchor.notes,
-      anchor.value,
-      anchor.sourcePreview,
-      JSON.stringify(anchor.relatedValues ?? []),
-      anchor.linkedParentCandidate ?? null,
-      JSON.stringify(anchor.sourceSpan)
-    );
+    insertAnchor.run(anchor.id, draftId, anchor.blockId ? `${draftId}_${anchor.blockId}` : null, anchor.anchorType, anchor.candidateEntityType, anchor.confidence, anchor.status, anchor.title, anchor.notes, anchor.value, anchor.sourcePreview, JSON.stringify(anchor.relatedValues ?? []), anchor.linkedParentCandidate ?? null, JSON.stringify(anchor.sourceSpan));
   });
 
   createSuggestedLinks(db, draftId, resolvedAnchors);
-
   return { draftId, inference };
 }
 
 function pickDraftLinkEntity(db: Database.Database, draftId: string, anchorId: string, entityType: DraftLinkEntityType) {
-  const row = db
-    .prepare(
-      `SELECT entity_id
-       FROM draft_entity_links
-       WHERE draft_id=? AND anchor_id=? AND entity_type=?
-       ORDER BY CASE link_status WHEN 'linked' THEN 0 WHEN 'suggested' THEN 1 ELSE 2 END, updated_at DESC
-       LIMIT 1`
-    )
-    .get(draftId, anchorId, entityType) as AnyRow | undefined;
+  const row = db.prepare(`SELECT entity_id FROM draft_entity_links WHERE draft_id=? AND anchor_id=? AND entity_type=? ORDER BY CASE link_status WHEN 'linked' THEN 0 WHEN 'suggested' THEN 1 ELSE 2 END, updated_at DESC LIMIT 1`).get(draftId, anchorId, entityType) as AnyRow | undefined;
   return row?.entity_id ? String(row.entity_id) : undefined;
 }
 
 function pickAnyLinkedEntity(db: Database.Database, draftId: string, entityType: DraftLinkEntityType) {
-  const row = db
-    .prepare(
-      `SELECT entity_id
-       FROM draft_entity_links
-       WHERE draft_id=? AND entity_type=?
-       ORDER BY CASE link_status WHEN 'linked' THEN 0 WHEN 'suggested' THEN 1 ELSE 2 END, updated_at DESC
-       LIMIT 1`
-    )
-    .get(draftId, entityType) as AnyRow | undefined;
+  const row = db.prepare(`SELECT entity_id FROM draft_entity_links WHERE draft_id=? AND entity_type=? ORDER BY CASE link_status WHEN 'linked' THEN 0 WHEN 'suggested' THEN 1 ELSE 2 END, updated_at DESC LIMIT 1`).get(draftId, entityType) as AnyRow | undefined;
   return row?.entity_id ? String(row.entity_id) : undefined;
 }
 
+function firstDomainId(db: Database.Database) {
+  const row = db.prepare("SELECT id FROM domains ORDER BY name LIMIT 1").get() as AnyRow | undefined;
+  return row?.id ? String(row.id) : undefined;
+}
+
 function ensureDomainId(db: Database.Database, draftId: string, anchorId: string) {
-  return (
-    pickDraftLinkEntity(db, draftId, anchorId, "domain") ??
-    pickAnyLinkedEntity(db, draftId, "domain") ??
-    ((db.prepare("SELECT id FROM domains ORDER BY name LIMIT 1").get() as AnyRow | undefined)?.id ? String((db.prepare("SELECT id FROM domains ORDER BY name LIMIT 1").get() as AnyRow).id) : undefined)
-  );
+  return pickDraftLinkEntity(db, draftId, anchorId, "domain") ?? pickAnyLinkedEntity(db, draftId, "domain") ?? firstDomainId(db);
 }
 
 function ensureCraftId(db: Database.Database, draftId: string, anchor: StructuralAnchor, draftTitle: string) {
@@ -306,15 +361,7 @@ function ensureCraftId(db: Database.Database, draftId: string, anchor: Structura
   if (existing) return existing;
   const craftId = randomUUID();
   db.prepare("INSERT INTO crafts (id, name, description) VALUES (?, ?, ?)").run(craftId, `${draftTitle} craft`, `Auto-created while promoting draft anchor ${anchor.title}`);
-  upsertDraftEntityLink(db, draftId, {
-    id: `draftlink_${draftId}_${anchor.id}_craft_${craftId}`,
-    anchorId: anchor.id,
-    entityType: "craft",
-    entityId: craftId,
-    linkStatus: "linked",
-    sourceText: anchor.value,
-    matchReason: "Auto-created craft placeholder for draft promotion."
-  });
+  upsertDraftEntityLink(db, draftId, { id: `draftlink_${draftId}_${anchor.id}_craft_${craftId}`, anchorId: anchor.id, entityType: "craft", entityId: craftId, linkStatus: "linked", sourceText: anchor.value, matchReason: "Auto-created craft placeholder for draft promotion." });
   return craftId;
 }
 
@@ -323,13 +370,7 @@ function ensureWargameId(db: Database.Database, draftId: string, anchor: Structu
   if (existing) return existing;
   const craftId = ensureCraftId(db, draftId, anchor, draftTitle);
   const wargameId = randomUUID();
-  db.prepare("INSERT INTO knowledge_wargames (id, craft_id, name, description, objective) VALUES (?, ?, ?, ?, ?)").run(
-    wargameId,
-    craftId,
-    `${draftTitle} wargame`,
-    `Auto-created while promoting draft anchor ${anchor.title}`,
-    null
-  );
+  db.prepare("INSERT INTO knowledge_wargames (id, craft_id, name, description, objective) VALUES (?, ?, ?, ?, ?)").run(wargameId, craftId, `${draftTitle} wargame`, `Auto-created while promoting draft anchor ${anchor.title}`, null);
   return wargameId;
 }
 
@@ -338,13 +379,7 @@ function ensureScenarioId(db: Database.Database, draftId: string, anchor: Struct
   if (existing) return existing;
   const wargameId = ensureWargameId(db, draftId, anchor, draftTitle);
   const scenarioId = randomUUID();
-  db.prepare("INSERT INTO knowledge_scenarios (id, wargame_id, name, description, sort_order) VALUES (?, ?, ?, ?, ?)").run(
-    scenarioId,
-    wargameId,
-    `${draftTitle} scenario`,
-    `Auto-created while promoting draft anchor ${anchor.title}`,
-    0
-  );
+  db.prepare("INSERT INTO knowledge_scenarios (id, wargame_id, name, description, sort_order) VALUES (?, ?, ?, ?, ?)").run(scenarioId, wargameId, `${draftTitle} scenario`, `Auto-created while promoting draft anchor ${anchor.title}`, 0);
   return scenarioId;
 }
 
@@ -353,13 +388,7 @@ function ensureThreatId(db: Database.Database, draftId: string, anchor: Structur
   if (existing) return existing;
   const scenarioId = ensureScenarioId(db, draftId, anchor, draftTitle);
   const threatId = randomUUID();
-  db.prepare("INSERT INTO knowledge_threats (id, scenario_id, name, description, severity) VALUES (?, ?, ?, ?, ?)").run(
-    threatId,
-    scenarioId,
-    `${draftTitle} threat`,
-    `Auto-created while promoting draft anchor ${anchor.title}`,
-    5
-  );
+  db.prepare("INSERT INTO knowledge_threats (id, scenario_id, name, description, severity) VALUES (?, ?, ?, ?, ?)").run(threatId, scenarioId, `${draftTitle} threat`, `Auto-created while promoting draft anchor ${anchor.title}`, 5);
   return threatId;
 }
 
@@ -371,7 +400,6 @@ function promoteAnchorEntity(db: Database.Database, draftId: string, anchor: Str
     db.prepare("INSERT INTO affairs (id, domain_id, title, description) VALUES (?, ?, ?, ?)").run(id, domainId, anchor.title, anchor.value);
     return { entityType: "affair" as const, entityId: id };
   }
-
   if (anchor.candidateEntityType === "interest") {
     const domainId = ensureDomainId(db, draftId, anchor.id);
     if (!domainId) throw new Error("No domain available for interest promotion.");
@@ -379,20 +407,17 @@ function promoteAnchorEntity(db: Database.Database, draftId: string, anchor: Str
     db.prepare("INSERT INTO interests (id, domain_id, title, notes) VALUES (?, ?, ?, ?)").run(id, domainId, anchor.title, anchor.value);
     return { entityType: "interest" as const, entityId: id };
   }
-
   if (anchor.candidateEntityType === "craft") {
     const id = randomUUID();
     db.prepare("INSERT INTO crafts (id, name, description) VALUES (?, ?, ?)").run(id, anchor.title, anchor.value);
     return { entityType: "craft" as const, entityId: id };
   }
-
   if (anchor.candidateEntityType === "stack") {
     const craftId = ensureCraftId(db, draftId, anchor, draftTitle);
     const id = randomUUID();
     db.prepare("INSERT INTO knowledge_stacks (id, craft_id, name, description, sort_order) VALUES (?, ?, ?, ?, ?)").run(id, craftId, anchor.title, anchor.value, 0);
     return { entityType: "stack" as const, entityId: id };
   }
-
   if (anchor.candidateEntityType === "protocol") {
     const craftId = ensureCraftId(db, draftId, anchor, draftTitle);
     const stackId = pickAnyLinkedEntity(db, draftId, "stack");
@@ -400,7 +425,6 @@ function promoteAnchorEntity(db: Database.Database, draftId: string, anchor: Str
     db.prepare("INSERT INTO knowledge_protocols (id, craft_id, stack_id, name, description, sort_order) VALUES (?, ?, ?, ?, ?, ?)").run(id, craftId, stackId ?? null, anchor.title, anchor.value, 0);
     return { entityType: "protocol" as const, entityId: id };
   }
-
   if (anchor.candidateEntityType === "rule") {
     const craftId = ensureCraftId(db, draftId, anchor, draftTitle);
     const protocolId = pickAnyLinkedEntity(db, draftId, "protocol");
@@ -408,7 +432,6 @@ function promoteAnchorEntity(db: Database.Database, draftId: string, anchor: Str
     db.prepare("INSERT INTO knowledge_rules (id, craft_id, protocol_id, statement, rationale, sort_order) VALUES (?, ?, ?, ?, ?, ?)").run(id, craftId, protocolId ?? null, anchor.title, anchor.value, 0);
     return { entityType: "rule" as const, entityId: id };
   }
-
   if (anchor.candidateEntityType === "heuristic") {
     const craftId = ensureCraftId(db, draftId, anchor, draftTitle);
     const protocolId = pickAnyLinkedEntity(db, draftId, "protocol");
@@ -417,43 +440,37 @@ function promoteAnchorEntity(db: Database.Database, draftId: string, anchor: Str
     db.prepare("INSERT INTO knowledge_heuristics (id, craft_id, protocol_id, rule_id, statement, explanation, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)").run(id, craftId, protocolId ?? null, ruleId ?? null, anchor.title, anchor.value, 0);
     return { entityType: "heuristic" as const, entityId: id };
   }
-
   if (anchor.candidateEntityType === "wargame") {
     const craftId = ensureCraftId(db, draftId, anchor, draftTitle);
     const id = randomUUID();
     db.prepare("INSERT INTO knowledge_wargames (id, craft_id, name, description, objective) VALUES (?, ?, ?, ?, ?)").run(id, craftId, anchor.title, anchor.value, null);
     return { entityType: "wargame" as const, entityId: id };
   }
-
   if (anchor.candidateEntityType === "scenario") {
     const wargameId = ensureWargameId(db, draftId, anchor, draftTitle);
     const id = randomUUID();
     db.prepare("INSERT INTO knowledge_scenarios (id, wargame_id, name, description, sort_order) VALUES (?, ?, ?, ?, ?)").run(id, wargameId, anchor.title, anchor.value, 0);
     return { entityType: "scenario" as const, entityId: id };
   }
-
   if (anchor.candidateEntityType === "threat") {
     const scenarioId = ensureScenarioId(db, draftId, anchor, draftTitle);
     const id = randomUUID();
     db.prepare("INSERT INTO knowledge_threats (id, scenario_id, name, description, severity) VALUES (?, ?, ?, ?, ?)").run(id, scenarioId, anchor.title, anchor.value, 5);
     return { entityType: "threat" as const, entityId: id };
   }
-
   if (anchor.candidateEntityType === "response") {
     const threatId = ensureThreatId(db, draftId, anchor, draftTitle);
     const id = randomUUID();
     db.prepare("INSERT INTO knowledge_responses (id, threat_id, name, description, response_type) VALUES (?, ?, ?, ?, ?)").run(id, threatId, anchor.title, anchor.value, "MITIGATE");
     return { entityType: "response" as const, entityId: id };
   }
-
   throw new Error(`Promotion not supported for ${anchor.candidateEntityType}.`);
 }
 
 export async function handleDraftLatest() {
   return withDb((db) => {
     const row = db.prepare("SELECT id FROM drafts ORDER BY updated_at DESC, created_at DESC LIMIT 1").get() as AnyRow | undefined;
-    if (!row?.id) return ok({ draft: null });
-    return ok({ draft: mapDraftBundle(db, String(row.id)) });
+    return ok({ draft: row?.id ? mapDraftBundle(db, String(row.id)) : null, drafts: listDraftSummaries(db) });
   });
 }
 
@@ -461,7 +478,7 @@ export async function handleDraftById(id: string) {
   return withDb((db) => {
     const draft = mapDraftBundle(db, id);
     if (!draft) return ok({ error: "Draft not found" }, 404);
-    return ok({ draft });
+    return ok({ draft, drafts: listDraftSummaries(db) });
   });
 }
 
@@ -469,14 +486,13 @@ export async function handleDraftSave(rawBody: unknown) {
   const body = (rawBody ?? {}) as DraftSaveBody;
   return withDb((db) => {
     const result = persistDraft(db, body);
-    return ok({ draft: mapDraftBundle(db, result.draftId) }, body.id ? 200 : 201);
+    return ok({ draft: mapDraftBundle(db, result.draftId), drafts: listDraftSummaries(db) }, body.id ? 200 : 201);
   });
 }
 
 export async function handleDraftPromote(rawBody: unknown) {
   const body = (rawBody ?? {}) as DraftPromoteBody;
   if (!body.anchorId) return ok({ error: "anchorId is required" }, 400);
-
   return withDb((db) => {
     const result = persistDraft(db, body);
     const bundle = mapDraftBundle(db, result.draftId);
@@ -487,35 +503,17 @@ export async function handleDraftPromote(rawBody: unknown) {
     const promoted = promoteAnchorEntity(db, result.draftId, anchor, bundle.draft.title);
     db.prepare("UPDATE structural_anchors SET status='accepted', updated_at=datetime('now') WHERE id=?").run(anchor.id);
 
-    const event = buildPromotion(anchor);
-    const promotionEvent: PromotionEvent = {
-      ...event,
-      createdEntityType: promoted.entityType,
-      createdEntityId: promoted.entityId
-    };
-    db.prepare(
-      "INSERT INTO promotion_events (id, draft_id, anchor_id, created_entity_type, created_entity_id, source_text, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).run(promotionEvent.id, result.draftId, anchor.id, promotionEvent.createdEntityType, promotionEvent.createdEntityId, promotionEvent.sourceText, promotionEvent.timestamp);
+    const promotionEvent: PromotionEvent = { ...buildPromotion(anchor), createdEntityType: promoted.entityType, createdEntityId: promoted.entityId };
+    db.prepare("INSERT INTO promotion_events (id, draft_id, anchor_id, created_entity_type, created_entity_id, source_text, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)").run(promotionEvent.id, result.draftId, anchor.id, promotionEvent.createdEntityType, promotionEvent.createdEntityId, promotionEvent.sourceText, promotionEvent.timestamp);
 
     const link = buildEntityLink(anchor, true);
-    upsertDraftEntityLink(db, result.draftId, {
-      ...link,
-      entityType: promoted.entityType,
-      entityId: promoted.entityId,
-      linkStatus: "linked",
-      matchReason: "Promoted from structural anchor into a canonical runtime entity."
-    });
+    upsertDraftEntityLink(db, result.draftId, { ...link, entityType: promoted.entityType, entityId: promoted.entityId, linkStatus: "linked", matchReason: "Promoted from structural anchor into a canonical runtime entity." });
 
     return ok({
       promotion: promotionEvent,
-      link: {
-        ...link,
-        entityType: promoted.entityType,
-        entityId: promoted.entityId,
-        linkStatus: "linked",
-        matchReason: "Promoted from structural anchor into a canonical runtime entity."
-      },
-      draft: mapDraftBundle(db, result.draftId)
+      link: { ...link, entityType: promoted.entityType, entityId: promoted.entityId, linkStatus: "linked", matchReason: "Promoted from structural anchor into a canonical runtime entity." },
+      draft: mapDraftBundle(db, result.draftId),
+      drafts: listDraftSummaries(db)
     });
   });
 }

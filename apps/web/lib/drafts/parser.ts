@@ -92,6 +92,8 @@ export type DraftEntityLink = {
   anchorId: string;
   entityType: DraftLinkEntityType;
   entityId: string;
+  entityLabel?: string;
+  entityRoute?: string;
   linkStatus: "linked" | "draft_only" | "suggested";
   sourceText: string;
   matchReason?: string;
@@ -667,5 +669,6 @@ export function buildEntityLink(anchor: StructuralAnchor, linked = false): Draft
     sourceText: anchor.value
   };
 }
+
 
 
