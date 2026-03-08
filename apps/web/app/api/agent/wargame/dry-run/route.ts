@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         dryRun.prompt,
         JSON.stringify(parsed),
         JSON.stringify(dryRun.proposedMutations),
-        JSON.stringify(dryRun.evaluation)
+        JSON.stringify({ ...dryRun.evaluation, runtimeInvariants: dryRun.runtimeInvariants })
       );
     });
     return ok(dryRun, 201);

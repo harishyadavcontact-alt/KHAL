@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { fail, ok, withStore } from "../../../../../lib/api";
-import { loadState, writeTask } from "@khal/sync-engine";
+import { writeTask } from "@khal/sync-engine";
+import { loadRuntimeProjection } from "../../../../../lib/runtime/authority";
 
 export async function POST(_: Request, { params }: { params: Promise<{ endId: string }> }) {
   try {
     const { endId } = await params;
 
     return await withStore((dbPath) => {
-      const loaded = loadState(dbPath);
+      const projection = loadRuntimeProjection({ dbPath });
       const created = [1, 2, 3].map((step) =>
         writeTask(
           dbPath,
@@ -19,11 +20,11 @@ export async function POST(_: Request, { params }: { params: Promise<{ endId: st
             horizon: step === 1 ? "WEEK" : step === 2 ? "MONTH" : "QUARTER",
             status: "NOT_STARTED"
           },
-          loaded.state.tasks
+          projection.state.tasks
         )
       );
 
-      return ok({ createdCount: created.length, created }, 201);
+      return ok({ createdCount: created.length, created, runtimeInvariants: projection.runtimeInvariants.summary }, 201);
     });
   } catch (error) {
     return fail(error, 400);

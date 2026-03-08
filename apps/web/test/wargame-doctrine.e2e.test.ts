@@ -1,42 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { existsSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
-import path from "node:path";
-import { tmpdir } from "node:os";
-import { initDatabase } from "@khal/sqlite-core";
 import { handleData } from "../lib/api";
 import { handleDoctrineRulebooksGet, handleDomainPnLLadderGet, handleDomainPnLLadderPut } from "../lib/api/doctrine";
 import { handlePlansCreate, handlePlansGet } from "../lib/api/plans";
-
-const SETTINGS_PATH = path.resolve(process.cwd(), "..", "..", ".khal.local.json");
-
-function writeSettings(dbPath: string) {
-  writeFileSync(SETTINGS_PATH, JSON.stringify({ dbPath }, null, 2), "utf-8");
-}
-
-function fixtureDb(): string {
-  const tempDir = mkdtempSync(path.join(tmpdir(), "khal-web-e2e-"));
-  const dbPath = path.join(tempDir, "KHAL-e2e.sqlite");
-  initDatabase(dbPath);
-  return dbPath;
-}
+import { cleanupFixtureDb, createFixtureDb, restoreSettings, snapshotSettings, writeFixtureSettings } from "./support/fixture-db";
 
 describe("war game doctrine e2e", () => {
   let previousSettings: string | null = null;
   let dbPath = "";
 
   beforeEach(() => {
-    previousSettings = existsSync(SETTINGS_PATH) ? readFileSync(SETTINGS_PATH, "utf-8") : null;
-    dbPath = fixtureDb();
-    writeSettings(dbPath);
+    previousSettings = snapshotSettings();
+    dbPath = createFixtureDb("khal-web-e2e-", "KHAL-e2e.sqlite");
+    writeFixtureSettings(dbPath);
   });
 
   afterEach(() => {
-    if (previousSettings === null) {
-      if (existsSync(SETTINGS_PATH)) unlinkSync(SETTINGS_PATH);
-    } else {
-      writeFileSync(SETTINGS_PATH, previousSettings, "utf-8");
-    }
-    rmSync(path.dirname(dbPath), { recursive: true, force: true });
+    restoreSettings(previousSettings);
+    cleanupFixtureDb(dbPath);
   });
 
   it("resolves doctrine overlay, persists ladder, and round-trips doctrine extras in plans", async () => {

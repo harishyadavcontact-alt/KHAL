@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type Database from "better-sqlite3";
 import { ok, withDb } from "../api";
+import { loadRuntimeProjection } from "../runtime/authority";
 import {
   buildEntityLink,
   buildPromotion,
@@ -468,32 +469,32 @@ function promoteAnchorEntity(db: Database.Database, draftId: string, anchor: Str
 }
 
 export async function handleDraftLatest() {
-  return withDb((db) => {
+  return withDb((db, dbPath) => {
     const row = db.prepare("SELECT id FROM drafts ORDER BY updated_at DESC, created_at DESC LIMIT 1").get() as AnyRow | undefined;
-    return ok({ draft: row?.id ? mapDraftBundle(db, String(row.id)) : null, drafts: listDraftSummaries(db) });
+    return ok({ draft: row?.id ? mapDraftBundle(db, String(row.id)) : null, drafts: listDraftSummaries(db), runtimeInvariants: loadRuntimeProjection({ db, dbPath }).runtimeInvariants.summary });
   });
 }
 
 export async function handleDraftById(id: string) {
-  return withDb((db) => {
+  return withDb((db, dbPath) => {
     const draft = mapDraftBundle(db, id);
     if (!draft) return ok({ error: "Draft not found" }, 404);
-    return ok({ draft, drafts: listDraftSummaries(db) });
+    return ok({ draft, drafts: listDraftSummaries(db), runtimeInvariants: loadRuntimeProjection({ db, dbPath }).runtimeInvariants.summary });
   });
 }
 
 export async function handleDraftSave(rawBody: unknown) {
   const body = (rawBody ?? {}) as DraftSaveBody;
-  return withDb((db) => {
+  return withDb((db, dbPath) => {
     const result = persistDraft(db, body);
-    return ok({ draft: mapDraftBundle(db, result.draftId), drafts: listDraftSummaries(db) }, body.id ? 200 : 201);
+    return ok({ draft: mapDraftBundle(db, result.draftId), drafts: listDraftSummaries(db), runtimeInvariants: loadRuntimeProjection({ db, dbPath }).runtimeInvariants.summary }, body.id ? 200 : 201);
   });
 }
 
 export async function handleDraftPromote(rawBody: unknown) {
   const body = (rawBody ?? {}) as DraftPromoteBody;
   if (!body.anchorId) return ok({ error: "anchorId is required" }, 400);
-  return withDb((db) => {
+  return withDb((db, dbPath) => {
     const result = persistDraft(db, body);
     const bundle = mapDraftBundle(db, result.draftId);
     if (!bundle) return ok({ error: "Draft not found after save" }, 404);
@@ -508,12 +509,14 @@ export async function handleDraftPromote(rawBody: unknown) {
 
     const link = buildEntityLink(anchor, true);
     upsertDraftEntityLink(db, result.draftId, { ...link, entityType: promoted.entityType, entityId: promoted.entityId, linkStatus: "linked", matchReason: "Promoted from structural anchor into a canonical runtime entity." });
+    const runtimeInvariants = loadRuntimeProjection({ db, dbPath }).runtimeInvariants;
 
     return ok({
       promotion: promotionEvent,
       link: { ...link, entityType: promoted.entityType, entityId: promoted.entityId, linkStatus: "linked", matchReason: "Promoted from structural anchor into a canonical runtime entity." },
       draft: mapDraftBundle(db, result.draftId),
-      drafts: listDraftSummaries(db)
+      drafts: listDraftSummaries(db),
+      runtimeInvariants: runtimeInvariants.summary
     });
   });
 }

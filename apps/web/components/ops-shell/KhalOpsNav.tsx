@@ -71,7 +71,7 @@ export function KhalOpsNav() {
         type="button"
         aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
         onClick={() => setMobileOpen((value) => !value)}
-        className="fixed left-3 top-3 z-50 rounded-md border border-white/20 bg-zinc-900/90 p-2 text-zinc-100 md:hidden"
+        className="fixed left-3 top-3 z-50 rounded-md border border-[var(--color-border)] bg-[rgba(17,21,28,0.95)] p-2 text-[var(--color-text)] md:hidden"
       >
         {mobileOpen ? <X size={16} /> : <Menu size={16} />}
       </button>
@@ -79,7 +79,7 @@ export function KhalOpsNav() {
 
       <aside
         data-khal-nav="true"
-        className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-white/10 bg-zinc-900/95 p-3 backdrop-blur-xl transition-transform duration-200 md:static md:w-60 md:translate-x-0 md:flex-shrink-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-[var(--color-border)] bg-[linear-gradient(180deg,rgba(13,16,21,0.98),rgba(17,22,28,0.96))] p-3 backdrop-blur-xl transition-transform duration-200 md:static md:w-60 md:translate-x-0 md:flex-shrink-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -107,8 +107,8 @@ export function KhalOpsNav() {
                 data-khal-nav-item="true"
                 className={
                   active
-                    ? "flex items-center gap-2 rounded-lg bg-blue-600 px-2.5 py-2 text-sm font-medium text-white"
-                    : "flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-zinc-300 hover:bg-white/5 hover:text-white"
+                    ? "flex items-center gap-2 rounded-lg border border-[var(--color-border-strong)] bg-[linear-gradient(135deg,var(--color-accent),var(--color-accent-strong))] px-2.5 py-2 text-sm font-medium text-[#111318] shadow-[0_12px_28px_rgba(200,154,87,0.22)]"
+                    : "flex items-center gap-2 rounded-lg border border-transparent px-2.5 py-2 text-sm font-medium text-[var(--color-text-muted)] hover:border-[var(--color-border)] hover:bg-white/5 hover:text-[var(--color-text)]"
                 }
               >
                 <Icon size={16} />

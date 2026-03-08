@@ -2,7 +2,7 @@ import { z } from "zod";
 import { fail, ok, withDb, withStore } from "../../../../../lib/api";
 import { commitAgentMutations } from "../../../../../lib/agent/wargame";
 import { evaluateDecision } from "../../../../../lib/decision-spec";
-import { loadState } from "@khal/sync-engine";
+import { loadRuntimeProjection } from "../../../../../lib/runtime/authority";
 
 const schema = z.object({
   dryRunId: z.string(),
@@ -70,22 +70,24 @@ export async function POST(request: Request) {
     });
 
     const postEval = await withStore((dbPath) => {
-      const loaded = loadState(dbPath);
+      const projection = loadRuntimeProjection({ dbPath });
       const mode = parsed.mode ?? "mission";
       const targetId = parsed.targetId ?? "mission-global";
-      return evaluateDecision({
+      const evaluation = evaluateDecision({
         mode,
         targetId,
         role: parsed.role,
         noRuinGate: parsed.noRuinGate,
-        state: loaded.state
+        state: projection.state
       });
+      return { evaluation, runtimeInvariants: projection.runtimeInvariants.summary };
     });
 
     return ok({
       dryRunId: parsed.dryRunId,
       commitResult,
-      evaluation: postEval
+      evaluation: postEval.evaluation,
+      runtimeInvariants: postEval.runtimeInvariants
     });
   } catch (error) {
     return fail(error, 400);

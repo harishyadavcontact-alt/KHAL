@@ -2,7 +2,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { fail, ok, withDb } from "../../../../lib/api";
 import { evaluateDecision } from "../../../../lib/decision-spec";
-import { loadState } from "@khal/sync-engine";
+import { loadRuntimeProjection } from "../../../../lib/runtime/authority";
 
 const schema = z.object({
   mode: z.enum(["source", "domain", "affair", "interest", "craft", "lineage", "mission"]),
@@ -16,11 +16,11 @@ export async function POST(request: Request) {
   try {
     const parsed = schema.parse(await request.json());
     return withDb((db, dbPath) => {
-      const loaded = loadState(dbPath);
+      const projection = loadRuntimeProjection({ db, dbPath });
       const result = evaluateDecision({
         mode: parsed.mode,
         targetId: parsed.targetId,
-        state: loaded.state,
+        state: projection.state,
         role: parsed.role,
         noRuinGate: parsed.noRuinGate,
         overrides: parsed.overrides
@@ -36,9 +36,9 @@ export async function POST(request: Request) {
         parsed.role ?? "MISSIONARY",
         result.blocked ? 1 : 0,
         result.readinessScore,
-        JSON.stringify(result)
+        JSON.stringify({ ...result, runtimeInvariants: projection.runtimeInvariants.summary })
       );
-      return ok(result);
+      return ok({ ...result, runtimeInvariants: projection.runtimeInvariants.summary });
     });
   } catch (error) {
     return fail(error, 400);

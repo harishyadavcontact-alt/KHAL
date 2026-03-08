@@ -1,28 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { existsSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
-import path from "node:path";
-import { tmpdir } from "node:os";
 import Database from "better-sqlite3";
-import { initDatabase } from "@khal/sqlite-core";
 import { POST as dryRunPost } from "../app/api/agent/wargame/dry-run/route";
 import { POST as commitPost } from "../app/api/agent/wargame/commit/route";
 import { POST as evaluatePost } from "../app/api/decision/evaluate/route";
 import { POST as overridePost } from "../app/api/decision/override/route";
 import { POST as triagePost } from "../app/api/decision/triage/route";
 import { POST as quickActionPost } from "../app/api/decision/quick-action/route";
-
-const SETTINGS_PATH = path.resolve(process.cwd(), "..", "..", ".khal.local.json");
-
-function writeSettings(dbPath: string) {
-  writeFileSync(SETTINGS_PATH, JSON.stringify({ dbPath }, null, 2), "utf-8");
-}
-
-function fixtureDb(): string {
-  const tempDir = mkdtempSync(path.join(tmpdir(), "khal-tri-readable-"));
-  const dbPath = path.join(tempDir, "KHAL-tri-readable.sqlite");
-  initDatabase(dbPath);
-  return dbPath;
-}
+import { cleanupFixtureDb, createFixtureDb, restoreSettings, snapshotSettings, writeFixtureSettings } from "./support/fixture-db";
 
 function postJson(url: string, body: unknown): Request {
   return new Request(url, {
@@ -37,18 +21,14 @@ describe("tri-readable api contracts", () => {
   let dbPath = "";
 
   beforeEach(() => {
-    previousSettings = existsSync(SETTINGS_PATH) ? readFileSync(SETTINGS_PATH, "utf-8") : null;
-    dbPath = fixtureDb();
-    writeSettings(dbPath);
+    previousSettings = snapshotSettings();
+    dbPath = createFixtureDb("khal-tri-readable-", "KHAL-tri-readable.sqlite");
+    writeFixtureSettings(dbPath);
   });
 
   afterEach(() => {
-    if (previousSettings === null) {
-      if (existsSync(SETTINGS_PATH)) unlinkSync(SETTINGS_PATH);
-    } else {
-      writeFileSync(SETTINGS_PATH, previousSettings, "utf-8");
-    }
-    rmSync(path.dirname(dbPath), { recursive: true, force: true });
+    restoreSettings(previousSettings);
+    cleanupFixtureDb(dbPath);
   });
 
   it("keeps evaluate deterministic for same input and persists override audit", async () => {

@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { fail, ok, withDb, withStore } from "../../../../lib/api";
 import { evaluateDecisionWithTriage } from "../../../../lib/decision-spec";
-import { loadState, writeInterest } from "@khal/sync-engine";
+import { writeInterest } from "@khal/sync-engine";
+import { loadRuntimeProjection } from "../../../../lib/runtime/authority";
 
 const schema = z.object({
   kind: z.enum([
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const loaded = await withStore((dbPath) => loadState(dbPath));
+    const loaded = await withStore((dbPath) => loadRuntimeProjection({ dbPath }));
     if (parsed.kind.startsWith("SET_INTEREST_") || parsed.kind === "ADD_INTEREST_KILL_CRITERIA_TEMPLATE") {
       const existing = loaded.state.interests.find((item) => item.id === targetId);
       if (!existing) return ok({ error: "Interest not found" }, 404);
@@ -170,16 +171,17 @@ export async function POST(request: Request) {
       });
     }
 
-    const evaluation = await withStore((dbPath) => {
-      const state = loadState(dbPath).state;
-      return evaluateDecisionWithTriage({
+    const evaluationProjection = await withStore((dbPath) => {
+      const projection = loadRuntimeProjection({ dbPath });
+      const evaluation = evaluateDecisionWithTriage({
         mode: parsed.targetRef.mode,
         targetId,
         role: parsed.role,
         noRuinGate: parsed.noRuinGate,
         overrides: parsed.overrides,
-        state
+        state: projection.state
       });
+      return { evaluation, runtimeInvariants: projection.runtimeInvariants.summary };
     });
 
     await withDb((db) => {
@@ -192,9 +194,9 @@ export async function POST(request: Request) {
         parsed.targetRef.mode,
         targetId,
         parsed.role ?? "MISSIONARY",
-        evaluation.blocked ? 1 : 0,
-        evaluation.readinessScore,
-        JSON.stringify({ quickActionKind: parsed.kind, evaluation })
+        evaluationProjection.evaluation.blocked ? 1 : 0,
+        evaluationProjection.evaluation.readinessScore,
+        JSON.stringify({ quickActionKind: parsed.kind, evaluation: evaluationProjection.evaluation, runtimeInvariants: evaluationProjection.runtimeInvariants })
       );
     });
 
@@ -202,10 +204,10 @@ export async function POST(request: Request) {
       applied: true,
       action: parsed.kind,
       targetRef: parsed.targetRef,
-      evaluation
+      evaluation: evaluationProjection.evaluation,
+      runtimeInvariants: evaluationProjection.runtimeInvariants
     });
   } catch (error) {
     return fail(error, 400);
   }
 }
-

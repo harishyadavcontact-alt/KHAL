@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { existsSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
-import { tmpdir } from "node:os";
-import { initDatabase } from "@khal/sqlite-core";
 import { handleData, handleMissionHierarchyGet, handleMissionHierarchyPut } from "../lib/api";
 import { isWarGameRouteMode, parseWarGameRouteMode } from "../lib/war-room/route-mode";
 import type { AppData } from "../components/war-room-v2/types";
@@ -18,19 +16,7 @@ import {
   parseRoutesFromSmokeScript,
   projectDomainsToVolatilitySlots
 } from "./decision-compatibility.fixture";
-
-const SETTINGS_PATH = path.resolve(process.cwd(), "..", "..", ".khal.local.json");
-
-function writeSettings(dbPath: string) {
-  writeFileSync(SETTINGS_PATH, JSON.stringify({ dbPath }, null, 2), "utf-8");
-}
-
-function fixtureDb(): string {
-  const tempDir = mkdtempSync(path.join(tmpdir(), "khal-decision-compat-"));
-  const dbPath = path.join(tempDir, "KHAL-decision-compat.sqlite");
-  initDatabase(dbPath);
-  return dbPath;
-}
+import { cleanupFixtureDb, createFixtureDb, restoreSettings, snapshotSettings, writeFixtureSettings } from "./support/fixture-db";
 
 async function loadAppData(): Promise<AppData> {
   const response = await handleData();
@@ -42,19 +28,15 @@ describe.sequential("khal decision compatibility (directional gate)", () => {
   let dbPath = "";
 
   beforeEach(() => {
-    previousSettings = existsSync(SETTINGS_PATH) ? readFileSync(SETTINGS_PATH, "utf-8") : null;
-    dbPath = fixtureDb();
-    writeSettings(dbPath);
+    previousSettings = snapshotSettings();
+    dbPath = createFixtureDb("khal-decision-compat-", "KHAL-decision-compat.sqlite");
+    writeFixtureSettings(dbPath);
   });
 
   afterEach(() => {
-    if (previousSettings === null) {
-      if (existsSync(SETTINGS_PATH)) unlinkSync(SETTINGS_PATH);
-    } else {
-      writeFileSync(SETTINGS_PATH, previousSettings, "utf-8");
-    }
+    restoreSettings(previousSettings);
     try {
-      rmSync(path.dirname(dbPath), { recursive: true, force: true, maxRetries: 8, retryDelay: 120 });
+      cleanupFixtureDb(dbPath);
     } catch {
       // Best effort cleanup on Windows file handle lag.
     }

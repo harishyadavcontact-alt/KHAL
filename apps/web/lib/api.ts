@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { loadState, normalize, refreshIfStale, writeAffair, writeInterest, writeTask } from "@khal/sync-engine";
+import { normalize, refreshIfStale, writeAffair, writeInterest, writeTask, type LoadedState } from "@khal/sync-engine";
 import Database from "better-sqlite3";
 import { initDatabase, resolveDbPath } from "@khal/sqlite-core";
 import { randomUUID } from "node:crypto";
 import { readSettings } from "./settings";
+import { loadRuntimeProjection } from "./runtime/authority";
 import {
   craftKnowledgeSchema,
   entityLinkSchema,
@@ -114,10 +115,10 @@ export function fail(error: unknown, status = 400) {
 }
 
 export async function handleState() {
-  return withStore((dbPath) => ok(loadState(dbPath)));
+  return withDb((db, dbPath) => ok(loadRuntimeProjection({ db, dbPath })));
 }
 
-function toMonolithAppData(payload: ReturnType<typeof loadState>) {
+function toMonolithAppData(payload: LoadedState) {
   const state = payload.state as any;
   const user = {
     name: "Operator",
@@ -262,7 +263,13 @@ function toMonolithAppData(payload: ReturnType<typeof loadState>) {
 }
 
 export async function handleData() {
-  return withStore((dbPath) => ok(toMonolithAppData(loadState(dbPath))));
+  return withDb((db, dbPath) => {
+    const projection = loadRuntimeProjection({ db, dbPath });
+    return ok({
+      ...toMonolithAppData(projection),
+      runtimeInvariants: projection.runtimeInvariants
+    });
+  });
 }
 
 export async function handleRefresh() {
@@ -290,8 +297,8 @@ export async function handleTask(rawBody: unknown) {
   const id = parsed.id ?? randomUUID();
 
   return withStore((dbPath) => {
-    const loaded = loadState(dbPath);
-    return ok(writeTask(dbPath, { ...parsed, id }, loaded.state.tasks, parsed.lastSeenModifiedAt), parsed.id ? 200 : 201);
+    const projection = loadRuntimeProjection({ dbPath });
+    return ok(writeTask(dbPath, { ...parsed, id }, projection.state.tasks, parsed.lastSeenModifiedAt), parsed.id ? 200 : 201);
   });
 }
 

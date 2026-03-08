@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { loadState, writeAffair, writeInterest, writeTask } from "@khal/sync-engine";
+import { writeAffair, writeInterest, writeTask } from "@khal/sync-engine";
 import type { WarGameModeSpec } from "../decision-spec/schema";
 import { buildDraftMutations, evaluateDecision } from "../decision-spec";
+import { loadRuntimeProjection } from "../runtime/authority";
 
 export type AgentDryRunInput = {
   mode: WarGameModeSpec;
@@ -12,12 +13,12 @@ export type AgentDryRunInput = {
 };
 
 export function createAgentDryRun(args: { dbPath: string; input: AgentDryRunInput }) {
-  const loaded = loadState(args.dbPath);
+  const projection = loadRuntimeProjection({ dbPath: args.dbPath });
   const targetId = args.input.targetId ?? "global";
   const evaluation = evaluateDecision({
     mode: args.input.mode,
     targetId,
-    state: loaded.state,
+    state: projection.state,
     role: args.input.role ?? "MISSIONARY",
     noRuinGate: args.input.noRuinGate ?? true
   });
@@ -25,7 +26,7 @@ export function createAgentDryRun(args: { dbPath: string; input: AgentDryRunInpu
     mode: args.input.mode,
     targetId: args.input.targetId,
     prompt: args.input.prompt,
-    state: loaded.state
+    state: projection.state
   });
   return {
     id: randomUUID(),
@@ -33,7 +34,8 @@ export function createAgentDryRun(args: { dbPath: string; input: AgentDryRunInpu
     targetId,
     prompt: args.input.prompt,
     evaluation,
-    proposedMutations
+    proposedMutations,
+    runtimeInvariants: projection.runtimeInvariants.summary
   };
 }
 
@@ -41,8 +43,8 @@ export function commitAgentMutations(args: {
   dbPath: string;
   acceptedMutations: Array<Record<string, unknown>>;
 }) {
-  const loaded = loadState(args.dbPath);
-  const tasks = [...loaded.state.tasks];
+  const projection = loadRuntimeProjection({ dbPath: args.dbPath });
+  const tasks = [...projection.state.tasks];
   const results: Array<Record<string, unknown>> = [];
 
   for (const mutation of args.acceptedMutations) {

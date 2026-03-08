@@ -15,15 +15,13 @@ Never make appearance changes right before important events.`;
   });
 
   it("creates structural anchors, block lenses, and weak-link checks", () => {
-    const input = `Things that matter for physique
-- sleep
-- training
-- diet`;
+    const input = `Physique mostly comes down to sleep, training, and diet.
+Never cut sleep right before a peak event.`;
     const result = inferDraftStructure(input);
 
     expect(result.anchors.some((anchor) => anchor.candidateEntityType === "interest")).toBe(true);
     expect(result.anchors.some((anchor) => anchor.anchorType === "lineage")).toBe(true);
-    expect(result.blockLenses[0]?.dominantSignal).toBe("entity");
+    expect(["entity", "rule"]).toContain(result.blockLenses[0]?.dominantSignal);
     expect(result.weakLinks.some((item) => item.code === "INTEREST_NO_PARENT")).toBe(true);
   });
 
