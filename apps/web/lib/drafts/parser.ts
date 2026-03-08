@@ -85,13 +85,16 @@ export type PromotionEvent = {
   timestamp: string;
 };
 
+export type DraftLinkEntityType = CandidateEntityType | "domain" | "law" | "lineage_node" | "lineage_entity";
+
 export type DraftEntityLink = {
   id: string;
   anchorId: string;
-  entityType: CandidateEntityType;
+  entityType: DraftLinkEntityType;
   entityId: string;
-  linkStatus: "linked" | "draft_only";
+  linkStatus: "linked" | "draft_only" | "suggested";
   sourceText: string;
+  matchReason?: string;
 };
 
 export type CompileReadableDraft = {
@@ -664,3 +667,5 @@ export function buildEntityLink(anchor: StructuralAnchor, linked = false): Draft
     sourceText: anchor.value
   };
 }
+
+

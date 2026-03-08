@@ -2,20 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { KhalOpsShell } from "../../components/ops-shell/KhalOpsShell";
-import type { AppData } from "../../components/war-room-v2/types";
 import {
-  buildEntityLink,
-  buildPromotion,
   compileDraft,
   inferDraftStructure,
   type DraftEntityLink,
   type PromotionEvent,
   type StructuralAnchor
 } from "../../lib/drafts/parser";
-import { createAffair, createInterest } from "../../lib/war-room/actions";
-import { useWarRoomData } from "../../lib/war-room/useWarRoomData";
 
-const STORAGE_KEY = "khal.drafts.v3";
+const STORAGE_KEY = "khal.drafts.v4";
 const SAMPLE = `Looxmax mostly comes down to sleep, training, and diet.
 Grooming stack: beard, hair, eyebrows, hygiene.
 Never make appearance changes right before important events.
@@ -23,40 +18,25 @@ If travel disrupts sleep then reduce intensity and protect recovery.`;
 
 type AnchorState = Record<string, "open" | "accepted" | "dismissed">;
 
-type ExistingLink = {
-  id: string;
-  label: string;
-  entityType: "affair" | "interest" | "craft" | "domain" | "law";
-  matchReason: string;
-};
-
-function compareText(source: string, candidate: string) {
-  const left = source.toLowerCase();
-  const right = candidate.toLowerCase();
-  return left.includes(right) || right.includes(left);
-}
-
-function findExistingLinks(data: AppData | null, anchor: StructuralAnchor | null): ExistingLink[] {
-  if (!data || !anchor) return [];
-  const anchorSignals = [anchor.title, anchor.value, ...(anchor.relatedValues ?? [])]
-    .map((value) => value.trim())
-    .filter(Boolean);
-
-  const links: ExistingLink[] = [];
-  const pushIfMatch = (label: string, entityType: ExistingLink["entityType"], id: string, matchReason: string) => {
-    if (anchorSignals.some((signal) => compareText(signal, label))) {
-      links.push({ id, label, entityType, matchReason });
-    }
+type PersistedDraftBundle = {
+  draft: {
+    id: string;
+    title: string;
+    rawText: string;
+    inferredStructure: Record<string, unknown>;
+    selectedAnchorId?: string;
+    uiState: {
+      anchorState?: AnchorState;
+      showDebug?: boolean;
+    };
+    createdAt: string;
+    updatedAt: string;
   };
-
-  data.affairs.forEach((item) => pushIfMatch(item.title, "affair", item.id, "Existing affair title overlaps this anchor."));
-  data.interests.forEach((item) => pushIfMatch(item.title, "interest", item.id, "Existing interest title overlaps this anchor."));
-  data.crafts.forEach((item) => pushIfMatch(item.name, "craft", item.id, "Existing craft already covers this language."));
-  data.domains.forEach((item) => pushIfMatch(item.name, "domain", item.id, "Draft may belong under this domain."));
-  data.laws.forEach((item) => pushIfMatch(item.name, "law", item.id, "Law language overlaps this anchor."));
-
-  return links.slice(0, 6);
-}
+  blocks: unknown[];
+  anchors: StructuralAnchor[];
+  entityLinks: DraftEntityLink[];
+  promotionEvents: PromotionEvent[];
+};
 
 function statusTone(status: StructuralAnchor["status"]) {
   if (status === "accepted") return "border-emerald-500/40 bg-emerald-500/10";
@@ -64,8 +44,14 @@ function statusTone(status: StructuralAnchor["status"]) {
   return "border-white/10 bg-zinc-950/70";
 }
 
+function formatSavedAt(value: string | null) {
+  if (!value) return "Not yet persisted";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Persisted" : `Persisted ${date.toLocaleString()}`;
+}
+
 export default function DraftsPage() {
-  const { data } = useWarRoomData();
+  const [draftId, setDraftId] = useState<string | null>(null);
   const [text, setText] = useState(SAMPLE);
   const [anchorState, setAnchorState] = useState<AnchorState>({});
   const [promotions, setPromotions] = useState<PromotionEvent[]>([]);
@@ -74,6 +60,9 @@ export default function DraftsPage() {
   const [showDebug, setShowDebug] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyAnchorId, setBusyAnchorId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const inference = useMemo(() => inferDraftStructure(text), [text]);
   const compileReadable = useMemo(() => compileDraft(text), [text]);
@@ -88,38 +77,99 @@ export default function DraftsPage() {
   );
 
   const selectedAnchor = selectedAnchorId ? resolvedAnchors.find((anchor) => anchor.id === selectedAnchorId) ?? null : null;
-  const linkedExisting = useMemo(() => findExistingLinks(data, selectedAnchor), [data, selectedAnchor]);
+  const suggestedLinks = useMemo(
+    () => links.filter((link) => link.anchorId === selectedAnchorId && link.linkStatus === "suggested"),
+    [links, selectedAnchorId]
+  );
+  const persistedLinks = useMemo(
+    () => links.filter((link) => link.linkStatus !== "suggested"),
+    [links]
+  );
+
+  function applyPersistedDraft(bundle: PersistedDraftBundle) {
+    setDraftId(bundle.draft.id);
+    setText(bundle.draft.rawText || SAMPLE);
+    setAnchorState(bundle.draft.uiState?.anchorState ?? {});
+    setShowDebug(Boolean(bundle.draft.uiState?.showDebug));
+    setSelectedAnchorId(bundle.draft.selectedAnchorId ?? bundle.anchors[0]?.id ?? null);
+    setPromotions(bundle.promotionEvents ?? []);
+    setLinks(bundle.entityLinks ?? []);
+    setLastSavedAt(bundle.draft.updatedAt ?? null);
+  }
 
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as {
-        text?: string;
-        anchorState?: AnchorState;
-        promotions?: PromotionEvent[];
-        links?: DraftEntityLink[];
-        showDebug?: boolean;
-      };
-      if (typeof parsed.text === "string") setText(parsed.text);
-      if (parsed.anchorState) setAnchorState(parsed.anchorState);
-      if (Array.isArray(parsed.promotions)) setPromotions(parsed.promotions);
-      if (Array.isArray(parsed.links)) setLinks(parsed.links);
-      if (typeof parsed.showDebug === "boolean") setShowDebug(parsed.showDebug);
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          text?: string;
+          anchorState?: AnchorState;
+          promotions?: PromotionEvent[];
+          links?: DraftEntityLink[];
+          showDebug?: boolean;
+          selectedAnchorId?: string | null;
+        };
+        if (typeof parsed.text === "string") setText(parsed.text);
+        if (parsed.anchorState) setAnchorState(parsed.anchorState);
+        if (Array.isArray(parsed.promotions)) setPromotions(parsed.promotions);
+        if (Array.isArray(parsed.links)) setLinks(parsed.links);
+        if (typeof parsed.showDebug === "boolean") setShowDebug(parsed.showDebug);
+        if (typeof parsed.selectedAnchorId === "string") setSelectedAnchorId(parsed.selectedAnchorId);
+      }
     } catch {
       // Ignore local storage parse failures.
     }
+
+    void (async () => {
+      try {
+        const response = await fetch("/api/drafts", { method: "GET", cache: "no-store" });
+        if (!response.ok) return;
+        const payload = (await response.json()) as { draft?: PersistedDraftBundle | null };
+        if (payload.draft) applyPersistedDraft(payload.draft);
+      } catch {
+        // Local fallback is acceptable.
+      } finally {
+        setLoaded(true);
+      }
+    })();
   }, []);
 
   useEffect(() => {
-    const payload = { text, anchorState, promotions, links, showDebug };
+    const payload = { text, anchorState, promotions, links, showDebug, selectedAnchorId };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  }, [anchorState, links, promotions, showDebug, text]);
+  }, [anchorState, links, promotions, selectedAnchorId, showDebug, text]);
 
   useEffect(() => {
     const open = resolvedAnchors.find((anchor) => anchor.status !== "dismissed");
     if (!selectedAnchorId && open) setSelectedAnchorId(open.id);
   }, [resolvedAnchors, selectedAnchorId]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    const timer = window.setTimeout(async () => {
+      setSaving(true);
+      try {
+        const response = await fetch("/api/drafts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: draftId, input: text, anchorState, selectedAnchorId, showDebug })
+        });
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(payload?.error ?? `Failed to persist draft (${response.status})`);
+        }
+        const payload = (await response.json()) as { draft: PersistedDraftBundle };
+        applyPersistedDraft(payload.draft);
+        setError(null);
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Failed to persist draft.");
+      } finally {
+        setSaving(false);
+      }
+    }, 700);
+
+    return () => window.clearTimeout(timer);
+  }, [anchorState, draftId, loaded, selectedAnchorId, showDebug, text]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -163,21 +213,17 @@ export default function DraftsPage() {
     setBusyAnchorId(anchor.id);
     setError(null);
     try {
-      const domainId = data?.domains?.[0]?.id;
-      let linked = false;
-      if (anchor.candidateEntityType === "interest" && domainId) {
-        await createInterest({ title: anchor.title.slice(0, 120), domainId });
-        linked = true;
-      }
-      if (anchor.candidateEntityType === "affair" && domainId) {
-        await createAffair({ title: anchor.title.slice(0, 120), domainId });
-        linked = true;
-      }
-
-      const event = buildPromotion(anchor);
-      const link = buildEntityLink(anchor, linked);
-      setPromotions((current) => [event, ...current.filter((entry) => entry.id !== event.id)].slice(0, 12));
-      setLinks((current) => [link, ...current.filter((entry) => entry.id !== link.id)].slice(0, 12));
+      const response = await fetch("/api/drafts/promote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: draftId, input: text, anchorState, selectedAnchorId, showDebug, anchorId: anchor.id })
+      });
+      const payload = (await response.json()) as {
+        error?: string;
+        draft?: PersistedDraftBundle;
+      };
+      if (!response.ok || payload.error) throw new Error(payload.error ?? `Promotion failed (${response.status})`);
+      if (payload.draft) applyPersistedDraft(payload.draft);
       setAnchorState((current) => ({ ...current, [anchor.id]: "accepted" }));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Promotion failed.");
@@ -210,8 +256,9 @@ export default function DraftsPage() {
                   Brain-dump in plain English. Drafts should pull thought toward usable structure without forcing syntax.
                 </p>
               </div>
-              <div className="rounded-full border border-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-zinc-400">
-                Alt+J / Alt+K move anchors, Alt+A accept, Alt+D dismiss
+              <div className="rounded-2xl border border-white/10 px-3 py-2 text-[11px] uppercase tracking-[0.24em] text-zinc-400">
+                <div>{saving ? "Persisting..." : formatSavedAt(lastSavedAt)}</div>
+                <div className="mt-1">Alt+J / Alt+K move, Alt+A accept, Alt+D dismiss</div>
               </div>
             </div>
             <textarea
@@ -225,7 +272,7 @@ export default function DraftsPage() {
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-400">
               <span className="rounded-full border border-white/10 px-3 py-1">Human-readable first</span>
               <span className="rounded-full border border-white/10 px-3 py-1">Anchors are intermediate structure</span>
-              <span className="rounded-full border border-white/10 px-3 py-1">Compile output stays internal</span>
+              <span className="rounded-full border border-white/10 px-3 py-1">SQLite-backed persistence</span>
             </div>
           </article>
 
@@ -265,11 +312,9 @@ export default function DraftsPage() {
 
         <section className="space-y-3">
           <article className="rounded-3xl border border-white/10 bg-zinc-900/70 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold text-zinc-100">Structure panel</h3>
-                <p className="mt-1 text-xs text-zinc-500">Human-readable structural feedback, not machine output.</p>
-              </div>
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-100">Structure panel</h3>
+              <p className="mt-1 text-xs text-zinc-500">Human-readable structural feedback, not machine output.</p>
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {structureCards.map((card) => (
@@ -306,7 +351,7 @@ export default function DraftsPage() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-zinc-100">Structural anchors</h3>
-                <p className="mt-1 text-xs text-zinc-500">Subtle semantic handles between prose and real entities.</p>
+                <p className="mt-1 text-xs text-zinc-500">Intermediate handles between prose and canonical entities.</p>
               </div>
               <div className="text-xs text-zinc-500">{resolvedAnchors.length} detected</div>
             </div>
@@ -365,16 +410,16 @@ export default function DraftsPage() {
           </article>
 
           <article className="rounded-3xl border border-white/10 bg-zinc-900/70 p-4 text-sm">
-            <h3 className="text-sm font-semibold text-zinc-100">Linked existing entities</h3>
+            <h3 className="text-sm font-semibold text-zinc-100">Map-aware links</h3>
             <div className="mt-3 space-y-2 text-zinc-300">
-              {linkedExisting.map((item) => (
-                <div key={`${item.entityType}-${item.id}`} className="rounded-2xl border border-white/10 bg-zinc-950/70 p-3">
+              {suggestedLinks.map((item) => (
+                <div key={`${item.entityType}-${item.entityId}`} className="rounded-2xl border border-white/10 bg-zinc-950/70 p-3">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">{item.entityType}</div>
-                  <div className="mt-1 font-medium text-zinc-100">{item.label}</div>
-                  <div className="mt-1 text-xs text-zinc-400">{item.matchReason}</div>
+                  <div className="mt-1 font-medium text-zinc-100">{item.entityId}</div>
+                  <div className="mt-1 text-xs text-zinc-400">{item.matchReason ?? "Persisted structural suggestion."}</div>
                 </div>
               ))}
-              {linkedExisting.length === 0 && <div className="text-zinc-500">No obvious existing entity overlap for the selected anchor.</div>}
+              {suggestedLinks.length === 0 && <div className="text-zinc-500">No persisted domain/law/lineage/entity suggestions for the selected anchor.</div>}
             </div>
           </article>
 
@@ -406,12 +451,12 @@ export default function DraftsPage() {
             <h3 className="text-sm font-semibold text-zinc-100">Promotions and provenance</h3>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-zinc-950/70 p-3">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Entity links</div>
+                <div className="text-[11px] uppercase tracking-[0.22em] text-zinc-500">Persisted links</div>
                 <div className="mt-2 space-y-2 text-zinc-300">
-                  {links.map((link) => (
+                  {persistedLinks.map((link) => (
                     <div key={link.id}>{link.entityType} to {link.entityId} ({link.linkStatus})</div>
                   ))}
-                  {links.length === 0 && <div className="text-zinc-500">Nothing linked yet.</div>}
+                  {persistedLinks.length === 0 && <div className="text-zinc-500">Nothing promoted or linked yet.</div>}
                 </div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-zinc-950/70 p-3">
@@ -433,7 +478,7 @@ export default function DraftsPage() {
             </button>
             {showDebug ? (
               <pre className="mt-3 max-h-64 overflow-auto rounded-2xl bg-zinc-950 p-3 text-[11px] text-zinc-300">
-                {JSON.stringify({ selectedAnchor, compileReadable }, null, 2)}
+                {JSON.stringify({ draftId, selectedAnchor, compileReadable }, null, 2)}
               </pre>
             ) : null}
           </article>
