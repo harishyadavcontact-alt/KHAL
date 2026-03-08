@@ -33,7 +33,7 @@ export function ConfidenceEvidenceStrip({
   return (
     <section className="glass p-3 rounded-xl border border-white/10 mb-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-[10px] uppercase tracking-widest text-zinc-500">Confidence + Evidence</div>
+        <div className="text-[10px] uppercase tracking-widest text-zinc-500">Signal + Evidence</div>
         <span className={`rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-widest ${badgeClass(confidence.confidence)}`}>
           {confidence.confidence}
         </span>

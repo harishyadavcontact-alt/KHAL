@@ -5,6 +5,12 @@ import { cleanupFixtureDb, createFixtureDb, restoreSettings, snapshotSettings, w
 
 function resetOntologyTables(db: Database.Database) {
   db.exec(`
+    DELETE FROM portfolio_repo_adapters;
+    DELETE FROM portfolio_decision_gates;
+    DELETE FROM portfolio_evidence;
+    DELETE FROM portfolio_experiments;
+    DELETE FROM portfolio_ship_logs;
+    DELETE FROM portfolio_projects;
     DELETE FROM draft_entity_links;
     DELETE FROM promotion_events;
     DELETE FROM structural_anchors;

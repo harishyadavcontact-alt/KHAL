@@ -147,5 +147,5 @@ Highest-leverage next steps:
 1. Add durable `drafts`, `draft_blocks`, `structural_anchors`, and `promotion_events` tables in SQLite.
 2. Promote additional anchor types into knowledge primitives through canonical APIs.
 3. Add map-aware anchor linking so drafts can target domains, laws, and lineage nodes explicitly.
-4. Add confidence tuning and review workflows for ambiguous anchors.
+4. Add ambiguity review workflows for uncertain anchors.
 5. Add richer block-level provenance and side-by-side promotion review.

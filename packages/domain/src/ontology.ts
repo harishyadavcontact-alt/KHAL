@@ -3,6 +3,7 @@ export type OntologyNodeType =
   | "domain"
   | "affair"
   | "interest"
+  | "portfolio_project"
   | "craft"
   | "stack"
   | "protocol"
@@ -64,4 +65,3 @@ export const ONTOLOGY_BACKBONE: readonly OntologyRelationRule[] = [
   { childType: "response", allowedParentTypes: ["threat"], relation: "RESPONDS_TO", severity: "hard" },
   { childType: "lineage_entity", allowedParentTypes: ["lineage_node"], relation: "LOCATED_IN", severity: "hard" }
 ] as const;
-

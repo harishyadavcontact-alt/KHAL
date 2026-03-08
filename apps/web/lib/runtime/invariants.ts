@@ -5,6 +5,10 @@ import {
   listDomains,
   listDraftLinkedPromotions,
   listInterests,
+  listPortfolioDecisionGates,
+  listPortfolioEvidence,
+  listPortfolioExperiments,
+  listPortfolioProjects,
   listKnowledgeCrafts,
   listKnowledgeHeuristics,
   listKnowledgeProtocols,
@@ -64,6 +68,10 @@ export function evaluateRuntimeInvariants(args: { dbPath?: string; db?: Database
     const domains = listDomains(db);
     const affairs = listAffairs(db);
     const interests = listInterests(db);
+    const portfolioProjects = listPortfolioProjects(db);
+    const portfolioExperiments = listPortfolioExperiments(db);
+    const portfolioDecisionGates = listPortfolioDecisionGates(db);
+    const portfolioEvidence = listPortfolioEvidence(db);
     const tasks = listTasks(db);
     const lineageNodes = listLineageNodes(db);
     const lineageEntities = listLineageEntities(db);
@@ -347,6 +355,7 @@ export function evaluateRuntimeInvariants(args: { dbPath?: string; db?: Database
     const protocolCraftIds = new Set(protocols.map((row) => String(row.craft_id)));
     const responseThreatIds = new Set(responses.map((row) => String(row.threat_id)));
     const taskSourceKeys = new Set(tasks.map((row) => `${String(row.source_type)}:${String(row.source_id)}`));
+    const interestIds = new Set(interests.map((row) => String(row.id)));
 
     for (const craft of crafts) {
       const craftId = String(craft.id);
@@ -408,6 +417,94 @@ export function evaluateRuntimeInvariants(args: { dbPath?: string; db?: Database
           repairHint: "Persist a linked draft entity landing so the promotion is navigable."
         })
       );
+    }
+
+    const experimentProjectIds = new Set(portfolioExperiments.filter((row) => String(row.status) !== "killed").map((row) => String(row.project_id)));
+    const openGateProjectIds = new Set(
+      portfolioDecisionGates
+        .filter((row) => {
+          const status = String(row.status ?? "");
+          return status === "open" || status === "watch";
+        })
+        .map((row) => String(row.project_id))
+    );
+    const evidenceProjectIds = new Set(portfolioEvidence.map((row) => String(row.project_id)));
+
+    for (const project of portfolioProjects) {
+      const projectId = String(project.id);
+      const linkedInterestId = project.linked_interest_id ? String(project.linked_interest_id) : undefined;
+      const role = String(project.strategic_role ?? "");
+      const stage = String(project.stage ?? "");
+      const isActive = Number(project.is_active ?? 0) === 1;
+      const hasBottleneck = Boolean(String(project.current_bottleneck ?? "").trim());
+      const hasNotes = Boolean(String(project.notes ?? "").trim());
+
+      if (linkedInterestId && !interestIds.has(linkedInterestId)) {
+        hardViolations.push(
+          finding({
+            severity: "hard",
+            code: "PORTFOLIO_PROJECT_MISSING_INTEREST",
+            message: "Portfolio project points to an interest that no longer exists.",
+            entityType: "portfolio_project",
+            entityId: projectId,
+            parentType: "interest",
+            parentId: linkedInterestId,
+            repairHint: "Reconnect the project to a live interest or clear the stale interest link."
+          })
+        );
+      }
+
+      if (isActive && role !== "archive" && role !== "killed" && !experimentProjectIds.has(projectId)) {
+        softViolations.push(
+          finding({
+            severity: "soft",
+            code: "PORTFOLIO_PROJECT_WITHOUT_EXPERIMENT",
+            message: "Active portfolio project has no active or planned experiment.",
+            entityType: "portfolio_project",
+            entityId: projectId,
+            repairHint: "Record one experiment so the bet has an explicit learning loop."
+          })
+        );
+      }
+
+      if ((stage === "stalled" || role === "core") && !openGateProjectIds.has(projectId)) {
+        softViolations.push(
+          finding({
+            severity: "soft",
+            code: "PORTFOLIO_PROJECT_WITHOUT_GATE",
+            message: "Portfolio project lacks an open decision gate.",
+            entityType: "portfolio_project",
+            entityId: projectId,
+            repairHint: "Add a continue, scale, pause, archive, or kill gate so the next decision is explicit."
+          })
+        );
+      }
+
+      if (isActive && role !== "archive" && role !== "killed" && !hasBottleneck) {
+        softViolations.push(
+          finding({
+            severity: "soft",
+            code: "PORTFOLIO_PROJECT_WITHOUT_BOTTLENECK",
+            message: "Active portfolio project has no declared bottleneck.",
+            entityType: "portfolio_project",
+            entityId: projectId,
+            repairHint: "Declare the current bottleneck so the project is attention-legible."
+          })
+        );
+      }
+
+      if ((role === "archive" || role === "killed" || stage === "archived") && !hasNotes && !evidenceProjectIds.has(projectId)) {
+        softViolations.push(
+          finding({
+            severity: "soft",
+            code: "PORTFOLIO_PROJECT_WITHOUT_LESSON",
+            message: "Archived or killed project has no retained lesson.",
+            entityType: "portfolio_project",
+            entityId: projectId,
+            repairHint: "Capture a short note or evidence item explaining why the bet was archived and what was learned."
+          })
+        );
+      }
     }
 
     return {

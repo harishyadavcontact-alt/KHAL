@@ -26,6 +26,42 @@ export function listInterests(db: Database.Database) {
   return queryRows(db, "SELECT id, title, domain_id FROM interests ORDER BY updated_at DESC, created_at DESC");
 }
 
+export function listPortfolioProjects(db: Database.Database) {
+  return queryRows(
+    db,
+    `SELECT id, slug, name, strategic_role, stage, is_active, linked_interest_id, notes, current_bottleneck
+     FROM portfolio_projects
+     ORDER BY updated_at DESC, created_at DESC`
+  );
+}
+
+export function listPortfolioExperiments(db: Database.Database) {
+  return queryRows(
+    db,
+    `SELECT id, project_id, title, status
+     FROM portfolio_experiments
+     ORDER BY updated_at DESC, created_at DESC`
+  );
+}
+
+export function listPortfolioDecisionGates(db: Database.Database) {
+  return queryRows(
+    db,
+    `SELECT id, project_id, title, gate_type, status, due_at
+     FROM portfolio_decision_gates
+     ORDER BY updated_at DESC, created_at DESC`
+  );
+}
+
+export function listPortfolioEvidence(db: Database.Database) {
+  return queryRows(
+    db,
+    `SELECT id, project_id, title, summary, impact, recorded_at
+     FROM portfolio_evidence
+     ORDER BY recorded_at DESC, created_at DESC`
+  );
+}
+
 export function listTasks(db: Database.Database) {
   return queryRows(db, "SELECT id, source_type, source_id, title, status FROM tasks ORDER BY updated_at DESC, created_at DESC");
 }

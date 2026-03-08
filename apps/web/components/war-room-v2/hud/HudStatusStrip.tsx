@@ -23,7 +23,7 @@ export function HudStatusStrip({ data, compact = false }: { data: AppData; compa
           <div className="text-xs font-semibold uppercase text-zinc-200">{snapshot.volatilityBand}</div>
         </div>
         <div className="rounded border border-white/10 bg-zinc-950/60 px-2 py-1.5">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500">Confidence</div>
+          <div className="text-[10px] uppercase tracking-widest text-zinc-500">Signal</div>
           <div className="text-xs font-semibold text-zinc-200">{snapshot.confidence}</div>
         </div>
         <div className="rounded border border-white/10 bg-zinc-950/60 px-2 py-1.5">

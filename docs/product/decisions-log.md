@@ -14,5 +14,6 @@
 - Triage doctrine (v0.4.5-R1): blocked states must produce deterministic, exact block-to-fix suggestions; no model dependence.
 - Quick action doctrine (v0.4.5-R1): one-click fixes are whitelisted, minimal, idempotent where possible, and never bypass no-ruin.
 - Drafts doctrine (v0.5 planning): Drafts is a prose-first, structure-aware thinking environment; structural anchors are the visible bridge between raw prose and compile-readable persistence.
+- Portfolio doctrine (v0.5): Portfolio War Room lives under Mission Command as the command surface above bets; it remains distinct from Interests and only supports an optional primary Interest link in v1.
 - API style: REST
 - Testing baseline: unit + parser + API-level coverage

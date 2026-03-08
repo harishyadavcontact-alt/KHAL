@@ -68,6 +68,46 @@ War Gaming v0.4.2 contract expectations:
 ## Mutation routes
 Entity mutation routes (`/api/affairs`, `/api/interests`, `/api/tasks`, and related nested endpoints) return persisted payloads and enforce conflict checks using SQLite modified timestamps.
 
+## Portfolio War Room (v0.5)
+
+### `GET /api/portfolio`
+Returns the Portfolio War Room snapshot:
+- `summary`
+- `projects[]`
+- `shippingRadar[]`
+- `experimentBoard[]`
+- `cemetery[]`
+- `interestOptions[]`
+- `runtimeInvariants`
+
+### `POST /api/portfolio`
+Creates a portfolio project in SQLite and returns:
+- `created` (detail snapshot for the new project)
+- `snapshot` (fresh landing snapshot)
+
+### `GET /api/portfolio/[slug]`
+Returns one project command snapshot:
+- `project`
+- `shipLogs[]`
+- `evidence[]`
+- `experiments[]`
+- `decisionGates[]`
+- `interestOptions[]`
+- `runtimeInvariants`
+
+### `PATCH /api/portfolio/[slug]`
+Updates the portfolio project and returns:
+- `project` (fresh detail snapshot)
+- `snapshot` (fresh landing snapshot)
+
+### Child mutation routes
+- `POST /api/portfolio/[slug]/ship-logs`
+- `POST /api/portfolio/[slug]/evidence`
+- `POST /api/portfolio/[slug]/experiments`
+- `POST /api/portfolio/[slug]/gates`
+
+These routes are local-first, SQLite-backed, and return refreshed detail plus landing snapshots so the Mission Command surface stays in sync without a second authority.
+
 `POST /api/plans` `sourceType` accepts additively:
 - `SOURCE`
 - `DOMAIN`

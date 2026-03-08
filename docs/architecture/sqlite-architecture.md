@@ -32,6 +32,8 @@ Hierarchy:
 - `fragilities` -> vulnerabilities and risk/stakes
 - `affairs` -> obligations curing fragility
 - `interests` -> optionality bets
+- `portfolio_projects` -> portfolio command layer above bets
+- `portfolio_ship_logs` / `portfolio_experiments` / `portfolio_evidence` / `portfolio_decision_gates` -> operating signal for each bet
 - `plans` + `metrics` -> war-gaming layer
 - `tasks` + `task_dependencies` -> surgical execution chain
 - `mission_nodes` + `mission_dependencies` -> mission command hierarchy graph

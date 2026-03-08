@@ -106,6 +106,107 @@ export interface Interest {
   evidenceNote?: string;
 }
 
+export type PortfolioStrategicRole = "core" | "option" | "probe" | "archive" | "killed";
+export type PortfolioStage = "idea" | "framing" | "build" | "shipping" | "traction" | "stalled" | "archived";
+export type PortfolioSignalBand = "low" | "watch" | "high";
+export type PortfolioShipType = "code" | "spec" | "doc" | "design" | "release" | "research" | "prompt";
+export type PortfolioEvidenceType = "user-signal" | "metric" | "observation" | "decision" | "market" | "technical";
+export type PortfolioDecisionGateType = "continue" | "scale" | "pause" | "archive" | "kill";
+export type PortfolioDecisionGateStatus = "open" | "watch" | "cleared" | "triggered";
+export type PortfolioExperimentStatus = "planned" | "active" | "paused" | "complete" | "killed";
+export type PortfolioRepoAdapterKind = "manual" | "meta_json";
+
+export interface PortfolioProject {
+  id: EntityId;
+  slug: string;
+  name: string;
+  tagline?: string;
+  strategicRole: PortfolioStrategicRole;
+  stage: PortfolioStage;
+  mission?: string;
+  wedge?: string;
+  rightTail?: string;
+  leftTail?: string;
+  currentExperiment?: string;
+  successMetric?: string;
+  killCriteria?: string;
+  nextMilestone?: string;
+  currentBottleneck?: string;
+  signalBand: PortfolioSignalBand;
+  repoUrl?: string;
+  repoName?: string;
+  defaultBranch?: string;
+  lastShippedAt?: string;
+  lastReviewedAt?: string;
+  isActive: boolean;
+  notes?: string;
+  linkedInterestId?: EntityId;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PortfolioShipLog {
+  id: EntityId;
+  projectId: EntityId;
+  title: string;
+  type: PortfolioShipType;
+  summary?: string;
+  sourceLabel?: string;
+  sourceUrl?: string;
+  shippedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PortfolioEvidence {
+  id: EntityId;
+  projectId: EntityId;
+  title: string;
+  type: PortfolioEvidenceType;
+  summary: string;
+  impact?: string;
+  recordedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PortfolioDecisionGate {
+  id: EntityId;
+  projectId: EntityId;
+  title: string;
+  gateType: PortfolioDecisionGateType;
+  criteria: string;
+  status: PortfolioDecisionGateStatus;
+  dueAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PortfolioExperiment {
+  id: EntityId;
+  projectId: EntityId;
+  title: string;
+  hypothesis: string;
+  expectedLearning?: string;
+  status: PortfolioExperimentStatus;
+  startedAt?: string;
+  completedAt?: string;
+  resultSummary?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PortfolioRepoAdapter {
+  id: EntityId;
+  projectId: EntityId;
+  adapterKind: PortfolioRepoAdapterKind;
+  sourcePath?: string;
+  metadata?: Record<string, unknown>;
+  lastIngestedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Task {
   id: EntityId;
   sourceType: "AFFAIR" | "INTEREST" | "PLAN" | "PREPARATION";
