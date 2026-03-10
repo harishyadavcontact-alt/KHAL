@@ -1,5 +1,6 @@
 import type { WarGameDependencyStatus, WarGameGrammarSpec, WarGameMode, WarGameModeEvaluation, WarGameRole } from "./types";
 import { getDecisionSpec } from "../../lib/decision-spec";
+import { DECISION_TREE_MODES, DECISION_TREE_MODE_BY_ID, modeToPlanSourceType as registryModeToPlanSourceType } from "../../lib/decision-tree/registry";
 
 export interface WarGameStage {
   id: "A" | "B" | "C" | "D" | "E";
@@ -43,13 +44,7 @@ export interface ReadinessResult {
 }
 
 export const WAR_GAME_MODES: Array<{ id: WarGameMode; label: string }> = [
-  { id: "source", label: "Source WarGame" },
-  { id: "domain", label: "Domain WarGame" },
-  { id: "affair", label: "Affair WarGame" },
-  { id: "interest", label: "Interest WarGame" },
-  { id: "craft", label: "Craft WarGame" },
-  { id: "mission", label: "Mission WarGame" },
-  { id: "lineage", label: "Lineage WarGame" }
+  ...DECISION_TREE_MODES.map((mode) => ({ id: mode.id, label: mode.protocolLabel }))
 ];
 
 export const WAR_GAME_STAGES: WarGameStage[] = [
@@ -71,7 +66,7 @@ export const WAR_GAME_GRAMMAR_REGISTRY: Record<WarGameMode, WarGameGrammarSpec> 
     {
       mode: mode.mode,
       title: mode.title,
-      narrative: mode.narrative,
+      narrative: `${mode.narrative} Primary question: ${DECISION_TREE_MODE_BY_ID.get(mode.mode)?.primaryQuestion ?? ""}`.trim(),
       fields: mode.requiredFields.map((key) => ({
         key,
         label: key.replaceAll("_", " "),
@@ -83,13 +78,7 @@ export const WAR_GAME_GRAMMAR_REGISTRY: Record<WarGameMode, WarGameGrammarSpec> 
 ) as Record<WarGameMode, WarGameGrammarSpec>;
 
 export function modeToPlanSourceType(mode: WarGameMode): "SOURCE" | "DOMAIN" | "AFFAIR" | "INTEREST" | "CRAFT" | "MISSION" | "LINEAGE" {
-  if (mode === "source") return "SOURCE";
-  if (mode === "domain") return "DOMAIN";
-  if (mode === "affair") return "AFFAIR";
-  if (mode === "interest") return "INTEREST";
-  if (mode === "craft") return "CRAFT";
-  if (mode === "mission") return "MISSION";
-  return "LINEAGE";
+  return registryModeToPlanSourceType(mode);
 }
 
 export function evaluateWarGameMode(args: {

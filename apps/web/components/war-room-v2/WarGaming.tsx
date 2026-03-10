@@ -68,6 +68,7 @@ import { HudStatusStrip } from "./hud/HudStatusStrip";
 import { SystemAnatomyMiniMap } from "./hud/SystemAnatomyMiniMap";
 import { TriageActionPanel } from "./panels/TriageActionPanel";
 import { DoctrineFixButtons } from "./panels/DoctrineFixButtons";
+import { DECISION_TREE_MODE_BY_ID } from "../../lib/decision-tree/registry";
 
 function modeTargetOptions(mode: WarGameMode, data: {
   sources: VolatilitySourceDto[];
@@ -88,6 +89,31 @@ function modeTargetOptions(mode: WarGameMode, data: {
   for (const node of data.missionGraph?.nodes ?? []) missionIds.add(node.missionId);
   return Array.from(missionIds).map((id) => ({ id, label: id }));
 }
+
+function warGameSectionMeta(mode: WarGameMode) {
+  if (mode === "source" || mode === "domain" || mode === "craft") {
+    return {
+      section: "State of the Art",
+      description: "Map the decision environment, diagnose fragility, and define admissible means before action."
+    };
+  }
+  if (mode === "affair" || mode === "interest") {
+    return {
+      section: "State of Affairs",
+      description: "Split obligations from options after the state of the art is explicit."
+    };
+  }
+  return {
+    section: "Mission",
+    description: "Aggregate exposures, lineage, and sequence into executable order."
+  };
+}
+
+const MODE_GROUPS: Array<{ label: string; modes: WarGameMode[] }> = [
+  { label: "State of the Art", modes: ["source", "domain", "craft"] },
+  { label: "State of Affairs", modes: ["affair", "interest"] },
+  { label: "Mission", modes: ["lineage", "mission"] }
+];
 
 function readinessPenaltySegments(penalties: {
   missingPredecessorPenalty: number;
@@ -186,7 +212,8 @@ export const WarGaming = ({
   violationFeed,
   optionalityBudget,
   onContextChange,
-  onAddTask
+  onAddTask,
+  onSourceMapSaved
 }: {
   user: UserProfile;
   domains: Domain[];
@@ -212,6 +239,7 @@ export const WarGaming = ({
   optionalityBudget?: OptionalityBudgetState;
   onContextChange?: (mode: WarGameMode, targetId?: string) => void;
   onAddTask: (task: any) => Promise<void> | void;
+  onSourceMapSaved?: () => Promise<void> | void;
 }) => {
   const router = useRouter();
   const roleStorageKey = "khal.wargame.role";
@@ -309,6 +337,8 @@ export const WarGaming = ({
   }, [mode, modeTargetId, protocolState, role]);
 
   const domainById = new Map(domains.map((domain) => [domain.id, domain]));
+  const modeDefinition = DECISION_TREE_MODE_BY_ID.get(mode);
+  const sectionMeta = warGameSectionMeta(mode);
 
   const filteredRisks = useMemo(
     () =>
@@ -502,11 +532,23 @@ export const WarGaming = ({
   const currentFilledFieldKeys = useMemo(() => {
     if (mode === "source") {
       const source = sources.find((item) => item.id === modeTargetId);
+      const requiredDomainIds = Array.from(new Set((source?.domains ?? []).map((item) => item.domainId)));
+      const relevantProfiles = (source?.mapProfiles ?? []).filter((profile) => requiredDomainIds.length === 0 || requiredDomainIds.includes(profile.domainId));
+      const profileByDomainId = new Map(relevantProfiles.map((profile) => [profile.domainId, profile]));
+      const mappedProfiles = requiredDomainIds.map((domainId) => profileByDomainId.get(domainId)).filter(Boolean);
+      const hasProfileCoverage = requiredDomainIds.length > 0 && mappedProfiles.length >= requiredDomainIds.length;
       return [
         source?.name ? "source_profile" : null,
-        (source?.domains?.length ?? 0) > 0 ? "linked_domains" : null,
-        (source?.domains?.length ?? 0) > 0 ? "propagation_paths" : null,
-        source?.domainCount ? "uncertainty_band" : null
+        (source?.domains?.length ?? 0) > 0 ? "semantic_domains" : null,
+        hasProfileCoverage && mappedProfiles.every((profile) => profile?.decisionType) ? "decision_type" : null,
+        hasProfileCoverage && mappedProfiles.every((profile) => profile?.tailClass) ? "tail_class" : null,
+        hasProfileCoverage && mappedProfiles.every((profile) => profile?.quadrant) ? "quadrant" : null,
+        hasProfileCoverage && mappedProfiles.every((profile) => profile?.methodPosture) ? "means_posture" : null,
+        hasProfileCoverage && mappedProfiles.every((profile) => profile?.stakesText?.trim()) ? "stakes" : null,
+        hasProfileCoverage && mappedProfiles.every((profile) => profile?.risksText?.trim()) ? "risks" : null,
+        hasProfileCoverage && mappedProfiles.every((profile) => profile?.fragilityPosture?.trim() && profile?.vulnerabilitiesText?.trim()) ? "fragility_profile" : null,
+        hasProfileCoverage && mappedProfiles.every((profile) => profile?.hedgeText?.trim() && profile?.edgeText?.trim()) ? "ends" : null,
+        hasProfileCoverage && mappedProfiles.every((profile) => profile?.primaryCraftId?.trim() && profile?.heuristicsText?.trim() && profile?.avoidText?.trim()) ? "means" : null
       ].filter(Boolean) as string[];
     }
     if (mode === "domain") {
@@ -761,6 +803,16 @@ export const WarGaming = ({
       <div className="rounded-xl border border-white/10 bg-zinc-900/30 p-3 mb-4">
         <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Mode Grammar</div>
         <div className="text-xs text-zinc-300 mb-2">{WAR_GAME_GRAMMAR_REGISTRY[mode].narrative}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+          <div className="rounded border border-white/10 bg-zinc-950/50 px-2 py-1.5 text-[11px]">
+            <div className="uppercase tracking-widest text-zinc-400">Primary Question</div>
+            <div className="mt-1 text-zinc-200">{modeDefinition?.primaryQuestion ?? "Mode question unavailable."}</div>
+          </div>
+          <div className="rounded border border-white/10 bg-zinc-950/50 px-2 py-1.5 text-[11px]">
+            <div className="uppercase tracking-widest text-zinc-400">Decision Lens</div>
+            <div className="mt-1 text-zinc-200">{modeDefinition?.decisionLens ?? "Mode lens unavailable."}</div>
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {WAR_GAME_GRAMMAR_REGISTRY[mode].fields.map((field) => {
             const filled = currentFilledFieldKeys.includes(field.key);
@@ -788,9 +840,10 @@ export const WarGaming = ({
       <div className="glass p-6 rounded-xl border border-white/10 mb-8">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-xl font-bold">WarGame Protocol</h2>
-            <p className="text-sm text-zinc-400 mt-1">Mode-specific protocol with shared scoring and gate logic.</p>
-            <p className="text-[10px] uppercase tracking-widest text-zinc-500 mt-2">Strategic Posture (8 Fronts)</p>
+            <h2 className="text-xl font-bold">{modeDefinition?.protocolLabel ?? "WarGame Protocol"}</h2>
+            <p className="text-sm text-zinc-400 mt-1">{modeDefinition?.primaryQuestion ?? "Mode-specific protocol with shared scoring and gate logic."}</p>
+            <p className="text-[10px] uppercase tracking-widest text-zinc-500 mt-2">{sectionMeta.section}</p>
+            <p className="text-xs text-zinc-500 mt-1">{sectionMeta.description}</p>
           </div>
           <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono">soft order + hard execute gates</div>
         </div>
@@ -826,10 +879,14 @@ export const WarGaming = ({
           <div>
             <label className="block text-xs uppercase tracking-widest text-zinc-500 mb-2">Protocol Mode</label>
             <select className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm" value={mode} onChange={(event) => setMode(event.target.value as WarGameMode)}>
-              {WAR_GAME_MODES.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
+              {MODE_GROUPS.map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {WAR_GAME_MODES.filter((item) => group.modes.includes(item.id)).map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </div>
@@ -924,11 +981,19 @@ export const WarGaming = ({
       </div>
 
       {mode === "source" && (
-        <WarGameVolatility sourceId={modeTargetId} sources={sources} domains={domains} lineages={lineages} lineageRisks={lineageRisks} />
+        <WarGameVolatility
+          sourceId={modeTargetId}
+          sources={sources}
+          domains={domains}
+          lineages={lineages}
+          lineageRisks={lineageRisks}
+          crafts={crafts.map((craft) => ({ id: craft.id, name: craft.name }))}
+          onSourceMapSaved={onSourceMapSaved}
+        />
       )}
       {mode === "domain" && <WarGameDomains domainId={modeTargetId} domains={domains} affairs={affairs} interests={interests} lineageRisks={lineageRisks} />}
-      {mode === "affair" && <WarGameAffair affairId={modeTargetId} affairs={affairs} domains={domains} />}
-      {mode === "interest" && <WarGameInterest interestId={modeTargetId} interests={interests} affairs={affairs} />}
+      {mode === "affair" && <WarGameAffair affairId={modeTargetId} affairs={affairs} domains={domains} sources={sources} crafts={crafts} />}
+      {mode === "interest" && <WarGameInterest interestId={modeTargetId} interests={interests} affairs={affairs} sources={sources} crafts={crafts} />}
       {mode === "craft" && <WarGameCraft craftId={modeTargetId} crafts={crafts} />}
       {mode === "mission" && <WarGameMission missionId={modeTargetId} missionGraph={missionGraph} affairs={affairs} interests={interests} />}
       {mode === "lineage" && <WarGameLineage lineageNodeId={modeTargetId} lineages={lineages} lineageRisks={lineageRisks} />}

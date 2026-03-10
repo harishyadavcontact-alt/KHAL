@@ -25,11 +25,16 @@ function isoDateDaysFromNow(days: number): string {
   return now.toISOString().slice(0, 10);
 }
 
+function isBlankText(value: unknown): boolean {
+  return String(value ?? "").trim().length === 0;
+}
+
 export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; onRefresh: () => Promise<unknown> | void; initialFocusId?: string }) {
   const router = useRouter();
   const derived = useMemo(() => withLabDerivedFields(data), [data]);
   const summary = useMemo(() => computeLabSummary(derived), [derived]);
   const domainById = useMemo(() => new Map(derived.domains.map((domain) => [domain.id, domain])), [derived.domains]);
+  const sourceMapProfiles = useMemo(() => data.sources?.flatMap((source) => source.mapProfiles ?? []) ?? [], [data.sources]);
 
   const ordered = useMemo(
     () => [...derived.interests].sort((left, right) => (right.asymmetryScore ?? 0) - (left.asymmetryScore ?? 0)),
@@ -53,6 +58,19 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
 
   const [draft, setDraft] = useState<Partial<Interest>>({});
   const focus = selected ? { ...selected, ...draft } : null;
+  const inheritedProfile = useMemo(
+    () => sourceMapProfiles.find((profile) => profile.interestId === selectedId),
+    [selectedId, sourceMapProfiles]
+  );
+  const inheritedSource = useMemo(
+    () => data.sources?.find((source) => source.id === inheritedProfile?.sourceId),
+    [data.sources, inheritedProfile?.sourceId]
+  );
+  const inheritedCraft = useMemo(
+    () => data.crafts.find((craft) => craft.id === inheritedProfile?.primaryCraftId),
+    [data.crafts, inheritedProfile?.primaryCraftId]
+  );
+  const suggestedHeuristics = useMemo(() => inheritedCraft?.heuristics.slice(0, 3) ?? [], [inheritedCraft]);
 
   const checks = useMemo(
     () => (focus ? computeInterestProtocolChecks(focus as Interest, domainById.get(focus.domainId ?? "")) : []),
@@ -94,6 +112,40 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
     setDraft({});
     setError(null);
   }, [initialFocusId]);
+
+  useEffect(() => {
+    if (!selected || !inheritedProfile) return;
+    setDraft((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      if (isBlankText(selected.hypothesis) && isBlankText(prev.hypothesis) && !isBlankText(inheritedProfile.edgeText)) {
+        next.hypothesis = inheritedProfile.edgeText;
+        changed = true;
+      }
+      if (isBlankText(selected.evidenceNote) && isBlankText(prev.evidenceNote) && !isBlankText(inheritedProfile.heuristicsText)) {
+        next.evidenceNote = inheritedProfile.heuristicsText;
+        changed = true;
+      }
+      if (isBlankText(selected.downside) && isBlankText(prev.downside) && !isBlankText(inheritedProfile.avoidText)) {
+        next.downside = inheritedProfile.avoidText;
+        changed = true;
+      }
+
+      return changed ? next : prev;
+    });
+  }, [selected, inheritedProfile]);
+
+  const applyInheritedDoctrine = () => {
+    if (!inheritedProfile) return;
+    setDraft((prev) => ({
+      ...prev,
+      hypothesis: inheritedProfile.edgeText ?? prev.hypothesis ?? "",
+      evidenceNote: inheritedProfile.heuristicsText ?? prev.evidenceNote ?? "",
+      downside: inheritedProfile.avoidText ?? inheritedProfile.risksText ?? prev.downside ?? ""
+    }));
+    setError(null);
+  };
 
   const attemptStageChange = (stage: Stage) => {
     if (!focus) return;
@@ -142,13 +194,15 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
         : ["Exit if drawdown exceeds max loss", "Exit if thesis invalidated by evidence"];
     setDraft((prev) => ({
       ...prev,
-      hypothesis: String(focus.hypothesis ?? "").trim() ? focus.hypothesis : `Convex trial for ${focus.title}`,
+      hypothesis: String(focus.hypothesis ?? "").trim() ? focus.hypothesis : inheritedProfile?.edgeText?.trim() || `Convex trial for ${focus.title}`,
       maxLossPct: Number.isFinite(Number(focus.maxLossPct)) && Number(focus.maxLossPct) > 0 ? Number(focus.maxLossPct) : 5,
       expiryDate: safeDateInput(focus.expiryDate) || isoDateDaysFromNow(30),
       killCriteria: nextKillCriteria,
       hedgePct: Number.isFinite(Number(focus.hedgePct)) ? Number(focus.hedgePct) : 90,
       edgePct: Number.isFinite(Number(focus.edgePct)) ? Number(focus.edgePct) : 10,
-      irreversibility: Number.isFinite(Number(focus.irreversibility)) ? Number(focus.irreversibility) : 30
+      irreversibility: Number.isFinite(Number(focus.irreversibility)) ? Number(focus.irreversibility) : 30,
+      evidenceNote: String(focus.evidenceNote ?? "").trim() ? focus.evidenceNote : inheritedProfile?.heuristicsText ?? "",
+      downside: String(focus.downside ?? "").trim() ? focus.downside : inheritedProfile?.avoidText ?? inheritedProfile?.risksText ?? ""
     }));
     setError(null);
   };
@@ -331,12 +385,67 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
           </div>
           {!focus ? null : (
             <>
+              {inheritedProfile ? (
+                <div className="rounded border border-blue-400/20 bg-blue-500/5 p-2.5 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-zinc-500">Inherited From State of the Art</div>
+                      <div className="text-xs text-zinc-200">
+                        {inheritedSource?.name ?? inheritedProfile.sourceId} {"->"} {domainById.get(focus.domainId)?.name ?? focus.domainId}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={applyInheritedDoctrine}
+                      className="rounded border border-white/10 px-2 py-1 text-[10px] text-zinc-200 hover:bg-white/5"
+                    >
+                      Prefill Doctrine
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] text-zinc-300">
+                    <div>
+                      <span className="text-zinc-500">Quadrant:</span> {inheritedProfile.quadrant}
+                    </div>
+                    <div>
+                      <span className="text-zinc-500">Craft:</span> {inheritedCraft?.name ?? inheritedProfile.primaryCraftId ?? "Unassigned"}
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-zinc-500">Edge:</span> {inheritedProfile.edgeText ?? "Undefined"}
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-zinc-500">Avoid:</span> {inheritedProfile.avoidText ?? "Undefined"}
+                    </div>
+                    {suggestedHeuristics.length ? (
+                      <div className="col-span-2">
+                        <span className="text-zinc-500">Suggested heuristics:</span>{" "}
+                        {suggestedHeuristics.map((heuristic) => heuristic.title).join(" | ")}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
               <div className="space-y-2">
                 <label className="block text-[10px] uppercase tracking-widest text-zinc-500">Hypothesis</label>
                 <textarea
                   className="w-full rounded border border-white/10 bg-zinc-950 px-2 py-1.5 text-xs"
                   value={String(focus.hypothesis ?? "")}
                   onChange={(event) => updateDraft("hypothesis", event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-[10px] uppercase tracking-widest text-zinc-500">Evidence Note</label>
+                <textarea
+                  className="w-full rounded border border-white/10 bg-zinc-950 px-2 py-1.5 text-xs"
+                  value={String(focus.evidenceNote ?? "")}
+                  onChange={(event) => updateDraft("evidenceNote", event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-[10px] uppercase tracking-widest text-zinc-500">Downside / Avoid</label>
+                <textarea
+                  className="w-full rounded border border-white/10 bg-zinc-950 px-2 py-1.5 text-xs"
+                  value={String(focus.downside ?? "")}
+                  onChange={(event) => updateDraft("downside", event.target.value)}
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">

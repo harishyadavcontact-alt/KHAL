@@ -1,13 +1,12 @@
-export type WarGameRouteMode = "source" | "domain" | "affair" | "interest" | "craft" | "mission" | "lineage";
+import { isDecisionTreeMode, parseDecisionTreeMode, type DecisionTreeModeId } from "../decision-tree/registry";
 
-const MODES: WarGameRouteMode[] = ["source", "domain", "affair", "interest", "craft", "mission", "lineage"];
+export type WarGameRouteMode = DecisionTreeModeId;
 
 export function isWarGameRouteMode(value: string): value is WarGameRouteMode {
-  return MODES.includes(value as WarGameRouteMode);
+  return isDecisionTreeMode(value);
 }
 
 export function parseWarGameRouteMode(value?: string | null): WarGameRouteMode | null {
-  if (!value) return null;
-  return isWarGameRouteMode(value) ? value : null;
+  return parseDecisionTreeMode(value);
 }
 

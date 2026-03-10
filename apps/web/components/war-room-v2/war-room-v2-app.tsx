@@ -20,8 +20,10 @@ import { KhalWordmark } from '../branding/KhalWordmark';
 import { KhalFinalMark } from '../branding/KhalFinalMark';
 import { DashboardView } from './DashboardView';
 import { WarRoomView } from './WarRoomView';
+import { WARGAME_MODES } from '../../lib/decision-tree/registry';
+import { routeForSectionView, viewForPath } from '../../lib/navigation/sections';
 
-const WAR_GAME_MODES: WarGameMode[] = ['source', 'domain', 'affair', 'interest', 'craft', 'mission', 'lineage'];
+const WAR_GAME_MODES: WarGameMode[] = [...WARGAME_MODES];
 
 const isWarGameMode = (value: string | null | undefined): value is WarGameMode => {
   return Boolean(value && WAR_GAME_MODES.includes(value as WarGameMode));
@@ -50,15 +52,6 @@ const toApiTaskStatus = (status?: string) => {
 const ensureTaskSourceType = (sourceType?: string): 'AFFAIR' | 'INTEREST' | 'PLAN' | 'PREPARATION' => {
   if (sourceType === 'AFFAIR' || sourceType === 'INTEREST' || sourceType === 'PLAN' || sourceType === 'PREPARATION') return sourceType;
   return 'PLAN';
-};
-
-const pathToView = (pathname: string): WarRoomViewState | null => {
-  if (pathname.startsWith('/dashboard')) return 'dashboard';
-  if (pathname.startsWith('/war-room')) return 'war-room';
-  if (pathname.startsWith('/war-gaming')) return 'war-gaming';
-  if (pathname.startsWith('/missionCommand') || pathname.startsWith('/mission-command')) return 'mission';
-  if (pathname.startsWith('/lab')) return 'lab';
-  return null;
 };
 
 const App = () => {
@@ -116,7 +109,7 @@ const App = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    const routeView = pathToView(pathname);
+    const routeView = viewForPath(pathname) as WarRoomViewState | null;
     if (routeView) {
       setActiveView(routeView);
     }
@@ -153,24 +146,9 @@ const App = () => {
   ];
 
   const navigateView = (nextView: WarRoomViewState) => {
-    if (nextView === 'dashboard') {
-      router.push('/dashboard');
-      return;
-    }
-    if (nextView === 'war-room') {
-      router.push('/war-room');
-      return;
-    }
-    if (nextView === 'mission') {
-      router.push('/missionCommand');
-      return;
-    }
-    if (nextView === 'war-gaming') {
-      router.push('/war-gaming');
-      return;
-    }
-    if (nextView === 'lab') {
-      router.push('/lab');
+    const route = routeForSectionView(nextView);
+    if (route !== '/dashboard' || nextView === 'dashboard') {
+      router.push(route === '/war-gaming/affair' ? '/war-gaming' : route);
       return;
     }
     setActiveView(nextView);

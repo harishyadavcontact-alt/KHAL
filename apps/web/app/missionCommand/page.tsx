@@ -13,20 +13,20 @@ export default function MissionCommandPage() {
   return (
     <KhalOpsShell title="Mission Command" subtitle="Hierarchy">
       {!data || loading ? (
-        <div className="max-w-7xl mx-auto p-5 text-zinc-400">Loading Mission Command...</div>
+        <div className="mx-auto max-w-7xl p-5 text-[var(--color-text-muted)]">Loading Mission Command...</div>
       ) : error ? (
-        <div className="max-w-7xl mx-auto p-5 text-red-300">{error}</div>
+        <div className="mx-auto max-w-7xl p-5 text-[var(--color-fragile)]">{error}</div>
       ) : (
         <>
           <div className="mx-auto max-w-7xl px-3 pt-4">
-            <div className="rounded-[28px] border border-[var(--color-border)] bg-[radial-gradient(circle_at_top_left,rgba(200,154,87,0.08),transparent_30%),linear-gradient(180deg,rgba(18,22,29,0.96),rgba(10,13,18,0.96))] p-4 shadow-[0_22px_64px_rgba(0,0,0,0.22)]">
+            <div className="khal-panel-strong rounded-[28px] p-4 shadow-[0_22px_64px_rgba(0,0,0,0.14)]">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="text-[11px] uppercase tracking-[0.24em] text-[var(--color-text-faint)]">New Surface</div>
-                  <div className="mt-1 text-lg font-semibold text-[var(--color-text)]">Portfolio War Room</div>
+                  <div className="khal-meta text-[11px]">New Surface</div>
+                  <div className="khal-title mt-1 text-lg font-semibold">Portfolio War Room</div>
                   <div className="mt-1 text-sm text-[var(--color-text-muted)]">Command multiple bets from one strategic-operational surface without collapsing doctrine into project management.</div>
                 </div>
-                <Link href="/missionCommand/portfolio" className="rounded-full border border-[var(--color-border-strong)] bg-[linear-gradient(135deg,var(--color-accent),var(--color-accent-strong))] px-4 py-2 text-sm font-semibold text-[#111318]">
+                <Link href="/missionCommand/portfolio" className="khal-button-accent px-4 py-2 text-sm font-semibold">
                   Open Portfolio War Room
                 </Link>
               </div>

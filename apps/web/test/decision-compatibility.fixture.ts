@@ -1,4 +1,5 @@
 import type { Affair, AppData, Domain, Interest, LineageRiskDto, VolatilitySourceDto } from "../components/war-room-v2/types";
+import { WARGAME_MODES } from "../lib/decision-tree/registry";
 
 export type CanonicalVolatilitySlotKey = "universe" | "nature" | "nurture" | "land" | "time" | "law6";
 
@@ -11,7 +12,7 @@ export const CANONICAL_VOLATILITY_SLOTS: Array<{ key: CanonicalVolatilitySlotKey
   { key: "law6", label: "Law 6 (TBD)" }
 ];
 
-export const EXPECTED_WARGAME_MODES = ["source", "domain", "affair", "interest", "craft", "mission", "lineage"] as const;
+export const EXPECTED_WARGAME_MODES = WARGAME_MODES;
 
 const SLOT_ORDER: Record<CanonicalVolatilitySlotKey, number> = {
   universe: 0,

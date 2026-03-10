@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { KHAL_OPS_NAV_ITEMS } from "./nav-config";
 import { KhalFinalMark } from "../branding/KhalFinalMark";
 import { KhalWordmark } from "../branding/KhalWordmark";
+
+const DESKTOP_NAV_COLLAPSED_KEY = "khal:ops-nav:collapsed";
 
 function isActive(pathname: string, href: string, matchPrefixes?: string[]) {
   if (pathname === href || pathname.startsWith(`${href}/`)) return true;
@@ -18,10 +20,24 @@ export function KhalOpsNav() {
   const router = useRouter();
   const navRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+  const [desktopReady, setDesktopReady] = useState(false);
 
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem(DESKTOP_NAV_COLLAPSED_KEY);
+    setDesktopCollapsed(stored === "true");
+    setDesktopReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!desktopReady || typeof window === "undefined") return;
+    window.localStorage.setItem(DESKTOP_NAV_COLLAPSED_KEY, desktopCollapsed ? "true" : "false");
+  }, [desktopCollapsed, desktopReady]);
 
   useEffect(() => {
     const isEditableTarget = (target: EventTarget | null) => {
@@ -71,7 +87,7 @@ export function KhalOpsNav() {
         type="button"
         aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
         onClick={() => setMobileOpen((value) => !value)}
-        className="fixed left-3 top-3 z-50 rounded-md border border-[var(--color-border)] bg-[rgba(17,21,28,0.95)] p-2 text-[var(--color-text)] md:hidden"
+        className="fixed left-3 top-3 z-50 rounded-md border border-[var(--color-border)] bg-[var(--color-panel-soft)] p-2 text-[var(--color-text)] md:hidden"
       >
         {mobileOpen ? <X size={16} /> : <Menu size={16} />}
       </button>
@@ -79,15 +95,19 @@ export function KhalOpsNav() {
 
       <aside
         data-khal-nav="true"
-        className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-[var(--color-border)] bg-[linear-gradient(180deg,rgba(13,16,21,0.98),rgba(17,22,28,0.96))] p-3 backdrop-blur-xl transition-transform duration-200 md:static md:w-60 md:translate-x-0 md:flex-shrink-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-[var(--color-border)] bg-[var(--leftnav-bg)] p-3 backdrop-blur-xl transition-[transform,width] duration-200 md:static md:translate-x-0 md:flex-shrink-0 ${
+          desktopCollapsed ? "md:w-[4.75rem]" : "md:w-60"
+        } ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="mb-2 flex items-center gap-3 px-1 py-2">
+        <div className={`mb-2 flex items-center px-1 py-2 ${desktopCollapsed ? "justify-center md:px-0" : "gap-3"}`}>
           <div className="h-8 w-8 text-[#ff8c00]">
             <KhalFinalMark size={32} />
           </div>
-          <KhalWordmark size={24} variant="muted" />
+          <div className={desktopCollapsed ? "md:hidden" : ""}>
+            <KhalWordmark size={24} variant="muted" />
+          </div>
         </div>
 
         <nav className="space-y-1">
@@ -107,16 +127,35 @@ export function KhalOpsNav() {
                 data-khal-nav-item="true"
                 className={
                   active
-                    ? "flex items-center gap-2 rounded-lg border border-[var(--color-border-strong)] bg-[linear-gradient(135deg,var(--color-accent),var(--color-accent-strong))] px-2.5 py-2 text-sm font-medium text-[#111318] shadow-[0_12px_28px_rgba(200,154,87,0.22)]"
-                    : "flex items-center gap-2 rounded-lg border border-transparent px-2.5 py-2 text-sm font-medium text-[var(--color-text-muted)] hover:border-[var(--color-border)] hover:bg-white/5 hover:text-[var(--color-text)]"
+                    ? `flex items-center rounded-lg border border-[var(--color-border-strong)] bg-[linear-gradient(135deg,var(--color-accent),var(--color-accent-strong))] py-2 text-sm font-medium text-[#111318] shadow-[0_12px_28px_rgba(200,154,87,0.22)] ${
+                        desktopCollapsed ? "justify-center px-2 md:px-0" : "gap-2 px-2.5"
+                      }`
+                    : `flex items-center rounded-lg border border-transparent py-2 text-sm font-medium text-[var(--color-text-muted)] hover:border-[var(--color-border)] hover:bg-white/5 hover:text-[var(--color-text)] ${
+                        desktopCollapsed ? "justify-center px-2 md:px-0" : "gap-2 px-2.5"
+                      }`
                 }
+                title={desktopCollapsed ? item.label : undefined}
               >
                 <Icon size={16} />
-                <span>{item.label}</span>
+                <span className={desktopCollapsed ? "md:hidden" : ""}>{item.label}</span>
               </Link>
             );
           })}
         </nav>
+
+        <div className="mt-auto hidden pt-3 md:block">
+          <button
+            type="button"
+            aria-label={desktopCollapsed ? "Expand navigation" : "Collapse navigation"}
+            onClick={() => setDesktopCollapsed((value) => !value)}
+            className={`flex w-full items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-panel-soft)] py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:text-[var(--color-text)] ${
+              desktopCollapsed ? "justify-center px-0" : "gap-2 px-2.5"
+            }`}
+          >
+            {desktopCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+            <span className={desktopCollapsed ? "hidden" : ""}>{desktopCollapsed ? "Expand" : "Collapse"}</span>
+          </button>
+        </div>
       </aside>
     </>
   );

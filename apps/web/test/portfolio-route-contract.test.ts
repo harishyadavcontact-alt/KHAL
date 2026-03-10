@@ -9,9 +9,9 @@ function read(relativePath: string) {
 describe("portfolio route contract", () => {
   it("keeps Portfolio War Room discoverable from Mission Command with a compatibility alias", () => {
     const missionPage = read("app/missionCommand/page.tsx");
-    const navConfig = read("components/ops-shell/nav-config.ts");
+    const sectionRegistry = read("lib/navigation/sections.ts");
     expect(missionPage).toContain("/missionCommand/portfolio");
-    expect(navConfig).toContain('"/portfolio"');
-    expect(navConfig).toContain('"/missionCommand"');
+    expect(sectionRegistry).toContain('"/portfolio"');
+    expect(sectionRegistry).toContain('"/missionCommand"');
   });
 });

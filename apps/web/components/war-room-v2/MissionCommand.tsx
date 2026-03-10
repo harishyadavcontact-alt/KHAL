@@ -159,46 +159,46 @@ export const MissionCommand = ({
         <MissionBottleneckPanel rows={data.missionBottlenecks} />
         <RecoveryPlaybooksPanel rows={data.recoveryPlaybooks} />
       </div>
-      <section className="glass p-4 rounded-xl border border-red-500/20 mb-5">
+      <section className="khal-panel p-4 mb-5 rounded-xl">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-3">
           <div>
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Mission Doctrine</div>
-            <h2 className="text-lg font-bold text-red-300">Mission removes fragility first.</h2>
-            <p className="text-xs text-zinc-300 mt-1">Absorbing barriers first, then expand optionality.</p>
+            <div className="khal-meta mb-1 text-[10px]">Mission Doctrine</div>
+            <h2 className="khal-title khal-tone-danger text-lg font-bold">Mission removes fragility first.</h2>
+            <p className="mt-1 text-xs text-[var(--color-text-muted)]">Absorbing barriers first, then expand optionality.</p>
           </div>
           <div className="grid grid-cols-2 gap-2 min-w-[240px]">
-            <div className="p-2 rounded-lg bg-zinc-900/60 border border-white/5">
-              <div className="text-[10px] uppercase text-zinc-500">Open Fragilities</div>
-              <div className="text-base font-bold">{missionState.openRisks.length}</div>
+            <div className="khal-stat p-2">
+              <div className="khal-meta text-[10px]">Open Fragilities</div>
+              <div className="khal-title text-base font-bold">{missionState.openRisks.length}</div>
             </div>
-            <div className="p-2 rounded-lg bg-zinc-900/60 border border-white/5">
-              <div className="text-[10px] uppercase text-zinc-500">Absorbing Barriers</div>
-              <div className="text-base font-bold text-red-400">{missionState.absorbingBarriers.length}</div>
+            <div className="khal-stat p-2">
+              <div className="khal-meta text-[10px]">Absorbing Barriers</div>
+              <div className="khal-title khal-tone-danger text-base font-bold">{missionState.absorbingBarriers.length}</div>
             </div>
-            <div className="p-2 rounded-lg bg-zinc-900/60 border border-white/5">
-              <div className="text-[10px] uppercase text-zinc-500">Affairs (Hedge)</div>
-              <div className="text-base font-bold text-blue-300">{data.affairs.length}</div>
+            <div className="khal-stat p-2">
+              <div className="khal-meta text-[10px]">Affairs (Hedge)</div>
+              <div className="khal-title khal-tone-accent text-base font-bold">{data.affairs.length}</div>
             </div>
-            <div className="p-2 rounded-lg bg-zinc-900/60 border border-white/5">
-              <div className="text-[10px] uppercase text-zinc-500">Interests (Edge)</div>
-              <div className="text-base font-bold text-emerald-300">{data.interests.length}</div>
+            <div className="khal-stat p-2">
+              <div className="khal-meta text-[10px]">Interests (Edge)</div>
+              <div className="khal-title khal-tone-success text-base font-bold">{data.interests.length}</div>
             </div>
-            <div className="p-2 rounded-lg bg-zinc-900/60 border border-white/5">
-              <div className="text-[10px] uppercase text-zinc-500">Lab Bottlenecks</div>
-              <div className="text-base font-bold text-amber-300">{labBlockedCount}</div>
+            <div className="khal-stat p-2">
+              <div className="khal-meta text-[10px]">Lab Bottlenecks</div>
+              <div className="khal-title khal-tone-warning text-base font-bold">{labBlockedCount}</div>
             </div>
           </div>
         </div>
 
         {missionState.unresolvedAffairs.length > 0 && (
-          <div className="mb-3 p-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-200">
+          <div className="mb-3 rounded-lg border p-2 text-xs text-[var(--color-fragile)] bg-[color-mix(in_srgb,var(--color-fragile)_12%,transparent)] border-[color-mix(in_srgb,var(--color-fragile)_38%,transparent)]">
             {missionState.unresolvedAffairs.length} affairs still missing mission fields (domain + means + objectives).
           </div>
         )}
 
         <div className="grid grid-cols-1 gap-3">
-          <div className="p-3 rounded-xl bg-zinc-900/50 border border-white/5">
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Top Mission Risk HeatGrid</div>
+          <div className="khal-editor-block p-3">
+            <div className="khal-meta mb-2 text-[10px]">Top Mission Risk HeatGrid</div>
             <HeatGrid
               columns={missionSnapshot.heatColumns}
               rows={missionSnapshot.heatRows}
@@ -215,8 +215,8 @@ export const MissionCommand = ({
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-3 mt-3">
-          <div className="p-3 rounded-xl bg-zinc-900/50 border border-white/5">
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Serial vs Parallel Flows</div>
+          <div className="khal-editor-block p-3">
+            <div className="khal-meta mb-2 text-[10px]">Serial vs Parallel Flows</div>
             <FlowLanes
               nodes={missionSnapshot.flowNodes}
               lanes={missionSnapshot.flowLanes}
@@ -230,8 +230,8 @@ export const MissionCommand = ({
               emptyText="No tier flows to render."
             />
           </div>
-          <div className="p-3 rounded-xl bg-zinc-900/50 border border-white/5">
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Tier Focus</div>
+          <div className="khal-editor-block p-3">
+            <div className="khal-meta mb-2 text-[10px]">Tier Focus</div>
             <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
               {missionSnapshot.rows.slice(0, 12).map((tier, index) => (
                 <button
@@ -246,33 +246,33 @@ export const MissionCommand = ({
                   }}
                   className={
                     activeTierIndex === index
-                      ? "w-full text-left p-2 rounded-lg bg-blue-500/15 border border-blue-500/40"
-                      : "w-full text-left p-2 rounded-lg bg-zinc-950/60 border border-white/5 hover:border-blue-500/30"
+                      ? "khal-panel-strong w-full p-2 text-left"
+                      : "khal-panel w-full p-2 text-left hover:border-[var(--color-accent)]"
                   }
                 >
                   <div className="flex items-center justify-between">
-                    <div className="text-xs font-semibold">Tier {tier.tier}: {tier.title}</div>
-                    <span className="text-[10px] font-mono text-red-300">F:{tier.fragility}</span>
+                    <div className="khal-title text-xs font-semibold">Tier {tier.tier}: {tier.title}</div>
+                    <span className="khal-tone-danger text-[10px] font-mono">F:{tier.fragility}</span>
                   </div>
-                  <div className="text-[10px] uppercase text-zinc-500 mt-1">Serial</div>
-                  <div className="text-xs text-zinc-300">{tier.serialAffairs.join(" | ") || "No linked affairs yet"}</div>
-                  <div className="text-[10px] uppercase text-zinc-500 mt-1">Parallel</div>
-                  <div className="text-xs text-zinc-300">{tier.parallelInterests.join(" | ") || "No linked interests yet"}</div>
+                  <div className="khal-meta mt-1 text-[10px]">Serial</div>
+                  <div className="text-xs text-[var(--color-text-muted)]">{tier.serialAffairs.join(" | ") || "No linked affairs yet"}</div>
+                  <div className="khal-meta mt-1 text-[10px]">Parallel</div>
+                  <div className="text-xs text-[var(--color-text-muted)]">{tier.parallelInterests.join(" | ") || "No linked interests yet"}</div>
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="mt-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Convexity Balance</div>
+        <div className="khal-editor-block mt-3 p-3">
+          <div className="khal-meta mb-2 text-[10px]">Convexity Balance</div>
           <StackedBalanceBar segments={missionSnapshot.balanceSegments} />
         </div>
 
         <div className="mt-3">
           <button
             onClick={() => onWarGame("mission", "mission-global")}
-            className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-[11px] font-bold uppercase tracking-widest text-white"
+            className="khal-button-accent px-3 py-2 text-[11px] font-bold uppercase tracking-widest"
           >
             WarGame Mission
           </button>

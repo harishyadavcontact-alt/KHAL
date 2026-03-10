@@ -44,21 +44,21 @@ export function CraftsView({
 
   return (
     <div className="space-y-8">
-      <h2 className="text-3xl font-bold">Crafts Library</h2>
+      <h2 className="khal-title text-3xl font-bold">Crafts Library</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {data.crafts.map((craft) => (
           <div
             key={craft.id}
             onClick={() => onSelectCraft(craft.id)}
-            className="glass p-8 rounded-3xl border border-white/5 hover:border-blue-500/30 transition-all cursor-pointer group"
+            className="khal-panel group cursor-pointer rounded-3xl p-8 transition-all hover:border-[var(--color-accent)]"
           >
             <div className="flex items-center gap-4 mb-6">
-              <div className="p-4 bg-blue-500/10 rounded-2xl group-hover:bg-blue-500/20 transition-colors">
-                <Box size={32} className="text-blue-400" />
+              <div className="rounded-2xl border border-[var(--color-line)] bg-[color-mix(in_srgb,var(--color-accent)_14%,var(--color-editor-bg-soft))] p-4 transition-colors group-hover:border-[var(--color-accent)]">
+                <Box size={32} className="text-[var(--color-accent)]" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold">{craft.name}</h3>
-                <p className="text-sm text-zinc-500">{craft.description}</p>
+                <h3 className="khal-title text-2xl font-bold">{craft.name}</h3>
+                <p className="text-sm text-[var(--color-text-muted)]">{craft.description}</p>
               </div>
             </div>
             <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
@@ -73,10 +73,10 @@ export function CraftsView({
                 { label: 'Rules', count: craft.knowledge?.rules.length ?? 0, icon: ShieldAlert },
                 { label: 'Wargames', count: craft.knowledge?.wargames.length ?? 0, icon: Swords }
               ].map((stat) => (
-                <div key={stat.label} className="text-center p-2 bg-zinc-800/50 rounded-xl border border-white/5">
-                  <stat.icon size={12} className="mx-auto mb-1 text-zinc-500" />
-                  <div className="text-xs font-bold">{stat.count}</div>
-                  <div className="text-[8px] text-zinc-500 uppercase">{stat.label}</div>
+                <div key={stat.label} className="khal-stat p-2 text-center">
+                  <stat.icon size={12} className="mx-auto mb-1 text-[var(--color-text-faint)]" />
+                  <div className="khal-title text-xs font-bold">{stat.count}</div>
+                  <div className="khal-meta text-[8px]">{stat.label}</div>
                 </div>
               ))}
             </div>

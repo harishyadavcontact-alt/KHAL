@@ -29,8 +29,12 @@ export function LineageMapView({ data }: { data: AppData }) {
   }, [nodes]);
 
   const selectedNode = nodes.find((node) => node.id === activeNodeId) ?? null;
-  const selectedEntities = entities.filter((entity) => entity.lineageNodeId === selectedNode?.id && (actorFilter === "all" || entity.actorType === actorFilter));
-  const selectedRisks = risks.filter((risk) => risk.lineageNodeId === selectedNode?.id && (actorFilter === "all" || !risk.actorType || risk.actorType === actorFilter));
+  const selectedEntities = entities.filter(
+    (entity) => entity.lineageNodeId === selectedNode?.id && (actorFilter === "all" || entity.actorType === actorFilter)
+  );
+  const selectedRisks = risks.filter(
+    (risk) => risk.lineageNodeId === selectedNode?.id && (actorFilter === "all" || !risk.actorType || risk.actorType === actorFilter)
+  );
 
   const avgFragility = selectedRisks.length
     ? Number((selectedRisks.reduce((sum, risk) => sum + (Number(risk.fragilityScore) || 0), 0) / selectedRisks.length).toFixed(2))
@@ -83,12 +87,14 @@ export function LineageMapView({ data }: { data: AppData }) {
       <div key={node.id} style={{ marginLeft: depth * 16 }}>
         <button
           onClick={() => setActiveNodeId(node.id)}
-          className={`w-full text-left px-3 py-2 rounded-lg border mb-2 ${
-            selectedNode?.id === node.id ? "bg-blue-500/20 border-blue-500/40 text-white" : "bg-zinc-900/40 border-white/5 text-zinc-300 hover:border-blue-500/30"
+          className={`mb-2 w-full rounded-lg border px-3 py-2 text-left transition-colors ${
+            selectedNode?.id === node.id
+              ? "khal-panel-strong text-[var(--color-text-strong)]"
+              : "khal-panel text-[var(--color-text)] hover:border-[var(--color-accent)]"
           }`}
         >
-          <div className="text-xs uppercase text-zinc-400">{node.level}</div>
-          <div className="font-semibold">{node.name}</div>
+          <div className="khal-meta text-[10px]">{node.level}</div>
+          <div className="khal-title font-semibold">{node.name}</div>
         </button>
         {renderBranch(node.id, depth + 1)}
       </div>
@@ -96,17 +102,15 @@ export function LineageMapView({ data }: { data: AppData }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold">Lineage Map</h2>
+    <div className="mx-auto max-w-7xl px-4 py-8">
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="khal-title text-3xl font-bold">Lineage Map</h2>
         <div className="flex gap-2">
           {(["all", "personal", "private", "public"] as const).map((actorType) => (
             <button
               key={actorType}
               onClick={() => setActorFilter(actorType)}
-              className={`px-3 py-1 rounded-full text-xs uppercase font-mono ${
-                actorFilter === actorType ? "bg-blue-600 text-white" : "bg-zinc-900 border border-white/10 text-zinc-400"
-              }`}
+              className={`khal-chip text-xs uppercase font-mono ${actorFilter === actorType ? "khal-chip-active" : ""}`}
             >
               {actorType}
             </button>
@@ -114,123 +118,121 @@ export function LineageMapView({ data }: { data: AppData }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-4 glass p-4 rounded-2xl border border-white/10 max-h-[70vh] overflow-y-auto custom-scrollbar">
-          {renderBranch(null)}
-        </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="khal-panel custom-scrollbar max-h-[70vh] overflow-y-auto p-4 lg:col-span-4">{renderBranch(null)}</div>
 
-        <div className="lg:col-span-8 space-y-6">
-          <div className="glass p-5 rounded-2xl border border-white/10">
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Selected Lineage Node</div>
-            <div className="text-xl font-bold">{selectedNode?.name ?? "None"}</div>
-            <div className="text-sm text-zinc-400 mt-1">{selectedNode?.level ?? ""}</div>
+        <div className="space-y-6 lg:col-span-8">
+          <div className="khal-panel-strong p-5">
+            <div className="khal-meta mb-2 text-[10px]">Selected Lineage Node</div>
+            <div className="khal-title text-xl font-bold">{selectedNode?.name ?? "None"}</div>
+            <div className="mt-1 text-sm text-[var(--color-text-muted)]">{selectedNode?.level ?? ""}</div>
             <div className="mt-4 grid grid-cols-3 gap-3">
-              <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                <div className="text-[10px] uppercase text-zinc-500">Entities</div>
-                <div className="text-lg font-bold">{selectedEntities.length}</div>
+              <div className="khal-stat p-3">
+                <div className="khal-meta text-[10px]">Entities</div>
+                <div className="khal-title text-lg font-bold">{selectedEntities.length}</div>
               </div>
-              <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                <div className="text-[10px] uppercase text-zinc-500">Risks</div>
-                <div className="text-lg font-bold">{selectedRisks.length}</div>
+              <div className="khal-stat p-3">
+                <div className="khal-meta text-[10px]">Risks</div>
+                <div className="khal-title text-lg font-bold">{selectedRisks.length}</div>
               </div>
-              <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                <div className="text-[10px] uppercase text-zinc-500">Avg Fragility</div>
-                <div className="text-lg font-bold">{avgFragility}</div>
+              <div className="khal-stat p-3">
+                <div className="khal-meta text-[10px]">Avg Fragility</div>
+                <div className="khal-title text-lg font-bold">{avgFragility}</div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div className="glass p-5 rounded-2xl border border-white/10">
-              <div className="text-sm font-bold mb-3">Domain Exposure</div>
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <div className="khal-panel p-5">
+              <div className="khal-title mb-3 text-sm font-bold">Domain Exposure</div>
               <div className="space-y-2">
-                {!domainExposure.length && <div className="text-sm text-zinc-500">No domain exposure mapped yet.</div>}
+                {!domainExposure.length && <div className="text-sm text-[var(--color-text-faint)]">No domain exposure mapped yet.</div>}
                 {domainExposure.map((item) => (
-                  <div key={item.domainId} className="p-3 bg-zinc-900/50 rounded-lg border border-white/5 flex items-center justify-between">
-                    <span className="text-sm text-zinc-200">{item.name}</span>
-                    <span className="text-xs font-mono text-zinc-400">{item.count}</span>
+                  <div key={item.domainId} className="khal-table-row">
+                    <span className="text-sm text-[var(--color-text)]">{item.name}</span>
+                    <span className="text-xs font-mono text-[var(--color-text-muted)]">{item.count}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="glass p-5 rounded-2xl border border-white/10">
-              <div className="text-sm font-bold mb-3">Volatility Exposure</div>
+            <div className="khal-panel p-5">
+              <div className="khal-title mb-3 text-sm font-bold">Volatility Exposure</div>
               <div className="space-y-2">
-                {!volatilityExposure.length && <div className="text-sm text-zinc-500">No volatility exposure mapped yet.</div>}
+                {!volatilityExposure.length && <div className="text-sm text-[var(--color-text-faint)]">No volatility exposure mapped yet.</div>}
                 {volatilityExposure.map((item) => (
-                  <div key={item.sourceId} className="p-3 bg-zinc-900/50 rounded-lg border border-white/5 flex items-center justify-between">
-                    <span className="text-sm text-zinc-200">{item.name}</span>
-                    <span className="text-xs font-mono text-zinc-400">{item.count}</span>
+                  <div key={item.sourceId} className="khal-table-row">
+                    <span className="text-sm text-[var(--color-text)]">{item.name}</span>
+                    <span className="text-xs font-mono text-[var(--color-text-muted)]">{item.count}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div className="glass p-5 rounded-2xl border border-white/10">
-              <div className="text-sm font-bold mb-3">Linked Interests</div>
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <div className="khal-panel p-5">
+              <div className="khal-title mb-3 text-sm font-bold">Linked Interests</div>
               <div className="space-y-2">
-                {!linkedInterests.length && <div className="text-sm text-zinc-500">No linked interests from current exposure.</div>}
+                {!linkedInterests.length && <div className="text-sm text-[var(--color-text-faint)]">No linked interests from current exposure.</div>}
                 {linkedInterests.map((interest) => (
-                  <div key={interest.id} className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                    <div className="font-medium text-sm">{interest.title}</div>
-                    <div className="text-xs text-zinc-500">{domainsById.get(interest.domainId)?.name ?? interest.domainId}</div>
+                  <div key={interest.id} className="khal-editor-block p-3">
+                    <div className="khal-title text-sm font-medium">{interest.title}</div>
+                    <div className="text-xs text-[var(--color-text-faint)]">{domainsById.get(interest.domainId)?.name ?? interest.domainId}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="glass p-5 rounded-2xl border border-white/10">
-              <div className="text-sm font-bold mb-3">Linked Affairs</div>
+            <div className="khal-panel p-5">
+              <div className="khal-title mb-3 text-sm font-bold">Linked Affairs</div>
               <div className="space-y-2">
-                {!linkedAffairs.length && <div className="text-sm text-zinc-500">No linked affairs from current exposure.</div>}
+                {!linkedAffairs.length && <div className="text-sm text-[var(--color-text-faint)]">No linked affairs from current exposure.</div>}
                 {linkedAffairs.map((affair) => (
-                  <div key={affair.id} className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                    <div className="font-medium text-sm">{affair.title}</div>
-                    <div className="text-xs text-zinc-500">{domainsById.get(affair.domainId)?.name ?? affair.domainId}</div>
+                  <div key={affair.id} className="khal-editor-block p-3">
+                    <div className="khal-title text-sm font-medium">{affair.title}</div>
+                    <div className="text-xs text-[var(--color-text-faint)]">{domainsById.get(affair.domainId)?.name ?? affair.domainId}</div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="glass p-5 rounded-2xl border border-white/10">
-            <div className="text-sm font-bold mb-3">Entities</div>
+          <div className="khal-panel p-5">
+            <div className="khal-title mb-3 text-sm font-bold">Entities</div>
             <div className="space-y-2">
-              {selectedEntities.length === 0 && <div className="text-sm text-zinc-500">No entities for this filter.</div>}
+              {selectedEntities.length === 0 && <div className="text-sm text-[var(--color-text-faint)]">No entities for this filter.</div>}
               {selectedEntities.map((entity) => (
-                <div key={entity.id} className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-                  <div className="font-medium">{entity.label}</div>
-                  <div className="text-xs uppercase text-zinc-500">{entity.actorType}</div>
-                  {entity.description && <div className="text-xs text-zinc-400 mt-1">{entity.description}</div>}
+                <div key={entity.id} className="khal-editor-block p-3">
+                  <div className="khal-title font-medium">{entity.label}</div>
+                  <div className="khal-meta text-[10px]">{entity.actorType}</div>
+                  {entity.description && <div className="mt-1 text-xs text-[var(--color-text-muted)]">{entity.description}</div>}
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="glass p-5 rounded-2xl border border-white/10">
-            <div className="text-sm font-bold mb-3">Risk Register</div>
+          <div className="khal-panel p-5">
+            <div className="khal-title mb-3 text-sm font-bold">Risk Register</div>
             <div className="space-y-2">
-              {selectedRisks.length === 0 && <div className="text-sm text-zinc-500">No risk rows for this lineage node.</div>}
+              {selectedRisks.length === 0 && <div className="text-sm text-[var(--color-text-faint)]">No risk rows for this lineage node.</div>}
               {selectedRisks.map((risk) => (
-                <div key={risk.id} className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+                <div key={risk.id} className="khal-editor-block p-3">
                   <div className="flex items-center justify-between">
-                    <div className="font-medium">{risk.title}</div>
-                    <div className="text-xs font-mono text-zinc-400">{risk.status}</div>
+                    <div className="khal-title font-medium">{risk.title}</div>
+                    <div className="text-xs font-mono text-[var(--color-text-muted)]">{risk.status}</div>
                   </div>
-                  <div className="text-xs text-zinc-500 mt-1">
+                  <div className="mt-1 text-xs text-[var(--color-text-faint)]">
                     Source: {sourcesById.get(risk.sourceId)?.name ?? risk.sourceId} • Domain: {domainsById.get(risk.domainId)?.name ?? risk.domainId}
                   </div>
-                  <div className="grid grid-cols-5 gap-2 mt-2 text-[10px] text-zinc-400">
+                  <div className="mt-2 grid grid-cols-5 gap-2 text-[10px] text-[var(--color-text-muted)]">
                     <span>E:{risk.exposure}</span>
                     <span>D:{risk.dependency}</span>
                     <span>I:{risk.irreversibility}</span>
                     <span>O:{risk.optionality}</span>
                     <span>F:{risk.fragilityScore}</span>
                   </div>
-                  {risk.notes && <div className="text-xs text-zinc-400 mt-2">{risk.notes}</div>}
+                  {risk.notes && <div className="mt-2 text-xs text-[var(--color-text-muted)]">{risk.notes}</div>}
                 </div>
               ))}
             </div>

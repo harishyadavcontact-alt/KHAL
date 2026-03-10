@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { KhalOpsShell } from "../../components/ops-shell/KhalOpsShell";
 import { InterestsView } from "../../components/war-room-v2/InterestsView";
 import { createInterest } from "../../lib/war-room/actions";
@@ -9,8 +9,13 @@ import { useWarRoomData } from "../../lib/war-room/useWarRoomData";
 
 export default function InterestsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data, loading, error, refresh } = useWarRoomData();
-  const [selectedInterestId, setSelectedInterestId] = useState<string | null>(null);
+  const [selectedInterestId, setSelectedInterestId] = useState<string | null>(searchParams.get("interestId"));
+
+  useEffect(() => {
+    setSelectedInterestId(searchParams.get("interestId"));
+  }, [searchParams]);
 
   return (
     <KhalOpsShell title="Interests" subtitle="Visionary Mode">
@@ -35,4 +40,3 @@ export default function InterestsPage() {
     </KhalOpsShell>
   );
 }
-

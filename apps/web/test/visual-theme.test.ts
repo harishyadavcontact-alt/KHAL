@@ -7,20 +7,25 @@ function read(relativePath: string) {
 }
 
 describe("visual theme regression", () => {
-  it("keeps the global shell on the mineral dark token system", () => {
+  it("keeps the shared token system and adds a light-theme override", () => {
     const css = read("app/globals.css");
     expect(css).toContain("--color-bg: #090b0f");
     expect(css).toContain("--color-accent: #c89a57");
-    expect(css).toContain("background: linear-gradient(180deg, rgba(25, 31, 39, 0.96), rgba(18, 22, 29, 0.96));");
-    expect(css).toContain("background: linear-gradient(180deg, rgba(12, 15, 20, 0.94), rgba(16, 20, 27, 0.94));");
-    expect(css).not.toContain("background: #f7f6f2;");
+    expect(css).toContain(':root[data-theme="light"]');
+    expect(css).toContain("--color-bg: #f2ede3;");
+    expect(css).toContain("--shell-bg:");
   });
 
-  it("uses the shared shell and nav accent treatment instead of legacy blue active states", () => {
+  it("uses the shared shell/nav accent treatment and exposes a theme toggle", () => {
     const shell = read("components/ops-shell/KhalOpsShell.tsx");
     const nav = read("components/ops-shell/KhalOpsNav.tsx");
-    expect(shell).toContain("var(--color-border)");
+    const appShell = read("components/app-shell.tsx");
+    const toggle = read("components/theme/ThemeToggle.tsx");
+    const provider = read("components/theme/ThemeProvider.tsx");
+    expect(shell).toContain("var(--color-line)");
     expect(nav).toContain("var(--color-accent)");
-    expect(nav).not.toContain("bg-blue-600");
+    expect(toggle).toContain("Switch theme to");
+    expect(provider).toContain("khal.theme.preference");
+    expect(appShell).toContain("ThemeToggle");
   });
 });

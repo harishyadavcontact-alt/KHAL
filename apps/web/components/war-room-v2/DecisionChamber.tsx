@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Activity, ArrowRight, Briefcase, ChevronRight, Compass, Layers, Shield, Sword, Target } from "lucide-react";
 import { AppData, Affair } from "./types";
 import { cn } from "./utils";
@@ -27,6 +27,18 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans,
   const allies = affair.strategy?.mapping?.allies ?? [];
   const enemies = affair.strategy?.mapping?.enemies ?? [];
   const entities = affair.entities ?? [];
+  const inheritedProfile = useMemo(
+    () => data.sources?.flatMap((source) => source.mapProfiles ?? []).find((profile) => profile.affairId === affair.id),
+    [affair.id, data.sources]
+  );
+  const inheritedSource = useMemo(
+    () => data.sources?.find((source) => source.id === inheritedProfile?.sourceId),
+    [data.sources, inheritedProfile?.sourceId]
+  );
+  const inheritedCraft = useMemo(
+    () => data.crafts.find((craft) => craft.id === inheritedProfile?.primaryCraftId),
+    [data.crafts, inheritedProfile?.primaryCraftId]
+  );
 
   const [planDraft, setPlanDraft] = useState({
     objectives: affair.plan?.objectives ?? [],
@@ -50,6 +62,11 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans,
   const selectedHeuristics = useMemo(
     () => craft?.heuristics.filter((h) => meansDraft.selectedHeuristicIds.includes(h.id)) ?? [],
     [craft, meansDraft.selectedHeuristicIds]
+  );
+  const suggestedCraft = inheritedCraft ?? craft;
+  const suggestedHeuristicOptions = useMemo(
+    () => suggestedCraft?.heuristics.slice(0, 4) ?? [],
+    [suggestedCraft]
   );
   const craftContext = useMemo(() => {
     if (!craft) {
@@ -104,6 +121,64 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans,
       traces
     };
   }, [craft]);
+
+  useEffect(() => {
+    if (!inheritedProfile) return;
+    setPlanDraft((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      if (next.objectives.length === 0) {
+        const seededObjectives = [inheritedProfile.hedgeText, inheritedProfile.stakesText].filter((value): value is string => Boolean(value?.trim()));
+        if (seededObjectives.length) {
+          next.objectives = seededObjectives;
+          changed = true;
+        }
+      }
+
+      if (!String(next.uncertainty ?? "").trim()) {
+        const inheritedUncertainty = inheritedProfile.risksText ?? inheritedProfile.vulnerabilitiesText;
+        if (String(inheritedUncertainty ?? "").trim()) {
+          next.uncertainty = String(inheritedUncertainty);
+          changed = true;
+        }
+      }
+
+      if (!String(next.timeHorizon ?? "").trim()) {
+        next.timeHorizon = "WEEK";
+        changed = true;
+      }
+
+      return changed ? next : prev;
+    });
+
+    setMeansDraft((prev) => {
+      if (prev.craftId || !inheritedProfile.primaryCraftId) return prev;
+      return { ...prev, craftId: inheritedProfile.primaryCraftId };
+    });
+  }, [inheritedProfile]);
+
+  const seedPlanFromDoctrine = () => {
+    if (!inheritedProfile) return;
+    setPlanDraft((prev) => ({
+      ...prev,
+      objectives: [
+        inheritedProfile.hedgeText,
+        inheritedProfile.stakesText,
+        ...prev.objectives
+      ].filter((value, index, array): value is string => Boolean(value?.trim()) && array.indexOf(value) === index),
+      uncertainty: prev.uncertainty?.trim() ? prev.uncertainty : inheritedProfile.risksText ?? inheritedProfile.vulnerabilitiesText ?? "",
+      timeHorizon: prev.timeHorizon?.trim() ? prev.timeHorizon : "WEEK"
+    }));
+  };
+
+  const applyCraftSuggestion = () => {
+    if (!inheritedProfile?.primaryCraftId) return;
+    setMeansDraft((prev) => ({
+      craftId: inheritedProfile.primaryCraftId ?? prev.craftId,
+      selectedHeuristicIds: prev.selectedHeuristicIds
+    }));
+  };
 
   const savePlan = async () => {
     setBusy("plan");
@@ -209,6 +284,18 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans,
                 <div className="text-[10px] text-zinc-500 uppercase mb-1">Volatility Exposure</div>
                 <p className="text-sm text-zinc-300">{volatilityExposure}</p>
               </div>
+              {inheritedProfile ? (
+                <>
+                  <div>
+                    <div className="text-[10px] text-zinc-500 uppercase mb-1">State of the Art Source</div>
+                    <div className="text-sm font-bold text-amber-300">{inheritedSource?.name ?? inheritedProfile.sourceId}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-zinc-500 uppercase mb-1">Quadrant</div>
+                    <div className="text-sm text-zinc-300">{inheritedProfile.quadrant}</div>
+                  </div>
+                </>
+              ) : null}
               <div>
                 <div className="text-[10px] text-zinc-500 uppercase mb-1">Parent Interest</div>
                 <div className="text-sm font-bold text-blue-400">{interest?.title}</div>
@@ -221,6 +308,41 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans,
               <Target size={16} /> Planning & Preparation
             </h3>
             <div className="space-y-4">
+              {inheritedProfile ? (
+                <div className="rounded-xl border border-amber-400/20 bg-amber-500/5 p-4">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-zinc-500">Inherited Preparation Context</div>
+                      <div className="text-xs text-zinc-300">Affairs inherit the hedge, fragility posture, and preparation warnings from State of the Art.</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={seedPlanFromDoctrine}
+                      className="rounded border border-white/10 px-2 py-1 text-[10px] text-zinc-200 hover:bg-white/5"
+                    >
+                      Seed Plan
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 text-xs md:grid-cols-2">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-zinc-500">Hedge</div>
+                      <div className="mt-1 text-zinc-200">{inheritedProfile.hedgeText ?? "Undefined"}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-zinc-500">Fragility Posture</div>
+                      <div className="mt-1 text-zinc-200">{inheritedProfile.fragilityPosture ?? "Undefined"}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-zinc-500">Risks</div>
+                      <div className="mt-1 text-zinc-200">{inheritedProfile.risksText ?? "Undefined"}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-zinc-500">Vulnerabilities</div>
+                      <div className="mt-1 text-zinc-200">{inheritedProfile.vulnerabilitiesText ?? "Undefined"}</div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
               <div>
                 <div className="text-[10px] text-zinc-500 uppercase mb-1">Objectives</div>
                 <ul className="text-sm text-zinc-300 space-y-1">
@@ -322,7 +444,18 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans,
             </h3>
             <div className="space-y-4">
               <div className="p-3 bg-zinc-800/50 rounded-xl border border-white/5">
-                <div className="text-[10px] text-zinc-500 uppercase mb-1">Active Craft</div>
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <div className="text-[10px] text-zinc-500 uppercase">Active Craft</div>
+                  {inheritedProfile?.primaryCraftId ? (
+                    <button
+                      type="button"
+                      onClick={applyCraftSuggestion}
+                      className="rounded border border-white/10 px-2 py-0.5 text-[10px] text-zinc-200 hover:bg-white/5"
+                    >
+                      Use Suggested Craft
+                    </button>
+                  ) : null}
+                </div>
                 <div className="flex items-center gap-3">
                   <select
                     className="flex-1 bg-zinc-900 border border-white/10 rounded px-3 py-2 text-sm"
@@ -344,6 +477,11 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans,
                     <Activity size={20} className="text-emerald-400" />
                   </div>
                 </div>
+                {inheritedProfile ? (
+                  <div className="mt-2 text-[11px] text-zinc-400">
+                    Suggested by State of the Art: {inheritedCraft?.name ?? inheritedProfile.primaryCraftId ?? "Unassigned"}
+                  </div>
+                ) : null}
               </div>
 
               <div>
@@ -423,6 +561,19 @@ export function DecisionChamber({ affair, data, onBack, onSavePlan, onSaveMeans,
                     </div>
                   </div>
                 ))}
+                {!selectedHeuristics.length && suggestedHeuristicOptions.length ? (
+                  <div className="p-4 bg-zinc-900/50 rounded-xl border border-dashed border-white/10">
+                    <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Suggested heuristics from craft</div>
+                    <div className="space-y-2">
+                      {suggestedHeuristicOptions.map((heuristic) => (
+                        <div key={heuristic.id} className="rounded-lg border border-white/5 bg-zinc-800/40 p-3">
+                          <div className="text-sm font-semibold">{heuristic.title}</div>
+                          <div className="mt-1 text-xs text-zinc-400">{heuristic.content}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </section>
