@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   Archive,
@@ -77,6 +77,7 @@ function MetricCard({ label, value, tone }: { label: string; value: string | num
 
 export function PortfolioWarRoomClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data, loading, error, refresh, setData } = usePortfolioWarRoomData();
   const [surfaceMode, setSurfaceMode] = useState<SurfaceMode>("board");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -87,6 +88,7 @@ export function PortfolioWarRoomClient() {
   const [createOpen, setCreateOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const initialInterestId = searchParams.get("interestId") ?? undefined;
 
   const visibleProjects = useMemo(() => {
     if (!data) return [];
@@ -99,6 +101,12 @@ export function PortfolioWarRoomClient() {
     });
     return sortPortfolioProjects(filtered, sortKey);
   }, [activeOnly, data, roleFilter, sortKey, stageFilter, surfaceMode]);
+
+  useEffect(() => {
+    if (!initialInterestId || !data) return;
+    const alreadyLinked = data.projects.some((project) => project.linkedInterestId === initialInterestId);
+    if (!alreadyLinked) setCreateOpen(true);
+  }, [data, initialInterestId]);
 
   async function createProject(values: Record<string, unknown>) {
     setBusy(true);
@@ -501,6 +509,7 @@ export function PortfolioWarRoomClient() {
         open={createOpen}
         mode="create"
         interestOptions={data.interestOptions}
+        initialLinkedInterestId={initialInterestId}
         busy={busy}
         onClose={() => setCreateOpen(false)}
         onSubmit={createProject}

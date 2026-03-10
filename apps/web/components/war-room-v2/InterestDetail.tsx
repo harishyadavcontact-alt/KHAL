@@ -49,12 +49,20 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Cell, PieChart, Pie
 } from 'recharts';
 import { cn } from './utils';
-import { AppData, Law, Domain, Craft, Interest, Affair, Entity, Perspective, Task } from './types';
-export const InterestDetail = ({ interest, affairs, onBack, onAffairClick }: { 
+import { AppData, Law, Domain, Craft, Interest, Affair, Entity, Perspective, SourceMapProfileDto, Task } from './types';
+export const InterestDetail = ({ interest, affairs, doctrine, onBack, onAffairClick, onOpenLab, onOpenPortfolio, onWarGame }: { 
   interest: Interest, 
   affairs: Affair[], 
+  doctrine?: {
+    profile?: SourceMapProfileDto;
+    sourceName?: string;
+    domainName?: string;
+  },
   onBack: () => void,
-  onAffairClick: (id: string) => void
+  onAffairClick: (id: string) => void,
+  onOpenLab?: () => void,
+  onOpenPortfolio?: () => void,
+  onWarGame?: () => void
 }) => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -82,12 +90,36 @@ export const InterestDetail = ({ interest, affairs, onBack, onAffairClick }: {
               </div>
               <div>
                 <div className="text-[10px] text-zinc-500 uppercase mb-1">Domain</div>
-                <div className="text-sm font-bold">{interest.domainId}</div>
+                <div className="text-sm font-bold">{doctrine?.domainName ?? interest.domainId}</div>
               </div>
               <div>
                 <div className="text-[10px] text-zinc-500 uppercase mb-1">Stakes</div>
                 <p className="text-sm text-zinc-300">{interest.stakes}</p>
               </div>
+              {doctrine?.profile ? (
+                <>
+                  <div>
+                    <div className="text-[10px] text-zinc-500 uppercase mb-1">Source</div>
+                    <div className="text-sm text-zinc-300">{doctrine.sourceName ?? doctrine.profile.sourceId}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-zinc-500 uppercase mb-1">Quadrant</div>
+                    <div className="text-sm text-zinc-300">{doctrine.profile.quadrant}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-zinc-500 uppercase mb-1">Edge</div>
+                    <p className="text-sm text-zinc-300">{doctrine.profile.edgeText ?? interest.hypothesis ?? "Undefined"}</p>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-zinc-500 uppercase mb-1">Avoid / Downside</div>
+                    <p className="text-sm text-zinc-300">{doctrine.profile.avoidText ?? interest.downside ?? "Undefined"}</p>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-zinc-500 uppercase mb-1">Means</div>
+                    <p className="text-sm text-zinc-300">{doctrine.profile.heuristicsText ?? interest.evidenceNote ?? "Undefined"}</p>
+                  </div>
+                </>
+              ) : null}
             </div>
           </section>
 
@@ -106,6 +138,23 @@ export const InterestDetail = ({ interest, affairs, onBack, onAffairClick }: {
 
         <div className="lg:col-span-2 space-y-6">
           <section className="glass p-6 rounded-2xl">
+            <div className="mb-6 flex flex-wrap gap-2">
+              {onOpenPortfolio ? (
+                <button onClick={onOpenPortfolio} className="px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-100">
+                  Open Portfolio
+                </button>
+              ) : null}
+              {onOpenLab ? (
+                <button onClick={onOpenLab} className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white">
+                  Open Lab
+                </button>
+              ) : null}
+              {onWarGame ? (
+                <button onClick={onWarGame} className="px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white">
+                  WarGame Interest
+                </button>
+              ) : null}
+            </div>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <Briefcase className="text-blue-400" />

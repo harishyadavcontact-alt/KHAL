@@ -36,6 +36,8 @@ Recent completed work:
 - operational `Affairs` and `Lab` surfaces now consume inherited source-domain doctrine directly:
   - `Affair` prep can be seeded from `hedge` / fragility / risk context
   - `Lab` can prefill hypothesis / evidence / downside from generated Interest doctrine
+- top-level `Interests` now exposes inherited doctrine and can open Portfolio creation with generated-interest context
+- Portfolio creation now understands linked Interests well enough to prefill a real project draft from doctrine fields
 
 Current known fragilities:
 
@@ -44,7 +46,7 @@ Current known fragilities:
 - War Gaming UI does not yet consume the extracted responseLogic doctrine chain
 - State of the Art "Map -> Stone -> Ends -> Means" flow is now persisted and staged in source-mode, but downstream doctrine/triage surfaces still only partially exploit it
 - State of Affairs inheritance now exists, but affair/interest screens are still too thin functionally compared to the richer source-mode doctrine data
-- top-level Interest and Portfolio surfaces still trail the richer doctrine now available in source-mode and Lab
+- Portfolio now consumes generated Interests at creation time, but deeper downstream exploitation of linked interest doctrine is still limited
 - Some docs trail the current implementation and need a truth-pass
 
 Strong next move:
@@ -54,7 +56,7 @@ Strong next move:
   - continue State of the Art implementation after Map:
     - use the new Stone / Ends / Means fields in doctrine scoring and source guidance
   - make State of Affairs inherit hedge / edge / craft / fragility data from State of the Art more explicitly
-  - continue deepening generated Interest / Portfolio surfaces so inherited doctrine is visible and editable in-context
+  - deepen Portfolio project detail and experiment/gate surfaces so linked-interest doctrine remains visible beyond creation time
   - continue reducing dependency on generic mock war-room data
   - clean remaining operator-facing confidence language
   - keep app-shell/theme work stable while feature work continues

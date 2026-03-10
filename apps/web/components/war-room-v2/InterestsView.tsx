@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Plus } from "lucide-react";
-import { AppData, Interest } from "./types";
+import { AppData, Interest, SourceMapProfileDto } from "./types";
 import { InterestDetail } from "./InterestDetail";
 
 interface InterestsViewProps {
@@ -11,6 +11,7 @@ interface InterestsViewProps {
   onCreateInterest: (payload: { title: string; domainId: string }) => Promise<void>;
   onWarGame: (interestId: string) => void;
   onOpenLab?: (interestId: string) => void;
+  onOpenPortfolio?: (interestId: string) => void;
 }
 
 function buildDummyInterests(data: AppData): Interest[] {
@@ -22,7 +23,13 @@ function buildDummyInterests(data: AppData): Interest[] {
   ];
 }
 
-export function InterestsView({ data, selectedInterestId, onSelectInterest, onSelectAffair, onCreateInterest, onWarGame, onOpenLab }: InterestsViewProps) {
+type InterestDoctrineContext = {
+  profile?: SourceMapProfileDto;
+  sourceName?: string;
+  domainName?: string;
+};
+
+export function InterestsView({ data, selectedInterestId, onSelectInterest, onSelectAffair, onCreateInterest, onWarGame, onOpenLab, onOpenPortfolio }: InterestsViewProps) {
   const [open, setOpen] = React.useState(false);
   const [title, setTitle] = React.useState("");
   const [domainId, setDomainId] = React.useState(data.domains[0]?.id ?? "general");
@@ -45,6 +52,21 @@ export function InterestsView({ data, selectedInterestId, onSelectInterest, onSe
   }, [data.domains, data.sources]);
 
   const visualInterests = useMemo(() => (data.interests.length ? data.interests : buildDummyInterests(data)), [data]);
+  const doctrineByInterestId = useMemo(() => {
+    const domainById = new Map(data.domains.map((domain) => [domain.id, domain]));
+    const lookup = new Map<string, InterestDoctrineContext>();
+    for (const source of data.sources ?? []) {
+      for (const profile of source.mapProfiles ?? []) {
+        if (!profile.interestId) continue;
+        lookup.set(profile.interestId, {
+          profile,
+          sourceName: source.name,
+          domainName: domainById.get(profile.domainId)?.name
+        });
+      }
+    }
+    return lookup;
+  }, [data.domains, data.sources]);
 
   const filteredInterests = useMemo(() => {
     const lineageRisks = data.lineageRisks ?? [];
@@ -73,15 +95,20 @@ export function InterestsView({ data, selectedInterestId, onSelectInterest, onSe
   }, [data.domains, data.lineageRisks, domainFilter, lineageFilter, scopeFilter, sourceFilter, visualInterests]);
 
   if (selectedInterestId) {
+    const activeInterestId = selectedInterestId;
     return (
       <InterestDetail
-        interest={visualInterests.find((interest) => interest.id === selectedInterestId)!}
-        affairs={data.affairs.filter((affair) => affair.interestId === selectedInterestId)}
+        interest={visualInterests.find((interest) => interest.id === activeInterestId)!}
+        affairs={data.affairs.filter((affair) => affair.interestId === activeInterestId)}
+        doctrine={doctrineByInterestId.get(activeInterestId)}
         onBack={() => onSelectInterest(null)}
         onAffairClick={(id: string) => {
           onSelectAffair(id);
           onSelectInterest(null);
         }}
+        onOpenLab={onOpenLab ? () => onOpenLab(activeInterestId) : undefined}
+        onOpenPortfolio={onOpenPortfolio ? () => onOpenPortfolio(activeInterestId) : undefined}
+        onWarGame={() => onWarGame(activeInterestId)}
       />
     );
   }
@@ -169,11 +196,11 @@ export function InterestsView({ data, selectedInterestId, onSelectInterest, onSe
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {filteredInterests.map((interest) => (
-          <div
-            key={interest.id}
-            onClick={() => onSelectInterest(interest.id)}
-            className="glass p-4 rounded-lg border border-white/5 hover:border-blue-500/30 transition-all cursor-pointer group"
-          >
+          <div key={interest.id} onClick={() => onSelectInterest(interest.id)} className="glass p-4 rounded-lg border border-white/5 hover:border-blue-500/30 transition-all cursor-pointer group">
+            {(() => {
+              const doctrine = doctrineByInterestId.get(interest.id);
+              return (
+                <>
             <div className="flex justify-between items-start mb-3">
               <div className="px-2 py-0.5 bg-zinc-800 rounded text-[10px] font-mono text-zinc-400 uppercase">{interest.perspective}</div>
               <span className="text-[10px] font-mono text-zinc-500 uppercase">{interest.domainId}</span>
@@ -190,7 +217,33 @@ export function InterestsView({ data, selectedInterestId, onSelectInterest, onSe
                 </div>
               ))}
             </div>
+            {doctrine?.profile ? (
+              <div className="mt-3 rounded-lg border border-white/10 bg-zinc-900/40 p-3 text-[11px] text-zinc-300">
+                <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-widest text-zinc-500">
+                  <span>{doctrine.sourceName ?? "Source mapped"}</span>
+                  <span>{doctrine.profile.quadrant}</span>
+                  <span>{doctrine.domainName ?? doctrine.profile.domainId}</span>
+                </div>
+                <div className="mt-2">
+                  <span className="text-zinc-500">Edge:</span> {doctrine.profile.edgeText ?? "Undefined"}
+                </div>
+                <div className="mt-1">
+                  <span className="text-zinc-500">Avoid:</span> {doctrine.profile.avoidText ?? "Undefined"}
+                </div>
+              </div>
+            ) : null}
             <div className="mt-3 flex justify-end gap-2">
+              {onOpenPortfolio ? (
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpenPortfolio(interest.id);
+                  }}
+                  className="px-2.5 py-1 rounded border border-white/10 hover:bg-white/5 text-[10px] font-bold uppercase tracking-widest text-zinc-200"
+                >
+                  Portfolio
+                </button>
+              ) : null}
               <button
                 onClick={(event) => {
                   event.stopPropagation();
@@ -210,6 +263,9 @@ export function InterestsView({ data, selectedInterestId, onSelectInterest, onSe
                 WarGame
               </button>
             </div>
+                </>
+              );
+            })()}
           </div>
         ))}
         {!filteredInterests.length && <div className="text-sm text-zinc-500">No interests match current filters.</div>}

@@ -214,10 +214,40 @@ function listAdapters(db: Database.Database) {
 }
 
 function listInterestOptions(db: Database.Database): PortfolioInterestOption[] {
-  return (db.prepare("SELECT id, title, domain_id FROM interests ORDER BY updated_at DESC, created_at DESC").all() as AnyRow[]).map((row) => ({
+  return (
+    db.prepare(
+      `SELECT i.id,
+              i.title,
+              i.domain_id,
+              i.hypothesis,
+              i.downside,
+              i.evidence_note,
+              i.protocol_ready,
+              d.name AS domain_name,
+              smp.quadrant,
+              smp.edge_text,
+              smp.heuristics_text,
+              smp.avoid_text,
+              vs.name AS source_name
+         FROM interests i
+         LEFT JOIN domains d ON d.id = i.domain_id
+         LEFT JOIN source_map_profiles smp ON smp.interest_id = i.id
+         LEFT JOIN volatility_sources vs ON vs.id = smp.source_id
+        ORDER BY i.updated_at DESC, i.created_at DESC`
+    ).all() as AnyRow[]
+  ).map((row) => ({
     id: String(row.id),
     title: String(row.title),
-    domainId: normalizeOptionalString(row.domain_id)
+    domainId: normalizeOptionalString(row.domain_id),
+    domainName: normalizeOptionalString(row.domain_name),
+    sourceName: normalizeOptionalString(row.source_name),
+    quadrant: normalizeOptionalString(row.quadrant),
+    edgeText: normalizeOptionalString(row.edge_text),
+    heuristicsText: normalizeOptionalString(row.heuristics_text ?? row.evidence_note),
+    avoidText: normalizeOptionalString(row.avoid_text),
+    hypothesis: normalizeOptionalString(row.hypothesis),
+    downside: normalizeOptionalString(row.downside),
+    protocolReady: Number(row.protocol_ready ?? 0) === 1
   }));
 }
 

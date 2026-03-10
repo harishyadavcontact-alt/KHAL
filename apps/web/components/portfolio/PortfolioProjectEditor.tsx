@@ -1,13 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { PortfolioProjectCard } from "../../lib/portfolio/models";
+import type { PortfolioInterestOption, PortfolioProjectCard } from "../../lib/portfolio/models";
 import { PORTFOLIO_ROLE_OPTIONS, PORTFOLIO_SIGNAL_OPTIONS, PORTFOLIO_STAGE_OPTIONS, labelize, signalBandLabel } from "./PortfolioSignals";
-
-type InterestOption = {
-  id: string;
-  title: string;
-};
 
 type EditorValues = {
   name: string;
@@ -71,11 +66,33 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   return <div className="mb-2 text-[11px] uppercase tracking-[0.22em] text-[var(--color-text-faint)]">{children}</div>;
 }
 
+function buildValuesFromInterestOption(option: PortfolioInterestOption, current: EditorValues): EditorValues {
+  const domainLabel = option.domainName ?? option.domainId ?? "Unmapped domain";
+  const sourceLabel = option.sourceName ? ` from ${option.sourceName}` : "";
+  return {
+    ...current,
+    name: current.name || option.title,
+    tagline: current.tagline || `${domainLabel}${sourceLabel}`,
+    strategicRole: current.strategicRole === "probe" ? "option" : current.strategicRole,
+    stage: current.stage === "idea" ? "framing" : current.stage,
+    mission: current.mission || option.edgeText || option.hypothesis || `Develop the asymmetric upside in ${domainLabel}.`,
+    wedge: current.wedge || option.heuristicsText || option.hypothesis || "",
+    rightTail: current.rightTail || option.edgeText || "",
+    leftTail: current.leftTail || option.downside || option.avoidText || "",
+    currentExperiment: current.currentExperiment || option.hypothesis || option.edgeText || "",
+    killCriteria: current.killCriteria || option.downside || option.avoidText || "",
+    currentBottleneck: current.currentBottleneck || option.avoidText || "",
+    signalBand: current.signalBand === "watch" && option.protocolReady ? "high" : current.signalBand,
+    linkedInterestId: option.id
+  };
+}
+
 export function PortfolioProjectEditor({
   open,
   mode,
   project,
   interestOptions,
+  initialLinkedInterestId,
   busy,
   onClose,
   onSubmit
@@ -83,7 +100,8 @@ export function PortfolioProjectEditor({
   open: boolean;
   mode: "create" | "edit";
   project?: PortfolioProjectCard | null;
-  interestOptions: InterestOption[];
+  interestOptions: PortfolioInterestOption[];
+  initialLinkedInterestId?: string;
   busy?: boolean;
   onClose: () => void;
   onSubmit: (values: EditorValues) => Promise<void> | void;
@@ -91,13 +109,25 @@ export function PortfolioProjectEditor({
   const [values, setValues] = useState<EditorValues>(buildValues(project));
 
   useEffect(() => {
-    if (open) setValues(buildValues(project));
-  }, [open, project]);
+    if (!open) return;
+    const baseValues = buildValues(project);
+    const linkedInterest =
+      initialLinkedInterestId && mode === "create"
+        ? interestOptions.find((interest) => interest.id === initialLinkedInterestId)
+        : undefined;
+    setValues(linkedInterest ? buildValuesFromInterestOption(linkedInterest, baseValues) : baseValues);
+  }, [initialLinkedInterestId, interestOptions, mode, open, project]);
 
   if (!open) return null;
 
   const setField = <K extends keyof EditorValues>(key: K, value: EditorValues[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
+  };
+
+  const applyInterestOption = (interestId: string) => {
+    const option = interestOptions.find((interest) => interest.id === interestId);
+    if (!option) return;
+    setValues((current) => buildValuesFromInterestOption(option, { ...current, linkedInterestId: interestId }));
   };
 
   return (
@@ -164,7 +194,15 @@ export function PortfolioProjectEditor({
             </div>
             <div>
               <FieldLabel>Linked Interest</FieldLabel>
-              <select value={values.linkedInterestId} onChange={(event) => setField("linkedInterestId", event.target.value)} className={fieldClass()}>
+              <select
+                value={values.linkedInterestId}
+                onChange={(event) => {
+                  const interestId = event.target.value;
+                  setField("linkedInterestId", interestId);
+                  if (interestId) applyInterestOption(interestId);
+                }}
+                className={fieldClass()}
+              >
                 <option value="">None</option>
                 {interestOptions.map((interest) => (
                   <option key={interest.id} value={interest.id}>

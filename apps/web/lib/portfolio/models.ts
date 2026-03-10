@@ -98,6 +98,15 @@ export type PortfolioInterestOption = {
   id: string;
   title: string;
   domainId?: string;
+  domainName?: string;
+  sourceName?: string;
+  quadrant?: string;
+  edgeText?: string;
+  heuristicsText?: string;
+  avoidText?: string;
+  hypothesis?: string;
+  downside?: string;
+  protocolReady?: boolean;
 };
 
 export type PortfolioMovementState = "shipping" | "watch" | "stalled" | "quiet";
