@@ -1,6 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { existsSync } from "node:fs";
+import { resolveDefaultDbPath } from "./operator-db";
 
 const SETTINGS_PATH = path.resolve(process.cwd(), "..", "..", ".khal.local.json");
 
@@ -17,13 +17,7 @@ export async function readSettings(): Promise<KhalSettings> {
     // ignore and use fallback
   }
 
-  const candidates = [
-    path.resolve(process.cwd(), "data", "KHAL.sqlite"),
-    path.resolve(process.cwd(), "..", "data", "KHAL.sqlite"),
-    path.resolve(process.cwd(), "..", "..", "data", "KHAL.sqlite")
-  ];
-
-  return { dbPath: candidates.find((candidate) => existsSync(candidate)) ?? candidates[0] };
+  return { dbPath: await resolveDefaultDbPath() };
 }
 
 export async function writeSettings(next: KhalSettings): Promise<void> {

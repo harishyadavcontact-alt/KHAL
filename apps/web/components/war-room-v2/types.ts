@@ -17,6 +17,9 @@ export type WarGameRole = "MISSIONARY" | "VISIONARY";
 export type ParityStatus = "exact" | "functionally_equivalent" | "drifted" | "missing";
 export type DoctrineScopeType = "GLOBAL" | "MODE" | "ENTITY";
 export type DoctrineRuleKind = "RULE" | "POLICY" | "OMISSION" | "TRIGGER" | "BARRIER" | "BET_RULE";
+export type SourceMapDecisionType = "simple" | "complex";
+export type SourceMapTailClass = "thin" | "fat" | "unknown";
+export type SourceMapQuadrant = "Q1" | "Q2" | "Q3" | "Q4";
 
 export interface UserProfile {
   name?: string;
@@ -234,6 +237,7 @@ export interface Interest {
   edgePct?: number;
   irreversibility?: number;
   evidenceNote?: string;
+  downside?: string;
   asymmetryScore?: number;
   protocolReady?: boolean;
 }
@@ -971,6 +975,31 @@ export interface VolatilitySourceDto {
   sortOrder: number;
   domainCount: number;
   domains?: VolatilitySourceDomainLinkDto[];
+  mapProfiles?: SourceMapProfileDto[];
+}
+
+export interface SourceMapProfileDto {
+  id: string;
+  sourceId: string;
+  domainId: string;
+  decisionType: SourceMapDecisionType;
+  tailClass: SourceMapTailClass;
+  quadrant: SourceMapQuadrant;
+  methodPosture: string;
+  notes?: string;
+  stakesText?: string;
+  risksText?: string;
+  playersText?: string;
+  lineageThreatText?: string;
+  fragilityPosture?: string;
+  vulnerabilitiesText?: string;
+  hedgeText?: string;
+  edgeText?: string;
+  primaryCraftId?: string;
+  heuristicsText?: string;
+  avoidText?: string;
+  affairId?: string;
+  interestId?: string;
 }
 
 export interface DomainStrategyDetailDto {

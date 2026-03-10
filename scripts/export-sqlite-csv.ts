@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 function csvEscape(value: unknown): string {
@@ -11,7 +11,20 @@ function csvEscape(value: unknown): string {
   return text;
 }
 
-const dbPath = path.resolve(process.argv[2] ?? path.resolve("data", "KHAL.sqlite"));
+function resolveDefaultDbPath() {
+  const settingsPath = path.resolve(".khal.local.json");
+  if (existsSync(settingsPath)) {
+    try {
+      const parsed = JSON.parse(readFileSync(settingsPath, "utf-8")) as { dbPath?: string };
+      if (parsed.dbPath) return path.resolve(parsed.dbPath);
+    } catch {
+      // ignore and fallback
+    }
+  }
+  return path.resolve("data", "KHAL.sqlite");
+}
+
+const dbPath = path.resolve(process.argv[2] ?? resolveDefaultDbPath());
 const outDir = path.resolve(process.argv[3] ?? path.resolve("exports", "csv"));
 
 const db = new Database(dbPath, { readonly: true });

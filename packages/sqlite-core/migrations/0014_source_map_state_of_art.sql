@@ -1,0 +1,11 @@
+ALTER TABLE source_map_profiles ADD COLUMN stakes_text TEXT;
+ALTER TABLE source_map_profiles ADD COLUMN risks_text TEXT;
+ALTER TABLE source_map_profiles ADD COLUMN players_text TEXT;
+ALTER TABLE source_map_profiles ADD COLUMN lineage_threat_text TEXT;
+ALTER TABLE source_map_profiles ADD COLUMN fragility_posture TEXT;
+ALTER TABLE source_map_profiles ADD COLUMN vulnerabilities_text TEXT;
+ALTER TABLE source_map_profiles ADD COLUMN hedge_text TEXT;
+ALTER TABLE source_map_profiles ADD COLUMN edge_text TEXT;
+ALTER TABLE source_map_profiles ADD COLUMN primary_craft_id TEXT;
+ALTER TABLE source_map_profiles ADD COLUMN heuristics_text TEXT;
+ALTER TABLE source_map_profiles ADD COLUMN avoid_text TEXT;

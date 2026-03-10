@@ -1,4 +1,5 @@
 import type { Affair, Craft, Interest, KhalState, Task } from "@khal/domain";
+import type { SourceMapProfileDto } from "../../components/war-room-v2/types";
 import {
   doctrineQuickActionSchema,
   decisionEvaluationResultSchema,
@@ -37,7 +38,7 @@ const SPEC: DecisionSpecDto = decisionSpecSchema.parse({
     { id: "G5_EXACT_MISSING", title: "Exact Missing Items", description: "Block responses must include exact missing items.", hard: true }
   ],
   modes: [
-    { mode: "source", title: "Source", narrative: "War-game volatility sources and propagation.", requiredFields: ["source_profile", "linked_domains", "propagation_paths", "uncertainty_band"], predecessors: [] },
+    { mode: "source", title: "Source", narrative: "Map semantic domains, decision structure, tail behavior, quadrant, Stone posture, ends, and admissible means.", requiredFields: ["source_profile", "semantic_domains", "decision_type", "tail_class", "quadrant", "means_posture", "stakes", "risks", "fragility_profile", "ends", "means"], predecessors: [] },
     { mode: "domain", title: "Domain", narrative: "War-game domain posture and fragility logic.", requiredFields: ["domain_class", "stakes", "risk_map", "fragility_profile", "ends_means_posture"], predecessors: ["source"] },
     { mode: "affair", title: "Affair", narrative: "War-game obligations and deterministic prep.", requiredFields: ["objective", "orks_kpis", "preparation", "thresholds", "execution_chain"], predecessors: ["domain"] },
     { mode: "interest", title: "Interest", narrative: "War-game options via Forge/Wield/Tinker.", requiredFields: ["forge_wield_tinker", "hypothesis", "loss_expiry", "kill_criteria", "barbell_split", "evidence"], predecessors: ["domain"] },
@@ -65,14 +66,26 @@ function hasDomainBarbellPosture(state: KhalState, domainId: string): { hedge: b
   return { hedge, edge };
 }
 
-function missingForMode(mode: WarGameModeSpec, state: KhalState, targetId: string): string[] {
+function missingForMode(mode: WarGameModeSpec, state: KhalState, targetId: string, sourceMapProfiles: SourceMapProfileDto[] = []): string[] {
   if (mode === "source") {
     const source = (state.sources ?? []).find((item) => item.id === targetId);
+    const requiredDomainIds = Array.from(new Set((source?.domains ?? []).map((item) => item.domainId)));
+    const relevantProfiles = sourceMapProfiles.filter((item) => item.sourceId === targetId && (requiredDomainIds.length === 0 || requiredDomainIds.includes(item.domainId)));
+    const profileByDomainId = new Map(relevantProfiles.map((item) => [item.domainId, item]));
+    const completeCoverage = requiredDomainIds.length > 0 && requiredDomainIds.every((domainId) => profileByDomainId.has(domainId));
+    const allMappedProfiles = completeCoverage ? requiredDomainIds.map((domainId) => profileByDomainId.get(domainId)).filter(Boolean) as SourceMapProfileDto[] : [];
     return [
       source?.name ? null : "source_profile",
-      (source?.domains?.length ?? 0) > 0 ? null : "linked_domains",
-      (source?.domains?.length ?? 0) > 0 ? null : "propagation_paths",
-      source?.code ? null : "uncertainty_band"
+      (source?.domains?.length ?? 0) > 0 ? null : "semantic_domains",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.decisionType)) ? null : "decision_type",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.tailClass)) ? null : "tail_class",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.quadrant)) ? null : "quadrant",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.methodPosture)) ? null : "means_posture",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.stakesText?.trim())) ? null : "stakes",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.risksText?.trim())) ? null : "risks",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.fragilityPosture?.trim()) && Boolean(item.vulnerabilitiesText?.trim())) ? null : "fragility_profile",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.hedgeText?.trim()) && Boolean(item.edgeText?.trim())) ? null : "ends",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.primaryCraftId?.trim()) && Boolean(item.heuristicsText?.trim()) && Boolean(item.avoidText?.trim())) ? null : "means"
     ].filter(Boolean) as string[];
   }
   if (mode === "domain") {
@@ -237,6 +250,7 @@ export function evaluateDecision(args: {
   mode: WarGameModeSpec;
   targetId: string;
   state: KhalState;
+  sourceMapProfiles?: SourceMapProfileDto[];
   role?: "MISSIONARY" | "VISIONARY";
   noRuinGate?: boolean;
   overrides?: string[];
@@ -255,7 +269,7 @@ export function evaluateDecision(args: {
     });
   }
 
-  const missingRequiredFields = missingForMode(args.mode, args.state, args.targetId);
+  const missingRequiredFields = missingForMode(args.mode, args.state, args.targetId, args.sourceMapProfiles);
   const completed = completedModes(args.state);
   const missingPredecessors = modeSpec.predecessors.filter((mode) => !completed[mode]);
   const guardReasons = evaluateGuards({
@@ -391,6 +405,7 @@ export function buildDeterministicTriage(args: {
   mode: WarGameModeSpec;
   targetId: string;
   state: KhalState;
+  sourceMapProfiles?: SourceMapProfileDto[];
   role?: "MISSIONARY" | "VISIONARY";
   noRuinGate?: boolean;
   overrides?: string[];
@@ -444,6 +459,7 @@ export function evaluateDecisionWithTriage(args: {
   mode: WarGameModeSpec;
   targetId: string;
   state: KhalState;
+  sourceMapProfiles?: SourceMapProfileDto[];
   role?: "MISSIONARY" | "VISIONARY";
   noRuinGate?: boolean;
   overrides?: string[];

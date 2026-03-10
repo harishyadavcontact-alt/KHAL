@@ -1,6 +1,12 @@
 # KHAL Runtime Authority
 
-SQLite at `data/KHAL.sqlite` is the only runtime authority.
+KHAL is SQLite-first, but runtime authority is now operator-scoped.
+
+- Product template DB: `data/KHAL.sqlite`
+- Active operator DBs: `data/operators/*.sqlite`
+- Local runtime selection override: `.khal.local.json`
+
+For a single local operator, the app should read/write the selected operator DB, not the template DB.
 
 ## Ownership
 

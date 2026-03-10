@@ -1,7 +1,8 @@
 # KHAL SQLite Architecture (v0.2 Pivot)
 
 ## Canonical Data Model
-- **Canonical runtime + strategic authority**: `data/KHAL.sqlite`
+- **Product template DB**: `data/KHAL.sqlite`
+- **Active runtime DB**: selected operator database, typically `data/operators/<operator-slug>.sqlite`
 - **Runtime mode**: local-first, offline-capable, deterministic API reads/writes
 - **Historical artifacts**: `Genesis.xlsx` retained for reference only (not active authority)
 
@@ -48,3 +49,4 @@ Hierarchy:
 - DB bootstrap script: `scripts/bootstrap-sqlite.ts`
 - Schema migration: `packages/sqlite-core/migrations/0001_init.sql`
 - Runtime adapter entry: `packages/sqlite-core/src/index.ts`
+- Operator DB resolution: `apps/web/lib/operator-db.ts`

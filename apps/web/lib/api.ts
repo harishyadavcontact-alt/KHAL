@@ -1,11 +1,20 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
-import { normalize, refreshIfStale, writeAffair, writeInterest, writeTask, type LoadedState } from "@khal/sync-engine";
+import { normalize, refreshIfStale, writeAffair, writeInterest, writeTask } from "@khal/sync-engine";
 import Database from "better-sqlite3";
-import { initDatabase, resolveDbPath } from "@khal/sqlite-core";
 import { randomUUID } from "node:crypto";
-import { readSettings } from "./settings";
 import { loadRuntimeProjection } from "./runtime/authority";
+import { toMonolithAppData } from "./api/app-data";
+import { fail, ok, withDb, withStore, type AnyRow } from "./api/shared";
+import { readOperatorProfile } from "./api/operator";
+export { fail, ok, withDb, withStore } from "./api/shared";
+export {
+  handleCalendarIcs,
+  handleTimeHorizonDeadlineCreate,
+  handleTimeHorizonDeadlineDelete,
+  handleTimeHorizonDeadlineUpdate,
+  handleTimeHorizonGet,
+  handleTimeHorizonProfile
+} from "./api/time-horizon";
 import {
   craftKnowledgeSchema,
   entityLinkSchema,
@@ -19,8 +28,6 @@ import {
   threatSchema,
   wargameSchema
 } from "./knowledge/models";
-
-type AnyRow = Record<string, unknown>;
 
 const affairSchema = z.object({
   id: z.string().uuid().optional(),
@@ -73,200 +80,18 @@ const taskSchema = z.object({
   lastSeenModifiedAt: z.string().optional()
 });
 
-export async function withStore<T>(fn: (dbPath: string) => Promise<T> | T): Promise<T> {
-  const settings = await readSettings();
-  return fn(settings.dbPath);
-}
-
-export async function withDb<T>(fn: (db: Database.Database, dbPath: string) => Promise<T> | T): Promise<T> {
-  const settings = await readSettings();
-  const dbPath = resolveDbPath(settings.dbPath);
-  initDatabase(dbPath);
-  const db = new Database(dbPath);
-  try {
-    return await fn(db, dbPath);
-  } finally {
-    db.close();
-  }
-}
-
-export function ok(data: unknown, status = 200) {
-  return NextResponse.json(data, { status });
-}
-
-function extractTopStackFrame(stack?: string): string | undefined {
-  if (!stack) return undefined;
-  return stack.split("\n").map((value) => value.trim()).find((value) => value.startsWith("at "));
-}
-
-export function fail(error: unknown, status = 400) {
-  const traceId = randomUUID();
-  const message = error instanceof Error ? error.message : "Unknown error";
-  const payload: Record<string, unknown> = { error: message, traceId };
-
-  if (process.env.NODE_ENV !== "production") {
-    payload.debug = {
-      topStackFrame: error instanceof Error ? extractTopStackFrame(error.stack) : undefined
-    };
-  }
-
-  console.error("[khal-api-error]", { traceId, status, message, stack: error instanceof Error ? error.stack : undefined });
-  return NextResponse.json(payload, { status });
-}
-
 export async function handleState() {
   return withDb((db, dbPath) => ok(loadRuntimeProjection({ db, dbPath })));
-}
-
-function toMonolithAppData(payload: LoadedState) {
-  const state = payload.state as any;
-  const user = {
-    name: "Operator",
-    birthDate: "2002-09-30T00:00:00.000Z",
-    lifeExpectancy: 80,
-    location: "Unknown"
-  };
-  const strategyMatrix = {
-    allies: 50,
-    enemies: 50,
-    overt: 50,
-    covert: 50,
-    offense: 10,
-    defense: 90,
-    conventional: 70,
-    unconventional: 30
-  };
-
-  const domains = (state.domains ?? []).map((domain: any) => {
-    const row = (state.warRoomNarrative?.blocks ?? []).find((item: any) => item?.kv?.domain === domain.name);
-    const volatilitySourceName = domain.volatilitySourceName ?? row?.heading ?? "Unknown Volatility";
-    return {
-      id: domain.id,
-      name: domain.name,
-      lawId: domain.lawId ?? domain.volatilitySourceId ?? domain.id,
-      volatilitySourceId: domain.volatilitySourceId ?? null,
-      volatilitySourceName,
-      volatility: domain.volatility ?? volatilitySourceName,
-      volatilitySource: domain.volatilitySource ?? volatilitySourceName,
-      stakesText: domain.stakesText ?? row?.kv?.stakes ?? "Undefined",
-      risksText: domain.risksText ?? row?.kv?.risks ?? "Undefined",
-      fragilityText: domain.fragilityText ?? row?.kv?.fragility ?? "Undefined",
-      vulnerabilitiesText: domain.vulnerabilitiesText ?? row?.kv?.vulnerabilities ?? "Undefined",
-      hedge: domain.hedge ?? row?.bullets?.[0] ?? "Define hedge",
-      edge: domain.edge ?? row?.bullets?.[1] ?? "Define edge",
-      heuristics: domain.heuristics ?? row?.bullets?.[2] ?? "Define heuristics",
-      tactics: domain.tactics ?? row?.bullets?.[3] ?? "Define tactics",
-      interestsText: domain.interestsText ?? row?.bullets?.[4] ?? "",
-      affairsText: domain.affairsText ?? row?.bullets?.[5] ?? ""
-    };
-  });
-
-  const laws = (state.laws ?? []).map((law: any) => ({
-    id: law.id,
-    name: law.name,
-    description: law.description ?? "",
-    volatilitySource: law.volatilitySource ?? "",
-    associatedCrafts: law.associatedCrafts ?? []
-  }));
-
-  const interests = (state.interests ?? []).map((interest: any) => ({
-    ...interest,
-    labStage: interest.labStage ?? "FORGE",
-    perspective: interest.perspective ?? "macro",
-    objectives: Array.isArray(interest.objectives) ? interest.objectives : []
-  }));
-
-  const affairs = (state.affairs ?? []).map((affair: any) => ({
-    ...affair,
-    perspective: affair.perspective ?? "macro",
-    status: String(affair.status ?? "planning").toLowerCase(),
-    context: affair.context ?? { associatedDomains: [affair.domainId].filter(Boolean), volatilityExposure: affair.description ?? "Operational volatility" },
-    means: affair.means ?? { craftId: "", selectedHeuristicIds: [] },
-    plan: affair.plan ?? { objectives: [], uncertainty: "Unknown", timeHorizon: "Unknown" },
-    strategy: affair.strategy ?? { posture: "defense", positioning: "conventional", mapping: { allies: [], enemies: [] } },
-    entities: affair.entities ?? []
-  }));
-
-  const tasks = (state.tasks ?? []).map((task: any) => ({
-    sourceType: task.sourceType ?? "PLAN",
-    sourceId: task.sourceId ?? "",
-    parentTaskId: task.parentTaskId ?? undefined,
-    dependencyIds: Array.isArray(task.dependencyIds) ? task.dependencyIds : [],
-    horizon: task.horizon ?? "WEEK",
-    dueDate: task.dueDate ?? undefined,
-    notes: task.notes ?? undefined,
-    id: task.id,
-    title: task.title,
-    domainId:
-      task.sourceType === "AFFAIR"
-        ? affairs.find((affair: any) => affair.id === task.sourceId)?.domainId ?? "general"
-        : task.sourceType === "INTEREST"
-          ? interests.find((interest: any) => interest.id === task.sourceId)?.domainId ?? "general"
-          : "general",
-    type: String(task.sourceType ?? "").toLowerCase(),
-    priority: typeof task.effortEstimate === "number" ? Math.min(100, Math.max(1, Math.round(task.effortEstimate))) : 50,
-    progress: task.status === "DONE" ? 100 : task.status === "IN_PROGRESS" ? 50 : 0,
-    status: task.status === "DONE" ? "done" : task.status === "IN_PROGRESS" ? "in_progress" : "not_started",
-    convexity: 0
-  }));
-
-  return {
-    user,
-    strategyMatrix,
-    laws,
-    domains,
-    interests,
-    affairs,
-    crafts: state.crafts ?? [],
-    tasks,
-    sources: (state.sources ?? []).map((source: any) => ({
-      id: source.id,
-      code: source.code,
-      name: source.name,
-      sortOrder: source.sortOrder ?? 0,
-      domainCount: Array.isArray(source.domains) ? source.domains.length : 0,
-      domains: (source.domains ?? []).map((link: any) => ({
-        id: link.id,
-        sourceId: link.sourceId,
-        domainId: link.domainId,
-        dependencyKind: link.dependencyKind,
-        pathWeight: link.pathWeight ?? 1
-      }))
-    })),
-    missionGraph: state.missionGraph ?? { nodes: [], dependencies: [] },
-    lineages: state.lineages ?? { nodes: [], entities: [] },
-    lineageRisks: state.lineageRisks ?? [],
-    doctrine: state.doctrine ?? { rulebooks: [], rules: [], domainPnLLadders: [] },
-    decisionAcceleration: {
-      virtueSpiral: payload.dashboard.virtueSpiral,
-      pathComparator: payload.dashboard.pathComparator,
-      copilot: payload.dashboard.copilot
-    },
-    decisionAccelerationMeta: payload.dashboard.decisionAccelerationMeta,
-    tripwire: payload.dashboard.tripwire,
-    ruinLedger: payload.dashboard.ruinLedger,
-    violationFeed: payload.dashboard.violationFeed,
-    latency: payload.dashboard.latency,
-    counterfactual: payload.dashboard.counterfactual,
-    confidence: payload.dashboard.confidence,
-    optionalityBudget: payload.dashboard.optionalityBudget,
-    fragilityTimeline: payload.dashboard.fragilityTimeline,
-    decisionReplay: payload.dashboard.decisionReplay,
-    blastRadius: payload.dashboard.blastRadius,
-    missionBottlenecks: payload.dashboard.missionBottlenecks,
-    hedgeCoverage: payload.dashboard.hedgeCoverage,
-    convexityPipeline: payload.dashboard.convexityPipeline,
-    outcomeAttribution: payload.dashboard.outcomeAttribution,
-    assumptions: payload.dashboard.assumptions,
-    recoveryPlaybooks: payload.dashboard.recoveryPlaybooks
-  };
 }
 
 export async function handleData() {
   return withDb((db, dbPath) => {
     const projection = loadRuntimeProjection({ db, dbPath });
+    const operator = readOperatorProfile(db);
     return ok({
       ...toMonolithAppData(projection),
+      user: operator.user,
+      onboarding: { onboarded: operator.onboarded },
       runtimeInvariants: projection.runtimeInvariants
     });
   });
@@ -711,23 +536,6 @@ const affairPlanSchema = z.object({
   timeHorizon: z.string().optional()
 });
 
-const timeHorizonProfileSchema = z.object({
-  focusText: z.string().optional(),
-  dobIso: z.string().optional(),
-  lifeExpectancyYears: z.number().int().min(1).max(130).optional()
-});
-
-const timeHorizonDeadlineCreateSchema = z.object({
-  label: z.string().min(1),
-  dueAt: z.string().min(1)
-});
-
-const timeHorizonDeadlineUpdateSchema = z.object({
-  label: z.string().min(1).optional(),
-  dueAt: z.string().min(1).optional(),
-  sortOrder: z.number().int().optional()
-});
-
 const domainStrategySchema = z.object({
   stakesText: z.string().optional(),
   risksText: z.string().optional(),
@@ -794,14 +602,6 @@ const lineageRiskSchema = z.object({
   notes: z.string().optional()
 });
 
-function ensureTimeHorizonProfile(db: Database.Database, userKey: string) {
-  const existing = db.prepare("SELECT user_key FROM time_horizon_profiles WHERE user_key=?").get(userKey) as { user_key: string } | undefined;
-  if (existing) return;
-  db.prepare(
-    "INSERT INTO time_horizon_profiles (user_key, focus_text, dob_iso, life_expectancy_years) VALUES (?, ?, ?, ?)"
-  ).run(userKey, "define your north star", "2002-09-30T00:00:00.000Z", 80);
-}
-
 function parseJsonOrDefault<T>(value: unknown, fallback: T): T {
   if (typeof value !== "string" || !value.trim()) return fallback;
   try {
@@ -831,173 +631,6 @@ function computeTalebFragilityScore(input: {
   return Number(score.toFixed(4));
 }
 
-function toIcsUtc(date: Date): string {
-  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
-}
-
-function escapeIcsText(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
-}
-
-export async function handleTimeHorizonGet(userKey = "default_operator") {
-  return withDb((db) => {
-    ensureTimeHorizonProfile(db, userKey);
-    const profile = db.prepare("SELECT * FROM time_horizon_profiles WHERE user_key=?").get(userKey) as AnyRow;
-    const deadlines = db
-      .prepare("SELECT id, label, due_at, sort_order FROM time_horizon_deadlines WHERE user_key=? ORDER BY due_at, sort_order")
-      .all(userKey) as AnyRow[];
-    return ok({
-      userKey,
-      profile: {
-        focusText: profile?.focus_text ? String(profile.focus_text) : "",
-        dobIso: profile?.dob_iso ? String(profile.dob_iso) : "2002-09-30T00:00:00.000Z",
-        lifeExpectancyYears: Number(profile?.life_expectancy_years ?? 80)
-      },
-      deadlines: deadlines.map((row) => ({
-        id: String(row.id),
-        label: String(row.label),
-        dueAt: String(row.due_at),
-        sortOrder: Number(row.sort_order ?? 0)
-      }))
-    });
-  });
-}
-
-export async function handleTimeHorizonProfile(rawBody: unknown, userKey = "default_operator") {
-  const parsed = timeHorizonProfileSchema.parse(rawBody);
-  return withDb((db) => {
-    ensureTimeHorizonProfile(db, userKey);
-    db.prepare(
-      `UPDATE time_horizon_profiles
-       SET focus_text = COALESCE(?, focus_text),
-           dob_iso = COALESCE(?, dob_iso),
-           life_expectancy_years = COALESCE(?, life_expectancy_years),
-           updated_at = datetime('now')
-       WHERE user_key=?`
-    ).run(parsed.focusText ?? null, parsed.dobIso ?? null, parsed.lifeExpectancyYears ?? null, userKey);
-    return handleTimeHorizonGet(userKey);
-  });
-}
-
-export async function handleTimeHorizonDeadlineCreate(rawBody: unknown, userKey = "default_operator") {
-  const parsed = timeHorizonDeadlineCreateSchema.parse(rawBody);
-  return withDb((db) => {
-    ensureTimeHorizonProfile(db, userKey);
-    const id = randomUUID();
-    const sortOrder = Number(
-      (db.prepare("SELECT COALESCE(MAX(sort_order), -1) AS max_sort FROM time_horizon_deadlines WHERE user_key=?").get(userKey) as AnyRow)?.max_sort ?? -1
-    ) + 1;
-    db.prepare("INSERT INTO time_horizon_deadlines (id, user_key, label, due_at, sort_order) VALUES (?, ?, ?, ?, ?)").run(
-      id,
-      userKey,
-      parsed.label,
-      parsed.dueAt,
-      sortOrder
-    );
-    return ok({ id, label: parsed.label, dueAt: parsed.dueAt, sortOrder }, 201);
-  });
-}
-
-export async function handleTimeHorizonDeadlineUpdate(deadlineId: string, rawBody: unknown, userKey = "default_operator") {
-  const parsed = timeHorizonDeadlineUpdateSchema.parse(rawBody);
-  return withDb((db) => {
-    const exists = db.prepare("SELECT id FROM time_horizon_deadlines WHERE id=? AND user_key=?").get(deadlineId, userKey) as { id: string } | undefined;
-    if (!exists) return ok({ error: "Deadline not found" }, 404);
-    db.prepare(
-      `UPDATE time_horizon_deadlines
-       SET label = COALESCE(?, label),
-           due_at = COALESCE(?, due_at),
-           sort_order = COALESCE(?, sort_order),
-           updated_at = datetime('now')
-       WHERE id=? AND user_key=?`
-    ).run(parsed.label ?? null, parsed.dueAt ?? null, parsed.sortOrder ?? null, deadlineId, userKey);
-    const row = db.prepare("SELECT id, label, due_at, sort_order FROM time_horizon_deadlines WHERE id=?").get(deadlineId) as AnyRow;
-    return ok({
-      id: String(row.id),
-      label: String(row.label),
-      dueAt: String(row.due_at),
-      sortOrder: Number(row.sort_order ?? 0)
-    });
-  });
-}
-
-export async function handleTimeHorizonDeadlineDelete(deadlineId: string, userKey = "default_operator") {
-  return withDb((db) => {
-    db.prepare("DELETE FROM time_horizon_deadlines WHERE id=? AND user_key=?").run(deadlineId, userKey);
-    return ok({ ok: true });
-  });
-}
-
-export async function handleCalendarIcs(query?: { horizon?: string }) {
-  return withDb((db) => {
-    const params: unknown[] = [];
-    let taskSql = "SELECT id, source_type, source_id, title, notes, horizon, due_date, status, updated_at FROM tasks WHERE due_date IS NOT NULL";
-    if (query?.horizon) {
-      taskSql += " AND horizon=?";
-      params.push(query.horizon);
-    }
-    taskSql += " ORDER BY due_date";
-    const tasks = db.prepare(taskSql).all(...params) as AnyRow[];
-    const deadlines = db
-      .prepare("SELECT id, label, due_at, updated_at FROM time_horizon_deadlines WHERE user_key=? ORDER BY due_at")
-      .all("default_operator") as AnyRow[];
-
-    const dtstamp = toIcsUtc(new Date());
-    const lines: string[] = [
-      "BEGIN:VCALENDAR",
-      "VERSION:2.0",
-      "PRODID:-//KHAL//WarRoom Calendar//EN",
-      "CALSCALE:GREGORIAN",
-      "METHOD:PUBLISH",
-      "X-WR-CALNAME:KHAL Execution",
-      "X-WR-TIMEZONE:UTC"
-    ];
-
-    for (const row of tasks) {
-      const due = new Date(String(row.due_date));
-      if (Number.isNaN(due.getTime())) continue;
-      const end = new Date(due.getTime() + 30 * 60 * 1000);
-      const uid = `task-${row.id}@khal`;
-      const summary = `[TASK] ${String(row.title)}`;
-      const description = `Source: ${String(row.source_type)}/${String(row.source_id)}\\nHorizon: ${String(row.horizon ?? "WEEK")}\\nStatus: ${String(row.status ?? "NOT_STARTED")}${
-        row.notes ? `\\nNotes: ${String(row.notes)}` : ""
-      }`;
-      lines.push("BEGIN:VEVENT");
-      lines.push(`UID:${uid}`);
-      lines.push(`DTSTAMP:${dtstamp}`);
-      lines.push(`DTSTART:${toIcsUtc(due)}`);
-      lines.push(`DTEND:${toIcsUtc(end)}`);
-      lines.push(`SUMMARY:${escapeIcsText(summary)}`);
-      lines.push(`DESCRIPTION:${escapeIcsText(description)}`);
-      lines.push("END:VEVENT");
-    }
-
-    for (const row of deadlines) {
-      const due = new Date(String(row.due_at));
-      if (Number.isNaN(due.getTime())) continue;
-      const end = new Date(due.getTime() + 60 * 60 * 1000);
-      const uid = `deadline-${row.id}@khal`;
-      lines.push("BEGIN:VEVENT");
-      lines.push(`UID:${uid}`);
-      lines.push(`DTSTAMP:${dtstamp}`);
-      lines.push(`DTSTART:${toIcsUtc(due)}`);
-      lines.push(`DTEND:${toIcsUtc(end)}`);
-      lines.push(`SUMMARY:${escapeIcsText(`[DEADLINE] ${String(row.label)}`)}`);
-      lines.push("END:VEVENT");
-    }
-
-    lines.push("END:VCALENDAR");
-
-    return new NextResponse(lines.join("\r\n"), {
-      status: 200,
-      headers: {
-        "Content-Type": "text/calendar; charset=utf-8",
-        "Content-Disposition": "inline; filename=\"khal.ics\"",
-        "Cache-Control": "no-store"
-      }
-    });
-  });
-}
 
 export async function handleAffairPlan(affairId: string, rawBody: unknown) {
   const parsed = affairPlanSchema.parse(rawBody);
@@ -1040,6 +673,49 @@ export async function handleVolatilitySources() {
         domainCount: Number(row.domain_count ?? 0)
       }))
     );
+  });
+}
+
+const volatilitySourceCreateSchema = z.object({
+  names: z.array(z.string().min(1)).min(1)
+});
+
+function slugifyVolatilitySource(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32) || "source";
+}
+
+export async function handleVolatilitySourcesPost(rawBody: unknown) {
+  const parsed = volatilitySourceCreateSchema.parse(rawBody);
+  return withDb((db) => {
+    const createdSourceIds: string[] = [];
+    const existingNames = new Set(
+      (db.prepare("SELECT name FROM volatility_sources").all() as AnyRow[]).map((row) => String(row.name).toLowerCase())
+    );
+    let sortOrder =
+      Number((db.prepare("SELECT COALESCE(MAX(sort_order), 0) AS max_sort FROM volatility_sources").get() as AnyRow)?.max_sort ?? 0);
+
+    for (const rawName of parsed.names) {
+      const name = rawName.trim();
+      if (!name) continue;
+      if (existingNames.has(name.toLowerCase())) {
+        const existing = db.prepare("SELECT id FROM volatility_sources WHERE lower(name)=lower(?)").get(name) as AnyRow | undefined;
+        if (existing?.id) createdSourceIds.push(String(existing.id));
+        continue;
+      }
+      sortOrder += 1;
+      const slug = slugifyVolatilitySource(name);
+      const id = `src-${slug}-${sortOrder}`;
+      const code = slug.replace(/-/g, "_").toUpperCase().slice(0, 24);
+      db.prepare("INSERT INTO volatility_sources (id, code, name, sort_order) VALUES (?, ?, ?, ?)").run(id, code, name, sortOrder);
+      existingNames.add(name.toLowerCase());
+      createdSourceIds.push(id);
+    }
+
+    return ok({ createdSourceIds, firstSourceId: createdSourceIds[0] ?? null }, 201);
   });
 }
 

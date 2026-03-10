@@ -1,9 +1,10 @@
 import type {
-  AppData,
   DomainStrategyDetailDto,
   Task,
   WarGameMode
 } from "../../components/war-room-v2/types";
+import type { WarGamingBootstrapData } from "./bootstrap";
+import { modeToPlanSourceType } from "../decision-tree/registry";
 
 type CreateTaskPayload = {
   title: string;
@@ -55,16 +56,6 @@ const toApiTaskStatus = (status?: string) => {
 const ensureTaskSourceType = (sourceType?: string): "AFFAIR" | "INTEREST" | "PLAN" | "PREPARATION" => {
   if (sourceType === "AFFAIR" || sourceType === "INTEREST" || sourceType === "PLAN" || sourceType === "PREPARATION") return sourceType;
   return "PLAN";
-};
-
-const modeToSourceType = (mode: WarGameMode): "SOURCE" | "DOMAIN" | "AFFAIR" | "INTEREST" | "CRAFT" | "MISSION" | "LINEAGE" => {
-  if (mode === "source") return "SOURCE";
-  if (mode === "domain") return "DOMAIN";
-  if (mode === "affair") return "AFFAIR";
-  if (mode === "interest") return "INTEREST";
-  if (mode === "craft") return "CRAFT";
-  if (mode === "mission") return "MISSION";
-  return "LINEAGE";
 };
 
 export async function updateDomainStrategy(domainId: string, updates: Partial<DomainStrategyDetailDto>) {
@@ -215,10 +206,10 @@ export async function saveWarGameProtocol(params: {
   payload: any;
   mode: WarGameMode;
   targetId?: string;
-  data: AppData;
+  data: Pick<WarGamingBootstrapData, "missionGraph">;
 }) {
   const { payload, mode, targetId, data } = params;
-  const sourceType = modeToSourceType(mode);
+  const sourceType = modeToPlanSourceType(mode);
   const resolvedTargetId = String(payload?.targetId ?? payload?.sourceId ?? targetId ?? "").trim();
   if (!resolvedTargetId) throw new Error("WarGame target is required.");
 

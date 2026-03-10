@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { fail, ok, withDb } from "../../../../lib/api";
 import { evaluateDecision } from "../../../../lib/decision-spec";
 import { loadRuntimeProjection } from "../../../../lib/runtime/authority";
+import { loadSourceMapProfiles } from "../../../../lib/api/source-map";
 
 const schema = z.object({
   mode: z.enum(["source", "domain", "affair", "interest", "craft", "lineage", "mission"]),
@@ -17,10 +18,12 @@ export async function POST(request: Request) {
     const parsed = schema.parse(await request.json());
     return withDb((db, dbPath) => {
       const projection = loadRuntimeProjection({ db, dbPath });
+      const sourceMapProfiles = loadSourceMapProfiles(db);
       const result = evaluateDecision({
         mode: parsed.mode,
         targetId: parsed.targetId,
         state: projection.state,
+        sourceMapProfiles,
         role: parsed.role,
         noRuinGate: parsed.noRuinGate,
         overrides: parsed.overrides
