@@ -69,6 +69,7 @@ import { SystemAnatomyMiniMap } from "./hud/SystemAnatomyMiniMap";
 import { TriageActionPanel } from "./panels/TriageActionPanel";
 import { DoctrineFixButtons } from "./panels/DoctrineFixButtons";
 import { DECISION_TREE_MODE_BY_ID } from "../../lib/decision-tree/registry";
+import type { WarGameDoctrineChain } from "../../lib/war-room/bootstrap";
 
 function modeTargetOptions(mode: WarGameMode, data: {
   sources: VolatilitySourceDto[];
@@ -211,6 +212,7 @@ export const WarGaming = ({
   hedgeCoverage,
   violationFeed,
   optionalityBudget,
+  responseLogic,
   onContextChange,
   onAddTask,
   onSourceMapSaved
@@ -237,6 +239,7 @@ export const WarGaming = ({
   hedgeCoverage?: HedgeCoverageCell[];
   violationFeed?: DoctrineViolationEvent[];
   optionalityBudget?: OptionalityBudgetState;
+  responseLogic?: WarGameDoctrineChain[];
   onContextChange?: (mode: WarGameMode, targetId?: string) => void;
   onAddTask: (task: any) => Promise<void> | void;
   onSourceMapSaved?: () => Promise<void> | void;
@@ -988,6 +991,7 @@ export const WarGaming = ({
           lineages={lineages}
           lineageRisks={lineageRisks}
           crafts={crafts.map((craft) => ({ id: craft.id, name: craft.name }))}
+          responseLogic={responseLogic ?? []}
           onSourceMapSaved={onSourceMapSaved}
         />
       )}

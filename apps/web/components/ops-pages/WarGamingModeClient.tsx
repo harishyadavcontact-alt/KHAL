@@ -135,6 +135,7 @@ export function WarGamingModeClient({ mode, targetId, onboarding = false }: { mo
               hedgeCoverage={data.hedgeCoverage}
               violationFeed={data.violationFeed}
               optionalityBudget={data.optionalityBudget}
+              responseLogic={data.responseLogic}
               initialMode={mode}
               initialTargetId={targetId}
               onSourceMapSaved={async () => {

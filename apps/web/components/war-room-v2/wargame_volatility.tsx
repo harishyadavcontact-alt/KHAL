@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { decisionTypeLabel, methodPostureForQuadrant, quadrantNarrative, tailClassLabel } from "../../lib/war-room/source-map";
 import { Domain, LineageNodeDto, LineageRiskDto, SourceMapDecisionType, SourceMapProfileDto, SourceMapTailClass, VolatilitySourceDto } from "./types";
+import type { WarGameDoctrineChain } from "../../lib/war-room/bootstrap";
 
 interface WarGameVolatilityProps {
   sourceId?: string;
@@ -10,6 +11,7 @@ interface WarGameVolatilityProps {
   lineages: LineageNodeDto[];
   lineageRisks: LineageRiskDto[];
   crafts?: Array<{ id: string; name: string }>;
+  responseLogic?: WarGameDoctrineChain[];
   onSourceMapSaved?: () => Promise<void> | void;
 }
 
@@ -47,6 +49,7 @@ export function WarGameVolatility({
   lineages,
   lineageRisks,
   crafts = [],
+  responseLogic = [],
   onSourceMapSaved
 }: WarGameVolatilityProps) {
   const router = useRouter();
@@ -64,6 +67,17 @@ export function WarGameVolatility({
   const sourceRisks = lineageRisks.filter((risk) => risk.sourceId === sourceId);
   const affectedLineages = lineages.filter((lineage) => sourceRisks.some((risk) => risk.lineageNodeId === lineage.id));
   const mapProfilesByDomainId = new Map((source?.mapProfiles ?? []).map((profile) => [profile.domainId, profile]));
+  const availableDoctrineChains = useMemo(() => {
+    if (!responseLogic.length) return [];
+    const selectedCraftIds = new Set(
+      Array.from(mapProfilesByDomainId.values())
+        .map((profile) => profile.primaryCraftId)
+        .filter((value): value is string => Boolean(value?.trim()))
+    );
+    if (!selectedCraftIds.size) return responseLogic.slice(0, 4);
+    const matched = responseLogic.filter((chain) => selectedCraftIds.has(chain.craftId));
+    return (matched.length ? matched : responseLogic).slice(0, 4);
+  }, [mapProfilesByDomainId, responseLogic]);
   const completedMapCount = linkedDomains.filter((domain) => mapProfilesByDomainId.has(domain.id)).length;
   const stepCoverage = {
     map: linkedDomains.filter((domain) => {
@@ -168,6 +182,13 @@ export function WarGameVolatility({
     }
   };
 
+  const doctrinePromptByStep: Record<StateOfArtStep, string> = {
+    map: "Use scenarios to understand what kind of world this source-domain pair can throw at you before you decide on methods.",
+    stone: "Use threats to pressure-test risks, fragility, and lineage exposure instead of treating them as abstract prose.",
+    ends: "Use available responses to sharpen what belongs in hedge versus edge.",
+    means: "Choose craft to narrow doctrine chains, then prefer heuristics and responses that fit the quadrant."
+  };
+
   return (
     <section className="glass p-5 rounded-xl border border-white/10 mb-6">
       <div className="flex items-center justify-between gap-4 mb-3">
@@ -238,6 +259,10 @@ export function WarGameVolatility({
         {linkedDomains.map((domain) => {
           const profile = mapProfilesByDomainId.get(domain.id);
           const methodPosture = profile?.methodPosture ?? methodPostureForQuadrant(profile?.quadrant ?? "Q4");
+          const doctrineChains =
+            profile?.primaryCraftId && responseLogic.length
+              ? responseLogic.filter((chain) => chain.craftId === profile.primaryCraftId)
+              : availableDoctrineChains;
           return (
             <div key={domain.id} className="khal-editor-block p-4">
               <div className="flex items-start justify-between gap-4">
@@ -482,6 +507,66 @@ export function WarGameVolatility({
                   </div>
                 </div>
               ) : null}
+
+              <div className="mt-4 rounded-lg border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] p-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-[var(--color-text-faint)]">Scenario / Threat / Response Guidance</div>
+                    <div className="mt-1 text-xs text-[var(--color-text-muted)]">{doctrinePromptByStep[activeStep]}</div>
+                  </div>
+                  <div className="rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase tracking-widest text-zinc-400">
+                    {doctrineChains.length} chain{doctrineChains.length === 1 ? "" : "s"}
+                  </div>
+                </div>
+                {doctrineChains.length ? (
+                  <div className="mt-3 grid grid-cols-1 xl:grid-cols-2 gap-3">
+                    {doctrineChains.slice(0, 2).map((chain) => (
+                      <div key={chain.id} className="rounded-lg border border-white/10 bg-zinc-950/25 p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-[10px] uppercase tracking-widest text-zinc-500">{chain.craftName}</div>
+                            <div className="mt-1 text-sm font-semibold text-zinc-200">{chain.name}</div>
+                          </div>
+                          <div className="text-[10px] text-zinc-500 uppercase">{chain.scenarios.length} scenarios</div>
+                        </div>
+                        {chain.objective ? <div className="mt-2 text-xs text-zinc-400">{chain.objective}</div> : null}
+                        <div className="mt-3 space-y-3">
+                          {chain.scenarios.slice(0, 2).map((scenario) => (
+                            <div key={scenario.id} className="rounded-lg border border-white/5 bg-black/10 p-3">
+                              <div className="text-[11px] font-semibold uppercase tracking-widest text-zinc-300">{scenario.name}</div>
+                              {scenario.description ? <div className="mt-1 text-xs text-zinc-500">{scenario.description}</div> : null}
+                              <div className="mt-2 space-y-2">
+                                {scenario.threats.slice(0, 2).map((threat) => (
+                                  <div key={threat.id} className="rounded border border-red-500/15 bg-red-500/5 px-2 py-2 text-xs">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="font-semibold text-zinc-200">{threat.name}</div>
+                                      <div className="text-[10px] uppercase tracking-widest text-red-300">S{threat.severity ?? 5}</div>
+                                    </div>
+                                    {threat.description ? <div className="mt-1 text-zinc-500">{threat.description}</div> : null}
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                      {threat.responses.slice(0, 3).map((response) => (
+                                        <span key={response.id} className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-emerald-200">
+                                          {response.name}
+                                        </span>
+                                      ))}
+                                      {!threat.responses.length ? <span className="text-[10px] uppercase tracking-widest text-zinc-600">No response mapped</span> : null}
+                                    </div>
+                                  </div>
+                                ))}
+                                {!scenario.threats.length ? <div className="text-[11px] text-zinc-600">No threats modeled yet.</div> : null}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-lg border border-dashed border-amber-500/35 bg-amber-500/5 px-3 py-3 text-xs text-amber-200">
+                    No doctrine chains are mapped yet. Add scenario, threat, and response knowledge under Crafts to improve source-mode guidance.
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}

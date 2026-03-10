@@ -38,6 +38,7 @@ Recent completed work:
   - `Lab` can prefill hypothesis / evidence / downside from generated Interest doctrine
 - top-level `Interests` now exposes inherited doctrine and can open Portfolio creation with generated-interest context
 - Portfolio creation now understands linked Interests well enough to prefill a real project draft from doctrine fields
+- source-mode War Gaming now consumes extracted `scenario -> threat -> response` doctrine as step-aware guidance instead of leaving it dormant in bootstrap
 
 Current known fragilities:
 
@@ -45,6 +46,7 @@ Current known fragilities:
 - War Gaming internals still contain legacy confidence naming in some types/metrics code
 - War Gaming UI does not yet consume the extracted responseLogic doctrine chain
 - State of the Art "Map -> Stone -> Ends -> Means" flow is now persisted and staged in source-mode, but downstream doctrine/triage surfaces still only partially exploit it
+- source-mode now displays doctrine chains, but triage/readiness still does not reason over them deeply
 - State of Affairs inheritance now exists, but affair/interest screens are still too thin functionally compared to the richer source-mode doctrine data
 - Portfolio now consumes generated Interests at creation time, but deeper downstream exploitation of linked interest doctrine is still limited
 - Some docs trail the current implementation and need a truth-pass
@@ -52,7 +54,7 @@ Current known fragilities:
 Strong next move:
 
 - Prepare War Gaming rewrite by extracting seams first:
-  - use the extracted scenario/threat/response contract inside source-mode War Gaming
+  - use the extracted scenario/threat/response contract inside scoring, triage, and recommended next actions after the new source-mode guidance pass
   - continue State of the Art implementation after Map:
     - use the new Stone / Ends / Means fields in doctrine scoring and source guidance
   - make State of Affairs inherit hedge / edge / craft / fragility data from State of the Art more explicitly
