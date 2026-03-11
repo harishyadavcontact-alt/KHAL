@@ -147,7 +147,10 @@ export function DashboardView({
           return;
         }
         if (payload?.evaluation) setTriage(payload.evaluation as TriageEvaluationSnapshot);
-        setActionNotice(`Applied: ${suggestion.title}`);
+        if (typeof payload?.route === "string" && payload.route.length > 0 && typeof window !== "undefined") {
+          window.location.assign(payload.route);
+        }
+        setActionNotice(payload?.applied === false ? String(payload?.message ?? `Guidance: ${suggestion.title}`) : `Applied: ${suggestion.title}`);
       } catch {
         setActionNotice("Quick action failed.");
       }

@@ -4,6 +4,8 @@ import { fail, ok, withDb, withStore } from "../../../../lib/api";
 import { evaluateDecisionWithTriage } from "../../../../lib/decision-spec";
 import { writeInterest } from "@khal/sync-engine";
 import { loadRuntimeProjection } from "../../../../lib/runtime/authority";
+import { loadSourceMapProfiles } from "../../../../lib/api/source-map";
+import { loadWarGameDoctrineChains } from "../../../../lib/api/wargaming-doctrine";
 
 const schema = z.object({
   kind: z.enum([
@@ -14,6 +16,10 @@ const schema = z.object({
     "SET_AFFAIR_THRESHOLD_TEMPLATE",
     "SET_AFFAIR_PREP_TEMPLATE",
     "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE",
+    "OPEN_SOURCE_DOCTRINE_CHAIN_PLAYBOOK",
+    "OPEN_SOURCE_SCENARIO_PLAYBOOK",
+    "OPEN_SOURCE_THREAT_PLAYBOOK",
+    "OPEN_SOURCE_RESPONSE_PLAYBOOK",
     "TRIPWIRE_RECOVERY_PATH"
   ]),
   targetRef: z.object({
@@ -42,6 +48,23 @@ export async function POST(request: Request) {
       return ok({
         applied: false,
         message: "No-ruin recovery is guidance-only and cannot be auto-mutated."
+      });
+    }
+
+    if (
+      parsed.kind === "OPEN_SOURCE_DOCTRINE_CHAIN_PLAYBOOK" ||
+      parsed.kind === "OPEN_SOURCE_SCENARIO_PLAYBOOK" ||
+      parsed.kind === "OPEN_SOURCE_THREAT_PLAYBOOK" ||
+      parsed.kind === "OPEN_SOURCE_RESPONSE_PLAYBOOK"
+    ) {
+      const payload = parsed.payload ?? {};
+      const route = typeof payload.route === "string" ? payload.route : "/crafts-library";
+      return ok({
+        applied: false,
+        action: parsed.kind,
+        targetRef: parsed.targetRef,
+        route,
+        message: "Guidance action: open Crafts and complete the doctrine chain."
       });
     }
 
@@ -171,15 +194,19 @@ export async function POST(request: Request) {
       });
     }
 
-    const evaluationProjection = await withStore((dbPath) => {
-      const projection = loadRuntimeProjection({ dbPath });
+    const evaluationProjection = await withDb((db, dbPath) => {
+      const projection = loadRuntimeProjection({ db, dbPath });
+      const sourceMapProfiles = loadSourceMapProfiles(db);
+      const responseLogic = loadWarGameDoctrineChains(db);
       const evaluation = evaluateDecisionWithTriage({
         mode: parsed.targetRef.mode,
         targetId,
         role: parsed.role,
         noRuinGate: parsed.noRuinGate,
         overrides: parsed.overrides,
-        state: projection.state
+        state: projection.state,
+        sourceMapProfiles,
+        responseLogic
       });
       return { evaluation, runtimeInvariants: projection.runtimeInvariants.summary };
     });

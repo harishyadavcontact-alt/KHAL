@@ -32,7 +32,10 @@ Current status:
 - source-mode now renders scenario / threat / response guidance from `responseLogic`
 - doctrine chains are narrowed by selected craft when available, otherwise fall back to a small global set
 - source-mode triage/readiness now checks whether the selected craft is backed by a doctrine chain with scenarios, threats, and responses
-- next likely seam is downstream exploitation of that doctrine signal in quick actions, affair/interest generation, and mission guidance
+- source-mode quick actions now open craft playbooks for missing doctrine chain / scenario / threat / response seams
+- generated Affairs / Interests now carry doctrine warnings forward when the selected craft is under-specified
+- Mission Command now has a dedicated bootstrap route instead of depending on the generic war-room payload
+- intentionally deferred: `Vision Command` and doctrine-penalized Mission ordering until they can respect source-domain granularity
 
 Key implementation files:
 - `apps/web/lib/api/wargaming-doctrine.ts`

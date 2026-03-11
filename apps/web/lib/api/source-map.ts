@@ -4,6 +4,8 @@ import { writeAffair, writeInterest } from "@khal/sync-engine";
 import type { Status } from "@khal/domain";
 import type Database from "better-sqlite3";
 import { ok, withDb, type AnyRow } from "./shared";
+import { loadWarGameDoctrineChains } from "./wargaming-doctrine";
+import { doctrineGapForCraft, doctrineGapReason } from "../doctrine/gaps";
 import { deriveQuadrant, methodPostureForQuadrant } from "../war-room/source-map";
 import type { SourceMapProfileDto } from "../../components/war-room-v2/types";
 
@@ -66,6 +68,13 @@ function seedInterestScores(profile: AnyRow) {
   if (String(profile.fragility_posture ?? "") === "antifragile") return { stakes: 6, risk: 3, convexity: 8 };
   if (String(profile.fragility_posture ?? "") === "robust") return { stakes: 5, risk: 4, convexity: 6 };
   return { stakes: 4, risk: 4, convexity: 5 };
+}
+
+function collectDoctrineWarnings(db: Database.Database, profile: AnyRow): string[] {
+  const craftId = String(profile.primary_craft_id ?? "").trim();
+  if (!craftId) return ["No primary craft selected; doctrine chain is undefined."];
+  const gap = doctrineGapForCraft(craftId, loadWarGameDoctrineChains(db));
+  return gap ? [doctrineGapReason(gap)] : [];
 }
 
 export function loadSourceMapProfiles(db: Database.Database): SourceMapProfileDto[] {
@@ -227,6 +236,8 @@ export async function handleSourceMapStateOfAffairs(sourceId: string, rawBody: u
       return ok({ error: "Define edge before creating an interest." }, 400);
     }
 
+    const doctrineWarnings = collectDoctrineWarnings(db, profile);
+
     if (parsed.kind === "affair") {
       const linkedAffairId = profile.affair_id ? String(profile.affair_id) : randomUUID();
       const existingAffair = db.prepare("SELECT * FROM affairs WHERE id=?").get(linkedAffairId) as AnyRow | undefined;
@@ -237,7 +248,16 @@ export async function handleSourceMapStateOfAffairs(sourceId: string, rawBody: u
           id: linkedAffairId,
           domainId: parsed.domainId,
           title: existingAffair?.title ? String(existingAffair.title) : `Hedge: ${String(domain.name)} - ${String(source.name)}`,
-          timeline: existingAffair?.timeline ? String(existingAffair.timeline) : "Immediate obligation seeded from State of the Art",
+          description: existingAffair?.description
+            ? String(existingAffair.description)
+            : doctrineWarnings.length
+              ? `Doctrine warnings: ${doctrineWarnings.join(" ")}`
+              : "",
+          timeline: existingAffair?.timeline
+            ? String(existingAffair.timeline)
+            : doctrineWarnings.length
+              ? "Immediate obligation seeded from State of the Art. Penalized due to unresolved doctrine gaps."
+              : "Immediate obligation seeded from State of the Art",
           stakes: existingAffair?.stakes ? Number(existingAffair.stakes) : affairScores.stakes,
           risk: existingAffair?.risk ? Number(existingAffair.risk) : affairScores.risk,
           status: (existingAffair?.status ? String(existingAffair.status) : "NOT_STARTED") as Status
@@ -254,7 +274,9 @@ export async function handleSourceMapStateOfAffairs(sourceId: string, rawBody: u
            WHERE affair_id=?`
         ).run(
           JSON.stringify(objectives),
-          String(profile.risks_text ?? profile.vulnerabilities_text ?? ""),
+          [String(profile.risks_text ?? profile.vulnerabilities_text ?? ""), doctrineWarnings.length ? `Doctrine warnings: ${doctrineWarnings.join(" ")}` : ""]
+            .filter(Boolean)
+            .join(" | "),
           "WEEK",
           linkedAffairId
         );
@@ -265,7 +287,9 @@ export async function handleSourceMapStateOfAffairs(sourceId: string, rawBody: u
         ).run(
           linkedAffairId,
           JSON.stringify(objectives),
-          String(profile.risks_text ?? profile.vulnerabilities_text ?? ""),
+          [String(profile.risks_text ?? profile.vulnerabilities_text ?? ""), doctrineWarnings.length ? `Doctrine warnings: ${doctrineWarnings.join(" ")}` : ""]
+            .filter(Boolean)
+            .join(" | "),
           "WEEK"
         );
       }
@@ -311,7 +335,8 @@ export async function handleSourceMapStateOfAffairs(sourceId: string, rawBody: u
         kind: "affair",
         id: linkedAffairId,
         route: `/war-gaming/affair?target=${encodeURIComponent(linkedAffairId)}`,
-        title: existingAffair?.title ? String(existingAffair.title) : `Hedge: ${String(domain.name)} - ${String(source.name)}`
+        title: existingAffair?.title ? String(existingAffair.title) : `Hedge: ${String(domain.name)} - ${String(source.name)}`,
+        doctrineWarnings
       });
     }
 
@@ -337,7 +362,14 @@ export async function handleSourceMapStateOfAffairs(sourceId: string, rawBody: u
         upside: existingInterest?.upside ? String(existingInterest.upside) : String(profile.edge_text ?? ""),
         downside: existingInterest?.downside ? String(existingInterest.downside) : String(profile.avoid_text ?? profile.risks_text ?? ""),
         evidenceNote: existingInterest?.evidence_note ? String(existingInterest.evidence_note) : String(profile.heuristics_text ?? ""),
-        notes: existingInterest?.notes ? String(existingInterest.notes) : `Generated from source ${String(source.name)} in domain ${String(domain.name)}.`
+        notes: existingInterest?.notes
+          ? String(existingInterest.notes)
+          : [
+              `Generated from source ${String(source.name)} in domain ${String(domain.name)}.`,
+              doctrineWarnings.length ? `Doctrine warnings: ${doctrineWarnings.join(" ")}` : ""
+            ]
+              .filter(Boolean)
+              .join(" ")
       },
       undefined
     );
@@ -346,7 +378,8 @@ export async function handleSourceMapStateOfAffairs(sourceId: string, rawBody: u
       kind: "interest",
       id: linkedInterestId,
       route: `/war-gaming/interest?target=${encodeURIComponent(linkedInterestId)}`,
-      title: existingInterest?.title ? String(existingInterest.title) : `Edge: ${String(domain.name)} - ${String(source.name)}`
+      title: existingInterest?.title ? String(existingInterest.title) : `Edge: ${String(domain.name)} - ${String(source.name)}`,
+      doctrineWarnings
     });
   });
 }

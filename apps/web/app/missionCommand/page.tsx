@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { KhalOpsShell } from "../../components/ops-shell/KhalOpsShell";
 import { MissionCommand } from "../../components/war-room-v2/MissionCommand";
-import { useWarRoomData } from "../../lib/war-room/useWarRoomData";
+import { useMissionCommandBootstrap } from "../../lib/war-room/useMissionCommandBootstrap";
 
 export default function MissionCommandPage() {
   const router = useRouter();
-  const { data, loading, error, refresh } = useWarRoomData();
+  const { data, loading, error, refresh } = useMissionCommandBootstrap();
 
   return (
     <KhalOpsShell title="Mission Command" subtitle="Hierarchy">

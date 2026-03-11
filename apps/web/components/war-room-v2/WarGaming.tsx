@@ -707,7 +707,10 @@ export const WarGaming = ({
       if (payload?.evaluation) {
         setTriageEval(payload.evaluation as TriageEvaluationSnapshot);
       }
-      setActionNotice(`Applied: ${suggestion.title}`);
+      if (typeof payload?.route === "string" && payload.route.length > 0) {
+        router.push(payload.route);
+      }
+      setActionNotice(payload?.applied === false ? String(payload?.message ?? `Guidance: ${suggestion.title}`) : `Applied: ${suggestion.title}`);
     } catch {
       setActionNotice("Quick action failed.");
     }

@@ -3,12 +3,13 @@ KHAL terminal handoff
 - Snapshot date: 2026-03-11
 - Repo: E:\KHAL
 - Branch: main
-- Current head: `58aef61` (`Make source-mode triage doctrine-aware`)
+- Current head: working tree pending commit for curated PR #2 integration
 - Runtime authority: operator-scoped SQLite via data/operators/*.sqlite selected through .khal.local.json
 - Excel: Genesis.xlsx is archival only
 
 Current clean commit chain:
 
+- pending: curated doctrine-playbook / mission-bootstrap slice
 - `58aef61` `Make source-mode triage doctrine-aware`
 - `f7f700b` `Use doctrine response logic in source war gaming`
 - `55539b2` `Bridge generated interests into portfolio command`
@@ -54,14 +55,19 @@ Recent completed work:
   - missing scenarios
   - missing threats
   - missing responses
+- source-mode quick actions can now route directly into craft playbooks for doctrine gaps
+- generated Affairs / Interests now carry doctrine warnings forward when their selected craft is under-specified
+- Mission Command now has a dedicated bootstrap route / hook instead of loading through the generic war-room payload
+- reviewed PR #2 and deliberately did not take:
+  - premature `Vision Command` nav/page
+  - domain-level doctrine-penalized Mission ordering that collapses source-domain granularity
 
 Current known fragilities:
 
 - War Room still has a mock/runtime split in apps/web/app/api/war-room-data/route.ts and apps/web/lib/war-room/useWarRoomData.ts
 - War Gaming internals still contain legacy confidence naming in some types/metrics code
-- War Gaming UI does not yet consume the extracted responseLogic doctrine chain
 - State of the Art "Map -> Stone -> Ends -> Means" flow is now persisted and staged in source-mode, but downstream doctrine/triage surfaces still only partially exploit it
-- source-mode now reasons over doctrine-chain coverage, but quick actions and downstream operational surfaces still do not exploit that signal deeply
+- source-mode now reasons over doctrine-chain coverage and routes to playbooks, but downstream operational surfaces still do not exploit that signal deeply
 - State of Affairs inheritance now exists, but affair/interest screens are still too thin functionally compared to the richer source-mode doctrine data
 - Portfolio now consumes generated Interests at creation time, but deeper downstream exploitation of linked interest doctrine is still limited
 - Some docs trail the current implementation and need a truth-pass
@@ -82,17 +88,14 @@ Strong next move:
 Active Plan 1 queue for Codex Cloud:
 
 1. Exploit doctrine-aware triage in quick actions.
-   - add source-mode quick actions for:
-     - missing doctrine chain
-     - missing scenarios
-     - missing threats
-     - missing responses
+   - done for source-mode craft playbooks
+   - next: make those playbooks land on richer prefiltered craft views, not just route hints
 2. Push doctrine gaps into generated `Affair` / `Interest` defaults.
-   - hedge/edge generation should reflect unresolved doctrine weakness
-   - generated planning records should carry doctrine warnings forward
+   - done for warnings propagation
+   - next: make the inherited warning shape affect preparation defaults more concretely
 3. Use doctrine weakness in Mission guidance.
-   - unresolved source doctrine should lower confidence in downstream ordering
-   - Mission should highlight fragile sequencing where responses are absent
+   - still pending
+   - must preserve source-domain granularity; do not collapse to plain domain penalties
 4. Keep reducing mock/runtime split.
    - prefer dedicated runtime loaders over generic war-room payload where possible
 5. Only after the above, reassess:

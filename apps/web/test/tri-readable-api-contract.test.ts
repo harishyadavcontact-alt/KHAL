@@ -188,4 +188,20 @@ describe("tri-readable api contracts", () => {
     expect(actionJson.applied).toBe(true);
     expect(actionJson.evaluation).toBeTruthy();
   });
+
+  it("returns guidance route for source doctrine playbook quick actions", async () => {
+    const actionResponse = await quickActionPost(
+      postJson("http://localhost/api/decision/quick-action", {
+        kind: "OPEN_SOURCE_DOCTRINE_CHAIN_PLAYBOOK",
+        targetRef: { mode: "source", targetId: "source-geopolitics" },
+        payload: { route: "/crafts-library?sourceId=source-geopolitics&playbook=chain" },
+        role: "MISSIONARY",
+        noRuinGate: true
+      })
+    );
+    const actionJson = await actionResponse.json();
+    expect(actionResponse.status).toBe(200);
+    expect(actionJson.applied).toBe(false);
+    expect(actionJson.route).toContain("/crafts-library");
+  });
 });

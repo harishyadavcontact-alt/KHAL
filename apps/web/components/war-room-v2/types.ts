@@ -826,6 +826,10 @@ export type DoctrineQuickActionKind =
   | "SET_AFFAIR_THRESHOLD_TEMPLATE"
   | "SET_AFFAIR_PREP_TEMPLATE"
   | "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE"
+  | "OPEN_SOURCE_DOCTRINE_CHAIN_PLAYBOOK"
+  | "OPEN_SOURCE_SCENARIO_PLAYBOOK"
+  | "OPEN_SOURCE_THREAT_PLAYBOOK"
+  | "OPEN_SOURCE_RESPONSE_PLAYBOOK"
   | "TRIPWIRE_RECOVERY_PATH";
 
 export interface DoctrineQuickAction {
@@ -937,6 +941,7 @@ export interface AppData {
   latency?: DecisionLatencySnapshot;
   counterfactual?: CounterfactualDelta;
   confidence?: ConfidenceEvidenceMeta;
+  responseLogic?: import("../../lib/war-room/bootstrap").WarGameDoctrineChain[];
   optionalityBudget?: OptionalityBudgetState;
   fragilityTimeline?: FragilityTimelinePoint[];
   decisionReplay?: DecisionReplayEvent[];

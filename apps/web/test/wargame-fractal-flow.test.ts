@@ -179,7 +179,7 @@ describe("wargame fractal flow", () => {
       role: "MISSIONARY",
       noRuinGate: true
     });
-    const grammar = triage.find((item) => item.title === "GRAMMAR_INCOMPLETE");
-    expect(grammar?.missingItems).toContain("doctrine_chain");
+    const doctrinePlaybook = triage.find((item) => item.actionKind === "OPEN_SOURCE_DOCTRINE_CHAIN_PLAYBOOK");
+    expect(doctrinePlaybook?.missingItems).toContain("doctrine_chain");
   });
 });
