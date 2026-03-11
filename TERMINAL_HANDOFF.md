@@ -3,7 +3,7 @@ KHAL terminal handoff
 - Snapshot date: 2026-03-11
 - Repo: E:\KHAL
 - Branch: main
-- Current head: `815fb17` (`Integrate curated doctrine playbook slice`)
+- Current head: `8df2d08` (`Refresh handoff after doctrine playbook slice`)
 - Runtime authority: operator-scoped SQLite via data/operators/*.sqlite selected through .khal.local.json
 - Excel: Genesis.xlsx is archival only
 
@@ -61,6 +61,8 @@ Recent completed work:
 - reviewed PR #2 and deliberately did not take:
   - premature `Vision Command` nav/page
   - domain-level doctrine-penalized Mission ordering that collapses source-domain granularity
+- Mission guidance now preserves source-domain provenance and attaches doctrine cautions to linked Affairs / Interests instead of applying a coarse domain penalty
+- War Gaming Mission and Mission Command now show source-domain doctrine cautions directly in ordering / warning surfaces
 
 Current known fragilities:
 
@@ -70,6 +72,7 @@ Current known fragilities:
 - source-mode now reasons over doctrine-chain coverage and routes to playbooks, but downstream operational surfaces still do not exploit that signal deeply
 - State of Affairs inheritance now exists, but affair/interest screens are still too thin functionally compared to the richer source-mode doctrine data
 - Portfolio now consumes generated Interests at creation time, but deeper downstream exploitation of linked interest doctrine is still limited
+- Mission tier cards still summarize at domain level in some places even though linked doctrine guidance is now source-domain aware
 - Some docs trail the current implementation and need a truth-pass
 
 Strong next move:
@@ -94,8 +97,8 @@ Active Plan 1 queue for Codex Cloud:
    - done for warnings propagation
    - next: make the inherited warning shape affect preparation defaults more concretely
 3. Use doctrine weakness in Mission guidance.
-   - still pending
-   - must preserve source-domain granularity; do not collapse to plain domain penalties
+   - done for source-domain-linked warnings and cautions
+   - next: make operational defaults and mission tiers use the richer provenance more deeply
 4. Keep reducing mock/runtime split.
    - prefer dedicated runtime loaders over generic war-room payload where possible
 5. Only after the above, reassess:
@@ -109,4 +112,4 @@ Session log:
 
 Recommended opening prompt for the new Codex terminal:
 
-Continue in E:\KHAL from current main. Read TERMINAL_HANDOFF.md and docs/agent-log/2026-03.md, inspect the current repo state, and continue the War Gaming rewrite by exploiting the new doctrine-aware source-mode triage signal in downstream planning: quick actions, generated Affairs/Interests, and mission guidance.
+Continue in E:\KHAL from current main. Read TERMINAL_HANDOFF.md and docs/agent-log/2026-03.md, inspect the current repo state, and continue the War Gaming rewrite by exploiting the source-domain doctrine signal downstream: operational defaults, richer mission provenance, and remaining mock/runtime reduction.

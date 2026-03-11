@@ -1002,7 +1002,17 @@ export const WarGaming = ({
       {mode === "affair" && <WarGameAffair affairId={modeTargetId} affairs={affairs} domains={domains} sources={sources} crafts={crafts} />}
       {mode === "interest" && <WarGameInterest interestId={modeTargetId} interests={interests} affairs={affairs} sources={sources} crafts={crafts} />}
       {mode === "craft" && <WarGameCraft craftId={modeTargetId} crafts={crafts} />}
-      {mode === "mission" && <WarGameMission missionId={modeTargetId} missionGraph={missionGraph} affairs={affairs} interests={interests} />}
+      {mode === "mission" && (
+        <WarGameMission
+          missionId={modeTargetId}
+          missionGraph={missionGraph}
+          affairs={affairs}
+          interests={interests}
+          sources={sources}
+          domains={domains}
+          responseLogic={responseLogic ?? []}
+        />
+      )}
       {mode === "lineage" && <WarGameLineage lineageNodeId={modeTargetId} lineages={lineages} lineageRisks={lineageRisks} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">

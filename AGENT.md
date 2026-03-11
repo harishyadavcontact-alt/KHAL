@@ -35,6 +35,8 @@ Current status:
 - source-mode quick actions now open craft playbooks for missing doctrine chain / scenario / threat / response seams
 - generated Affairs / Interests now carry doctrine warnings forward when the selected craft is under-specified
 - Mission Command now has a dedicated bootstrap route instead of depending on the generic war-room payload
+- Mission guidance now preserves source-domain provenance instead of flattening doctrine weakness to one domain-level penalty
+- Mission and Mission Command now surface source-domain doctrine cautions on linked Affairs / Interests without introducing coarse ranking penalties
 - intentionally deferred: `Vision Command` and doctrine-penalized Mission ordering until they can respect source-domain granularity
 
 Key implementation files:
@@ -43,6 +45,7 @@ Key implementation files:
 - `apps/web/components/war-room-v2/WarGaming.tsx`
 - `apps/web/components/war-room-v2/wargame_volatility.tsx`
 - `apps/web/lib/api/source-map.ts`
+- `apps/web/lib/war-room/mission-guidance.ts`
 
 Key planning docs:
 - `docs/architecture/war-gaming-rewrite-slice-2026-03-11.md`

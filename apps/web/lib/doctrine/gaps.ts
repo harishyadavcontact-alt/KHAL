@@ -10,6 +10,13 @@ export function doctrineGapReason(code: DoctrineGapCode): string {
   return "Doctrine chain is missing responses.";
 }
 
+export function doctrineWarningsForProfile(profile: Pick<SourceMapProfileDto, "primaryCraftId">, responseLogic: WarGameDoctrineChain[]): string[] {
+  const craftId = profile.primaryCraftId?.trim();
+  if (!craftId) return ["No primary craft selected; doctrine chain is undefined."];
+  const gap = doctrineGapForCraft(craftId, responseLogic);
+  return gap ? [doctrineGapReason(gap)] : [];
+}
+
 export function doctrineGapForCraft(craftId: string, responseLogic: WarGameDoctrineChain[]): DoctrineGapCode | undefined {
   const chains = responseLogic.filter((chain) => chain.craftId === craftId);
   if (!chains.length) return "doctrine_chain";

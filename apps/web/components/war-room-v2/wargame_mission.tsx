@@ -1,14 +1,19 @@
 import React, { useMemo } from "react";
-import { Affair, Interest, MissionGraphDto } from "./types";
+import { Affair, Domain, Interest, MissionGraphDto, VolatilitySourceDto } from "./types";
+import type { WarGameDoctrineChain } from "../../lib/war-room/bootstrap";
+import { buildMissionGuidance } from "../../lib/war-room/mission-guidance";
 
 interface WarGameMissionProps {
   missionId?: string;
   missionGraph?: MissionGraphDto;
   affairs: Affair[];
   interests: Interest[];
+  sources?: VolatilitySourceDto[];
+  domains?: Domain[];
+  responseLogic?: WarGameDoctrineChain[];
 }
 
-export function WarGameMission({ missionId, missionGraph, affairs, interests }: WarGameMissionProps) {
+export function WarGameMission({ missionId, missionGraph, affairs, interests, sources, domains, responseLogic }: WarGameMissionProps) {
   const missionNodes = useMemo(
     () => (missionGraph?.nodes ?? []).filter((node) => node.missionId === missionId && node.refType !== "MISSION"),
     [missionGraph?.nodes, missionId]
@@ -19,18 +24,10 @@ export function WarGameMission({ missionId, missionGraph, affairs, interests }: 
   const interestCount = missionNodes.filter((node) => node.refType === "INTEREST").length;
   const linkedAffairs = affairs.filter((affair) => missionNodes.some((node) => node.refType === "AFFAIR" && node.refId === affair.id));
   const linkedInterests = interests.filter((interest) => missionNodes.some((node) => node.refType === "INTEREST" && node.refId === interest.id));
-  const recommendedOrder = [
-    ...[...affairs].sort((left, right) => Number(right.stakes ?? 0) * Number(right.risk ?? 0) - Number(left.stakes ?? 0) * Number(left.risk ?? 0)).map((affair) => ({
-      id: affair.id,
-      kind: "Affair",
-      title: affair.title
-    })),
-    ...[...interests].sort((left, right) => Number(right.convexity ?? 0) - Number(left.convexity ?? 0)).map((interest) => ({
-      id: interest.id,
-      kind: "Interest",
-      title: interest.title
-    }))
-  ].slice(0, 6);
+  const missionGuidance = useMemo(
+    () => buildMissionGuidance({ affairs, interests, sources, domains, responseLogic }),
+    [affairs, domains, interests, responseLogic, sources]
+  );
 
   return (
     <section className="glass p-5 rounded-xl border border-white/10 mb-6">
@@ -64,10 +61,21 @@ export function WarGameMission({ missionId, missionGraph, affairs, interests }: 
       <div className="mt-4 rounded-lg border border-white/10 bg-zinc-900/40 p-3">
         <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Default Mission Ordering</div>
         <div className="space-y-2 text-xs">
-          {recommendedOrder.length ? (
-            recommendedOrder.map((item, index) => (
+          {missionGuidance.recommendedOrder.length ? (
+            missionGuidance.recommendedOrder.map((item, index) => (
               <div key={item.id} className="rounded border border-white/10 bg-zinc-950/30 px-3 py-2 text-zinc-200">
-                {index + 1}. {item.kind}: {item.title}
+                <div>
+                  {index + 1}. {item.kind}: {item.title}
+                </div>
+                {item.doctrineRefs.length ? (
+                  <div className="mt-1 space-y-1">
+                    {item.doctrineRefs.map((ref) => (
+                      <div key={`${item.id}-${ref.sourceId}-${ref.domainId}`} className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-amber-200 mr-1">
+                        {ref.sourceName} {"->"} {ref.domainName}: {ref.warnings.join(" ")}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ))
           ) : (
@@ -75,6 +83,18 @@ export function WarGameMission({ missionId, missionGraph, affairs, interests }: 
           )}
         </div>
       </div>
+      {missionGuidance.doctrineLinkedRecords.length ? (
+        <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+          <div className="text-[10px] uppercase tracking-widest text-amber-200 mb-2">Mission Doctrine Cautions</div>
+          <div className="space-y-2 text-xs text-amber-100">
+            {missionGuidance.doctrineLinkedRecords.slice(0, 4).map((item) => (
+              <div key={`caution-${item.id}`}>
+                {item.kind}: {item.title}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

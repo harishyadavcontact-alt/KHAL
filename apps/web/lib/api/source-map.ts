@@ -5,7 +5,7 @@ import type { Status } from "@khal/domain";
 import type Database from "better-sqlite3";
 import { ok, withDb, type AnyRow } from "./shared";
 import { loadWarGameDoctrineChains } from "./wargaming-doctrine";
-import { doctrineGapForCraft, doctrineGapReason } from "../doctrine/gaps";
+import { doctrineWarningsForProfile } from "../doctrine/gaps";
 import { deriveQuadrant, methodPostureForQuadrant } from "../war-room/source-map";
 import type { SourceMapProfileDto } from "../../components/war-room-v2/types";
 
@@ -71,10 +71,10 @@ function seedInterestScores(profile: AnyRow) {
 }
 
 function collectDoctrineWarnings(db: Database.Database, profile: AnyRow): string[] {
-  const craftId = String(profile.primary_craft_id ?? "").trim();
-  if (!craftId) return ["No primary craft selected; doctrine chain is undefined."];
-  const gap = doctrineGapForCraft(craftId, loadWarGameDoctrineChains(db));
-  return gap ? [doctrineGapReason(gap)] : [];
+  return doctrineWarningsForProfile(
+    { primaryCraftId: profile.primary_craft_id ? String(profile.primary_craft_id) : undefined },
+    loadWarGameDoctrineChains(db)
+  );
 }
 
 export function loadSourceMapProfiles(db: Database.Database): SourceMapProfileDto[] {

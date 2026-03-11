@@ -5,6 +5,7 @@ import { FlowLanes } from "./charts/FlowLanes";
 import { StackedBalanceBar } from "./charts/StackedBalanceBar";
 import { buildMissionVisualSnapshot } from "../../lib/war-room/visual-encodings";
 import { isInterestProtocolReady } from "../../lib/war-room/operational-metrics";
+import { buildMissionGuidance } from "../../lib/war-room/mission-guidance";
 import { VirtueSpiralPanel } from "./VirtueSpiralPanel";
 import { DoNowCopilotCard } from "./DoNowCopilotCard";
 import { ProtocolStatusStrip } from "./ProtocolStatusStrip";
@@ -52,6 +53,16 @@ export const MissionCommand = ({
   }, [data.affairs, data.interests, data.lineageRisks]);
 
   const missionSnapshot = useMemo(() => buildMissionVisualSnapshot(data), [data]);
+  const missionGuidance = useMemo(
+    () => buildMissionGuidance({
+      affairs: data.affairs,
+      interests: data.interests,
+      sources: data.sources,
+      domains: data.domains,
+      responseLogic: data.responseLogic
+    }),
+    [data.affairs, data.domains, data.interests, data.responseLogic, data.sources]
+  );
   const activeTier = missionSnapshot.rows[activeTierIndex] ?? null;
 
   useEffect(() => {
@@ -195,6 +206,11 @@ export const MissionCommand = ({
             {missionState.unresolvedAffairs.length} affairs still missing mission fields (domain + means + objectives).
           </div>
         )}
+        {missionGuidance.doctrineLinkedRecords.length > 0 && (
+          <div className="mb-3 rounded-lg border p-2 text-xs text-amber-100 bg-amber-500/10 border-amber-500/30">
+            {missionGuidance.doctrineLinkedRecords.length} mission-linked records still carry source-domain doctrine cautions. Keep obligations first and avoid overstating execution confidence.
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-3">
           <div className="khal-editor-block p-3">
@@ -254,6 +270,11 @@ export const MissionCommand = ({
                     <div className="khal-title text-xs font-semibold">Tier {tier.tier}: {tier.title}</div>
                     <span className="khal-tone-danger text-[10px] font-mono">F:{tier.fragility}</span>
                   </div>
+                  {missionGuidance.doctrineLinkedRecords.some((item) => item.domainId === tier.domainId) ? (
+                    <div className="mt-1 inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-amber-200">
+                      source-domain doctrine cautions active
+                    </div>
+                  ) : null}
                   <div className="khal-meta mt-1 text-[10px]">Serial</div>
                   <div className="text-xs text-[var(--color-text-muted)]">{tier.serialAffairs.join(" | ") || "No linked affairs yet"}</div>
                   <div className="khal-meta mt-1 text-[10px]">Parallel</div>
@@ -268,6 +289,26 @@ export const MissionCommand = ({
           <div className="khal-meta mb-2 text-[10px]">Convexity Balance</div>
           <StackedBalanceBar segments={missionSnapshot.balanceSegments} />
         </div>
+
+        {missionGuidance.doctrineLinkedRecords.length > 0 ? (
+          <div className="khal-editor-block mt-3 p-3">
+            <div className="khal-meta mb-2 text-[10px]">Source-Domain Mission Cautions</div>
+            <div className="space-y-2 text-xs text-[var(--color-text-muted)]">
+              {missionGuidance.doctrineLinkedRecords.slice(0, 6).map((item) => (
+                <div key={`mission-guidance-${item.id}`} className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+                  <div className="font-semibold text-zinc-100">{item.kind}: {item.title}</div>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {item.doctrineRefs.map((ref) => (
+                      <span key={`${item.id}-${ref.sourceId}-${ref.domainId}`} className="rounded-full border border-amber-500/30 px-2 py-0.5 text-[10px] uppercase tracking-widest text-amber-200">
+                        {ref.sourceName} {"->"} {ref.domainName}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-3">
           <button
