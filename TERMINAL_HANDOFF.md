@@ -1,9 +1,19 @@
 KHAL terminal handoff
 
+- Snapshot date: 2026-03-11
 - Repo: E:\KHAL
 - Branch: main
+- Current head: `58aef61` (`Make source-mode triage doctrine-aware`)
 - Runtime authority: operator-scoped SQLite via data/operators/*.sqlite selected through .khal.local.json
 - Excel: Genesis.xlsx is archival only
+
+Current clean commit chain:
+
+- `58aef61` `Make source-mode triage doctrine-aware`
+- `f7f700b` `Use doctrine response logic in source war gaming`
+- `55539b2` `Bridge generated interests into portfolio command`
+- `de6bd94` `Wire war gaming flow into ops UI surfaces`
+- `522413e` `Extract war gaming runtime and source-map doctrine`
 
 Recent completed work:
 
@@ -68,6 +78,26 @@ Strong next move:
   - continue reducing dependency on generic mock war-room data
   - clean remaining operator-facing confidence language
   - keep app-shell/theme work stable while feature work continues
+
+Active Plan 1 queue for Codex Cloud:
+
+1. Exploit doctrine-aware triage in quick actions.
+   - add source-mode quick actions for:
+     - missing doctrine chain
+     - missing scenarios
+     - missing threats
+     - missing responses
+2. Push doctrine gaps into generated `Affair` / `Interest` defaults.
+   - hedge/edge generation should reflect unresolved doctrine weakness
+   - generated planning records should carry doctrine warnings forward
+3. Use doctrine weakness in Mission guidance.
+   - unresolved source doctrine should lower confidence in downstream ordering
+   - Mission should highlight fragile sequencing where responses are absent
+4. Keep reducing mock/runtime split.
+   - prefer dedicated runtime loaders over generic war-room payload where possible
+5. Only after the above, reassess:
+   - deeper Portfolio exploitation
+   - eventual `Vision Command` synthesis section
 
 Session log:
 
