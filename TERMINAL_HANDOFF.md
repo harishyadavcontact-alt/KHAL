@@ -3,12 +3,13 @@ KHAL terminal handoff
 - Snapshot date: 2026-03-11
 - Repo: E:\KHAL
 - Branch: main
-- Current head: `8df2d08` (`Refresh handoff after doctrine playbook slice`)
+- Current head: `4c3e579` (`Add source-domain mission guidance warnings`)
 - Runtime authority: operator-scoped SQLite via data/operators/*.sqlite selected through .khal.local.json
 - Excel: Genesis.xlsx is archival only
 
 Current clean commit chain:
 
+- `4c3e579` `Add source-domain mission guidance warnings`
 - `815fb17` `Integrate curated doctrine playbook slice`
 - `58aef61` `Make source-mode triage doctrine-aware`
 - `f7f700b` `Use doctrine response logic in source war gaming`
