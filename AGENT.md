@@ -31,7 +31,8 @@ Current rewrite focus:
 Current status:
 - source-mode now renders scenario / threat / response guidance from `responseLogic`
 - doctrine chains are narrowed by selected craft when available, otherwise fall back to a small global set
-- next likely seam is deeper use of doctrine responses in scoring / triage, not just display guidance
+- source-mode triage/readiness now checks whether the selected craft is backed by a doctrine chain with scenarios, threats, and responses
+- next likely seam is downstream exploitation of that doctrine signal in quick actions, affair/interest generation, and mission guidance
 
 Key implementation files:
 - `apps/web/lib/api/wargaming-doctrine.ts`

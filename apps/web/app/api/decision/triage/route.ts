@@ -3,6 +3,7 @@ import { fail, ok, withDb } from "../../../../lib/api";
 import { evaluateDecisionWithTriage } from "../../../../lib/decision-spec";
 import { loadRuntimeProjection } from "../../../../lib/runtime/authority";
 import { loadSourceMapProfiles } from "../../../../lib/api/source-map";
+import { loadWarGameDoctrineChains } from "../../../../lib/api/wargaming-doctrine";
 
 const schema = z.object({
   mode: z.enum(["source", "domain", "affair", "interest", "craft", "lineage", "mission"]),
@@ -18,6 +19,7 @@ export async function POST(request: Request) {
     return withDb((db, dbPath) => {
       const projection = loadRuntimeProjection({ db, dbPath });
       const sourceMapProfiles = loadSourceMapProfiles(db);
+      const responseLogic = loadWarGameDoctrineChains(db);
       const result = evaluateDecisionWithTriage({
         mode: parsed.mode,
         targetId: parsed.targetId,
@@ -25,7 +27,8 @@ export async function POST(request: Request) {
         noRuinGate: parsed.noRuinGate,
         overrides: parsed.overrides,
         state: projection.state,
-        sourceMapProfiles
+        sourceMapProfiles,
+        responseLogic
       });
       return ok({ ...result, runtimeInvariants: projection.runtimeInvariants.summary });
     });

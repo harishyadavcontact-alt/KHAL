@@ -39,6 +39,11 @@ Recent completed work:
 - top-level `Interests` now exposes inherited doctrine and can open Portfolio creation with generated-interest context
 - Portfolio creation now understands linked Interests well enough to prefill a real project draft from doctrine fields
 - source-mode War Gaming now consumes extracted `scenario -> threat -> response` doctrine as step-aware guidance instead of leaving it dormant in bootstrap
+- source-mode decision evaluation / triage now reasons over doctrine-chain coverage:
+  - missing craft doctrine chain
+  - missing scenarios
+  - missing threats
+  - missing responses
 
 Current known fragilities:
 
@@ -46,7 +51,7 @@ Current known fragilities:
 - War Gaming internals still contain legacy confidence naming in some types/metrics code
 - War Gaming UI does not yet consume the extracted responseLogic doctrine chain
 - State of the Art "Map -> Stone -> Ends -> Means" flow is now persisted and staged in source-mode, but downstream doctrine/triage surfaces still only partially exploit it
-- source-mode now displays doctrine chains, but triage/readiness still does not reason over them deeply
+- source-mode now reasons over doctrine-chain coverage, but quick actions and downstream operational surfaces still do not exploit that signal deeply
 - State of Affairs inheritance now exists, but affair/interest screens are still too thin functionally compared to the richer source-mode doctrine data
 - Portfolio now consumes generated Interests at creation time, but deeper downstream exploitation of linked interest doctrine is still limited
 - Some docs trail the current implementation and need a truth-pass
@@ -54,10 +59,11 @@ Current known fragilities:
 Strong next move:
 
 - Prepare War Gaming rewrite by extracting seams first:
-  - use the extracted scenario/threat/response contract inside scoring, triage, and recommended next actions after the new source-mode guidance pass
+  - use the extracted scenario/threat/response contract inside recommended next actions and downstream planning surfaces after the new scoring/triage pass
   - continue State of the Art implementation after Map:
     - use the new Stone / Ends / Means fields in doctrine scoring and source guidance
   - make State of Affairs inherit hedge / edge / craft / fragility data from State of the Art more explicitly
+  - let source-mode doctrine gaps shape generated Affair / Interest defaults and mission ordering more directly
   - deepen Portfolio project detail and experiment/gate surfaces so linked-interest doctrine remains visible beyond creation time
   - continue reducing dependency on generic mock war-room data
   - clean remaining operator-facing confidence language
@@ -70,4 +76,4 @@ Session log:
 
 Recommended opening prompt for the new Codex terminal:
 
-Continue in E:\KHAL from current main. Read TERMINAL_HANDOFF.md and docs/agent-log/2026-03.md, inspect the current repo state, and continue the War Gaming rewrite by implementing the next State of the Art stages after Map: Philosopher's Stone, Ends, and Means, on top of the extracted source-map and responseLogic seams.
+Continue in E:\KHAL from current main. Read TERMINAL_HANDOFF.md and docs/agent-log/2026-03.md, inspect the current repo state, and continue the War Gaming rewrite by exploiting the new doctrine-aware source-mode triage signal in downstream planning: quick actions, generated Affairs/Interests, and mission guidance.

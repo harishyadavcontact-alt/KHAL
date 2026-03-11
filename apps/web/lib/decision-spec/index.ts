@@ -1,5 +1,6 @@
 import type { Affair, Craft, Interest, KhalState, Task } from "@khal/domain";
 import type { SourceMapProfileDto } from "../../components/war-room-v2/types";
+import type { WarGameDoctrineChain } from "../war-room/bootstrap";
 import {
   doctrineQuickActionSchema,
   decisionEvaluationResultSchema,
@@ -66,7 +67,39 @@ function hasDomainBarbellPosture(state: KhalState, domainId: string): { hedge: b
   return { hedge, edge };
 }
 
-function missingForMode(mode: WarGameModeSpec, state: KhalState, targetId: string, sourceMapProfiles: SourceMapProfileDto[] = []): string[] {
+function missingDoctrineForSourceMode(profiles: SourceMapProfileDto[], responseLogic: WarGameDoctrineChain[]): string[] {
+  if (!profiles.length) return [];
+  const selectedCraftIds = Array.from(
+    new Set(
+      profiles
+        .map((item) => item.primaryCraftId?.trim())
+        .filter((item): item is string => Boolean(item))
+    )
+  );
+  if (!selectedCraftIds.length) return [];
+
+  const doctrineChains = responseLogic.filter((chain) => selectedCraftIds.includes(chain.craftId));
+  if (!doctrineChains.length) return ["doctrine_chain"];
+
+  const hasScenarios = doctrineChains.some((chain) => chain.scenarios.length > 0);
+  if (!hasScenarios) return ["scenario_logic"];
+
+  const hasThreats = doctrineChains.some((chain) => chain.scenarios.some((scenario) => scenario.threats.length > 0));
+  if (!hasThreats) return ["threat_logic"];
+
+  const hasResponses = doctrineChains.some((chain) => chain.scenarios.some((scenario) => scenario.threats.some((threat) => threat.responses.length > 0)));
+  if (!hasResponses) return ["response_logic"];
+
+  return [];
+}
+
+function missingForMode(
+  mode: WarGameModeSpec,
+  state: KhalState,
+  targetId: string,
+  sourceMapProfiles: SourceMapProfileDto[] = [],
+  responseLogic: WarGameDoctrineChain[] = []
+): string[] {
   if (mode === "source") {
     const source = (state.sources ?? []).find((item) => item.id === targetId);
     const requiredDomainIds = Array.from(new Set((source?.domains ?? []).map((item) => item.domainId)));
@@ -74,7 +107,7 @@ function missingForMode(mode: WarGameModeSpec, state: KhalState, targetId: strin
     const profileByDomainId = new Map(relevantProfiles.map((item) => [item.domainId, item]));
     const completeCoverage = requiredDomainIds.length > 0 && requiredDomainIds.every((domainId) => profileByDomainId.has(domainId));
     const allMappedProfiles = completeCoverage ? requiredDomainIds.map((domainId) => profileByDomainId.get(domainId)).filter(Boolean) as SourceMapProfileDto[] : [];
-    return [
+    const grammarMissing = [
       source?.name ? null : "source_profile",
       (source?.domains?.length ?? 0) > 0 ? null : "semantic_domains",
       completeCoverage && allMappedProfiles.every((item) => Boolean(item.decisionType)) ? null : "decision_type",
@@ -87,6 +120,8 @@ function missingForMode(mode: WarGameModeSpec, state: KhalState, targetId: strin
       completeCoverage && allMappedProfiles.every((item) => Boolean(item.hedgeText?.trim()) && Boolean(item.edgeText?.trim())) ? null : "ends",
       completeCoverage && allMappedProfiles.every((item) => Boolean(item.primaryCraftId?.trim()) && Boolean(item.heuristicsText?.trim()) && Boolean(item.avoidText?.trim())) ? null : "means"
     ].filter(Boolean) as string[];
+    if (grammarMissing.length) return grammarMissing;
+    return missingDoctrineForSourceMode(allMappedProfiles, responseLogic);
   }
   if (mode === "domain") {
     const domain = state.domains.find((item) => item.id === targetId);
@@ -251,6 +286,7 @@ export function evaluateDecision(args: {
   targetId: string;
   state: KhalState;
   sourceMapProfiles?: SourceMapProfileDto[];
+  responseLogic?: WarGameDoctrineChain[];
   role?: "MISSIONARY" | "VISIONARY";
   noRuinGate?: boolean;
   overrides?: string[];
@@ -269,7 +305,7 @@ export function evaluateDecision(args: {
     });
   }
 
-  const missingRequiredFields = missingForMode(args.mode, args.state, args.targetId, args.sourceMapProfiles);
+  const missingRequiredFields = missingForMode(args.mode, args.state, args.targetId, args.sourceMapProfiles, args.responseLogic);
   const completed = completedModes(args.state);
   const missingPredecessors = modeSpec.predecessors.filter((mode) => !completed[mode]);
   const guardReasons = evaluateGuards({
@@ -406,6 +442,7 @@ export function buildDeterministicTriage(args: {
   targetId: string;
   state: KhalState;
   sourceMapProfiles?: SourceMapProfileDto[];
+  responseLogic?: WarGameDoctrineChain[];
   role?: "MISSIONARY" | "VISIONARY";
   noRuinGate?: boolean;
   overrides?: string[];
@@ -460,6 +497,7 @@ export function evaluateDecisionWithTriage(args: {
   targetId: string;
   state: KhalState;
   sourceMapProfiles?: SourceMapProfileDto[];
+  responseLogic?: WarGameDoctrineChain[];
   role?: "MISSIONARY" | "VISIONARY";
   noRuinGate?: boolean;
   overrides?: string[];
