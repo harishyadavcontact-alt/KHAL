@@ -1,6 +1,7 @@
 import type { Affair, Craft, Interest, KhalState, Task } from "@khal/domain";
 import type { SourceMapProfileDto } from "../../components/war-room-v2/types";
 import type { WarGameDoctrineChain } from "../war-room/bootstrap";
+import { missingDoctrineForSourceProfiles } from "../doctrine/gaps";
 import {
   doctrineQuickActionSchema,
   decisionEvaluationResultSchema,
@@ -68,30 +69,9 @@ function hasDomainBarbellPosture(state: KhalState, domainId: string): { hedge: b
 }
 
 function missingDoctrineForSourceMode(profiles: SourceMapProfileDto[], responseLogic: WarGameDoctrineChain[]): string[] {
-  if (!profiles.length) return [];
-  const selectedCraftIds = Array.from(
-    new Set(
-      profiles
-        .map((item) => item.primaryCraftId?.trim())
-        .filter((item): item is string => Boolean(item))
-    )
-  );
-  if (!selectedCraftIds.length) return [];
-
-  const doctrineChains = responseLogic.filter((chain) => selectedCraftIds.includes(chain.craftId));
-  if (!doctrineChains.length) return ["doctrine_chain"];
-
-  const hasScenarios = doctrineChains.some((chain) => chain.scenarios.length > 0);
-  if (!hasScenarios) return ["scenario_logic"];
-
-  const hasThreats = doctrineChains.some((chain) => chain.scenarios.some((scenario) => scenario.threats.length > 0));
-  if (!hasThreats) return ["threat_logic"];
-
-  const hasResponses = doctrineChains.some((chain) => chain.scenarios.some((scenario) => scenario.threats.some((threat) => threat.responses.length > 0)));
-  if (!hasResponses) return ["response_logic"];
-
-  return [];
+  return missingDoctrineForSourceProfiles(profiles, responseLogic);
 }
+
 
 function missingForMode(
   mode: WarGameModeSpec,
@@ -373,6 +353,12 @@ export function evaluateDecision(args: {
   });
 }
 
+
+function sourcePlaybookRoute(targetId: string, playbook: "chain" | "scenario" | "threat" | "response"): string {
+  const params = new URLSearchParams({ sourceId: targetId, playbook });
+  return `/crafts-library?${params.toString()}`;
+}
+
 function triageActionsForReason(args: {
   mode: WarGameModeSpec;
   targetId: string;
@@ -392,7 +378,7 @@ function triageActionsForReason(args: {
       guardIds
     });
 
-  if (args.reason.code === "INTEREST_CONVEXITY_INCOMPLETE" || args.reason.code === "GRAMMAR_INCOMPLETE") {
+  if (args.reason.code === "INTEREST_CONVEXITY_INCOMPLETE" || (args.mode === "interest" && args.reason.code === "GRAMMAR_INCOMPLETE")) {
     const has = (key: string) => args.reason.missingItems.includes(key);
     const out: DoctrineQuickActionDto[] = [];
     if (has("maxLossPct") || has("loss_expiry")) out.push(action("SET_INTEREST_MAX_LOSS_DEFAULT", "Set max-loss default (10%)", { maxLossPct: 10 }, ["G3_INTEREST_CONVEXITY"]));
@@ -422,6 +408,24 @@ function triageActionsForReason(args: {
 
   if (args.reason.code === "NO_RUIN_GATE_FAILED") {
     return [action("TRIPWIRE_RECOVERY_PATH", "Open no-ruin recovery path", { guidance: "Resolve tripwire recovery action before execution." }, ["G4_NO_RUIN"])];
+  }
+
+  if (args.mode === "source" && args.reason.code === "GRAMMAR_INCOMPLETE") {
+    const has = (key: string) => args.reason.missingItems.includes(key);
+    const out: DoctrineQuickActionDto[] = [];
+    if (has("doctrine_chain")) {
+      out.push(action("OPEN_SOURCE_DOCTRINE_CHAIN_PLAYBOOK", "Open doctrine-chain playbook", { route: sourcePlaybookRoute(args.targetId, "chain") }));
+    }
+    if (has("scenario_logic")) {
+      out.push(action("OPEN_SOURCE_SCENARIO_PLAYBOOK", "Open scenario playbook", { route: sourcePlaybookRoute(args.targetId, "scenario") }));
+    }
+    if (has("threat_logic")) {
+      out.push(action("OPEN_SOURCE_THREAT_PLAYBOOK", "Open threat playbook", { route: sourcePlaybookRoute(args.targetId, "threat") }));
+    }
+    if (has("response_logic")) {
+      out.push(action("OPEN_SOURCE_RESPONSE_PLAYBOOK", "Open response playbook", { route: sourcePlaybookRoute(args.targetId, "response") }));
+    }
+    return out;
   }
 
   return [];

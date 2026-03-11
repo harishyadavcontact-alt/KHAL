@@ -175,6 +175,20 @@ export interface CraftKnowledgeLink {
   sortOrder?: number;
 }
 
+
+export interface WarGameThreatWithResponses extends CraftKnowledgeThreat {
+  responses: CraftKnowledgeResponse[];
+}
+
+export interface WarGameScenarioWithThreats extends CraftKnowledgeScenario {
+  threats: WarGameThreatWithResponses[];
+}
+
+export interface WarGameDoctrineChain extends CraftKnowledgeWargame {
+  craftName: string;
+  scenarios: WarGameScenarioWithThreats[];
+}
+
 export interface CraftKnowledge {
   stacks: CraftKnowledgeStack[];
   protocols: CraftKnowledgeProtocol[];
@@ -826,6 +840,10 @@ export type DoctrineQuickActionKind =
   | "SET_AFFAIR_THRESHOLD_TEMPLATE"
   | "SET_AFFAIR_PREP_TEMPLATE"
   | "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE"
+  | "OPEN_SOURCE_DOCTRINE_CHAIN_PLAYBOOK"
+  | "OPEN_SOURCE_SCENARIO_PLAYBOOK"
+  | "OPEN_SOURCE_THREAT_PLAYBOOK"
+  | "OPEN_SOURCE_RESPONSE_PLAYBOOK"
   | "TRIPWIRE_RECOVERY_PATH";
 
 export interface DoctrineQuickAction {
@@ -937,7 +955,9 @@ export interface AppData {
   latency?: DecisionLatencySnapshot;
   counterfactual?: CounterfactualDelta;
   confidence?: ConfidenceEvidenceMeta;
+  signalBand?: "STRONG" | "WATCH" | "WEAK";
   optionalityBudget?: OptionalityBudgetState;
+  responseLogic?: WarGameDoctrineChain[];
   fragilityTimeline?: FragilityTimelinePoint[];
   decisionReplay?: DecisionReplayEvent[];
   blastRadius?: BlastRadiusSnapshot;

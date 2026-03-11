@@ -114,6 +114,9 @@ describe("source map doctrine", () => {
 
     expect(affairPayload.kind).toBe("affair");
     expect(interestPayload.kind).toBe("interest");
+    expect(Array.isArray(affairPayload.doctrineWarnings)).toBe(true);
+    expect(affairPayload.doctrineWarnings.length).toBeGreaterThan(0);
+    expect(affairPayload.doctrineWarnings[0]).toContain("doctrine");
 
     const verifyDb = new Database(dbPath, { readonly: true });
     try {
@@ -128,10 +131,13 @@ describe("source map doctrine", () => {
       expect(linked.interest_id).toBe(interestPayload.id);
 
       const affair = verifyDb.prepare("SELECT title FROM affairs WHERE id=?").get(affairPayload.id) as Record<string, string>;
-      const interest = verifyDb.prepare("SELECT title, hypothesis FROM interests WHERE id=?").get(interestPayload.id) as Record<string, string>;
+      const affairPlan = verifyDb.prepare("SELECT uncertainty FROM affair_plan_details WHERE affair_id=?").get(affairPayload.id) as Record<string, string>;
+      const interest = verifyDb.prepare("SELECT title, hypothesis, notes FROM interests WHERE id=?").get(interestPayload.id) as Record<string, string>;
       expect(affair.title).toContain("Hedge:");
+      expect(affairPlan.uncertainty).toContain("Doctrine warnings:");
       expect(interest.title).toContain("Edge:");
       expect(interest.hypothesis).toContain("Keep small convex bets alive.");
+      expect(interest.notes).toContain("Doctrine warnings:");
     } finally {
       verifyDb.close();
     }

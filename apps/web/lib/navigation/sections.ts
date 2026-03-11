@@ -66,6 +66,14 @@ export const KHAL_SECTIONS: readonly KhalSectionDefinition[] = [
     includeInAppShell: true
   },
   {
+    id: "vision-command",
+    href: "/vision-command",
+    label: "Vision Command",
+    moduleCopy: "Read-only synthesis for strategic narrative convergence",
+    matchPrefixes: ["/vision-command"],
+    includeInOpsNav: true
+  },
+  {
     id: "source-of-volatility",
     href: "/source-of-volatility",
     label: "Source of Volatility",

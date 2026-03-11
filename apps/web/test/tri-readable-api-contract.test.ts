@@ -170,6 +170,22 @@ describe("tri-readable api contracts", () => {
     expect(firstJson.suggestions).toEqual(secondJson.suggestions);
   });
 
+
+  it("returns guidance for source doctrine playbook quick action", async () => {
+    const actionResponse = await quickActionPost(
+      postJson("http://localhost/api/decision/quick-action", {
+        kind: "OPEN_SOURCE_RESPONSE_PLAYBOOK",
+        targetRef: { mode: "source", targetId: "src-universe" },
+        payload: { route: "/crafts-library" },
+        role: "MISSIONARY",
+        noRuinGate: true
+      })
+    );
+    const actionJson = await actionResponse.json();
+    expect(actionResponse.status).toBe(200);
+    expect(actionJson.applied).toBe(false);
+    expect(actionJson.route).toBe("/crafts-library");
+  });
   it("applies whitelisted quick action and returns fresh evaluation", async () => {
     const actionResponse = await quickActionPost(
       postJson("http://localhost/api/decision/quick-action", {

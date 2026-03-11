@@ -30,6 +30,7 @@ const ICON_BY_HREF: Record<string, LucideIcon> = {
   "/dashboard": LayoutDashboard,
   "/war-room": MapIcon,
   "/missionCommand": Compass,
+  "/vision-command": Compass,
   "/source-of-volatility": Sword,
   "/maya": Hexagon,
   "/interests": Anchor,

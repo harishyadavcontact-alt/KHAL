@@ -179,7 +179,113 @@ describe("wargame fractal flow", () => {
       role: "MISSIONARY",
       noRuinGate: true
     });
-    const grammar = triage.find((item) => item.title === "GRAMMAR_INCOMPLETE");
-    expect(grammar?.missingItems).toContain("doctrine_chain");
+    const doctrineFix = triage.find((item) => item.actionKind === "OPEN_SOURCE_DOCTRINE_CHAIN_PLAYBOOK");
+    expect(doctrineFix?.missingItems).toContain("doctrine_chain");
   });
+
+  it("returns step-specific source doctrine quick actions", () => {
+    const now = new Date().toISOString();
+    const state: KhalState = {
+      domains: [{ id: "d1", name: "Finance", createdAt: now, updatedAt: now }],
+      laws: [],
+      crafts: [],
+      ends: [],
+      fragilities: [],
+      affairs: [],
+      interests: [],
+      tasks: [],
+      missionNodes: [],
+      missionGraph: { nodes: [], dependencies: [] },
+      warRoomNarrative: {},
+      sources: [{ id: "s1", code: "macro-vol", name: "Macro Volatility", sortOrder: 1, domains: [{ id: "sd1", sourceId: "s1", domainId: "d1", dependencyKind: "PRIMARY", pathWeight: 1 }] }],
+      lineages: { nodes: [], entities: [] },
+      lineageRisks: [],
+      doctrine: { rulebooks: [], rules: [], domainPnLLadders: [] }
+    };
+    const sourceMapProfiles: SourceMapProfileDto[] = [{
+      id: "map-1",
+      sourceId: "s1",
+      domainId: "d1",
+      decisionType: "complex",
+      tailClass: "fat",
+      quadrant: "Q4",
+      methodPosture: "No-ruin first.",
+      stakesText: "Capital and strategic freedom.",
+      risksText: "Large downside under opacity.",
+      fragilityPosture: "Fragile if over-exposed.",
+      vulnerabilitiesText: "Leverage and dependency chains.",
+      hedgeText: "Raise resilience buffer.",
+      edgeText: "Keep small convex optionality.",
+      primaryCraftId: "craft-1",
+      heuristicsText: "Barbell and optionality.",
+      avoidText: "Do not optimize into opacity."
+    }];
+
+    const scenarioMissing = buildDeterministicTriage({
+      mode: "source",
+      targetId: "s1",
+      state,
+      sourceMapProfiles,
+      responseLogic: [{ id: "wg-1", craftId: "craft-1", craftName: "Antifragility", name: "Macro war game", scenarios: [] }],
+      role: "MISSIONARY",
+      noRuinGate: true
+    });
+    const scenarioAction = scenarioMissing.find((item) => item.actionKind === "OPEN_SOURCE_SCENARIO_PLAYBOOK");
+    expect(scenarioAction).toBeTruthy();
+    expect(String(scenarioAction?.actionPayload?.route ?? "")).toContain("sourceId=s1");
+    expect(String(scenarioAction?.actionPayload?.route ?? "")).toContain("playbook=scenario");
+  });
+  it("keeps source triage deterministic across repeated doctrine-gap evaluations", () => {
+    const now = new Date().toISOString();
+    const state: KhalState = {
+      domains: [{ id: "d1", name: "Finance", createdAt: now, updatedAt: now }],
+      laws: [],
+      crafts: [],
+      ends: [],
+      fragilities: [],
+      affairs: [],
+      interests: [],
+      tasks: [],
+      missionNodes: [],
+      missionGraph: { nodes: [], dependencies: [] },
+      warRoomNarrative: {},
+      sources: [{ id: "s1", code: "macro-vol", name: "Macro Volatility", sortOrder: 1, domains: [{ id: "sd1", sourceId: "s1", domainId: "d1", dependencyKind: "PRIMARY", pathWeight: 1 }] }],
+      lineages: { nodes: [], entities: [] },
+      lineageRisks: [],
+      doctrine: { rulebooks: [], rules: [], domainPnLLadders: [] }
+    };
+    const sourceMapProfiles: SourceMapProfileDto[] = [{
+      id: "map-1",
+      sourceId: "s1",
+      domainId: "d1",
+      decisionType: "complex",
+      tailClass: "fat",
+      quadrant: "Q4",
+      methodPosture: "No-ruin first.",
+      stakesText: "Capital and strategic freedom.",
+      risksText: "Large downside under opacity.",
+      fragilityPosture: "Fragile if over-exposed.",
+      vulnerabilitiesText: "Leverage and dependency chains.",
+      hedgeText: "Raise resilience buffer.",
+      edgeText: "Keep small convex optionality.",
+      primaryCraftId: "craft-1",
+      heuristicsText: "Barbell and optionality.",
+      avoidText: "Do not optimize into opacity."
+    }];
+
+    const args = {
+      mode: "source" as const,
+      targetId: "s1",
+      state,
+      sourceMapProfiles,
+      responseLogic: [{ id: "wg-1", craftId: "craft-1", craftName: "Antifragility", name: "Macro war game", scenarios: [] }],
+      role: "MISSIONARY" as const,
+      noRuinGate: true
+    };
+
+    const first = buildDeterministicTriage(args);
+    const second = buildDeterministicTriage(args);
+    expect(first).toEqual(second);
+  });
+
 });

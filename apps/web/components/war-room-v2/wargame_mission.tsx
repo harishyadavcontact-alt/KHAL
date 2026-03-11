@@ -1,14 +1,32 @@
 import React, { useMemo } from "react";
-import { Affair, Interest, MissionGraphDto } from "./types";
+import { Affair, Interest, MissionGraphDto, VolatilitySourceDto } from "./types";
+import type { WarGameDoctrineChain } from "../../lib/war-room/bootstrap";
+import { buildMissionRecommendedOrder as buildMissionRecommendedOrderFromLib, doctrineGapByDomainReadable } from "../../lib/war-room/mission-ranking";
 
 interface WarGameMissionProps {
   missionId?: string;
   missionGraph?: MissionGraphDto;
   affairs: Affair[];
   interests: Interest[];
+  sources?: VolatilitySourceDto[];
+  responseLogic?: WarGameDoctrineChain[];
 }
 
-export function WarGameMission({ missionId, missionGraph, affairs, interests }: WarGameMissionProps) {
+export type { MissionRecommendedOrderItem } from "../../lib/war-room/mission-ranking";
+
+export function unresolvedDoctrineGapByDomain(sources: VolatilitySourceDto[] = [], responseLogic: WarGameDoctrineChain[] = []): Map<string, string> {
+  return doctrineGapByDomainReadable(sources, responseLogic);
+}
+
+export function buildMissionRecommendedOrder(args: {
+  affairs: Affair[];
+  interests: Interest[];
+  doctrineGapByDomain?: Map<string, string>;
+}) {
+  return buildMissionRecommendedOrderFromLib(args);
+}
+
+export function WarGameMission({ missionId, missionGraph, affairs, interests, sources, responseLogic }: WarGameMissionProps) {
   const missionNodes = useMemo(
     () => (missionGraph?.nodes ?? []).filter((node) => node.missionId === missionId && node.refType !== "MISSION"),
     [missionGraph?.nodes, missionId]
@@ -19,18 +37,11 @@ export function WarGameMission({ missionId, missionGraph, affairs, interests }: 
   const interestCount = missionNodes.filter((node) => node.refType === "INTEREST").length;
   const linkedAffairs = affairs.filter((affair) => missionNodes.some((node) => node.refType === "AFFAIR" && node.refId === affair.id));
   const linkedInterests = interests.filter((interest) => missionNodes.some((node) => node.refType === "INTEREST" && node.refId === interest.id));
-  const recommendedOrder = [
-    ...[...affairs].sort((left, right) => Number(right.stakes ?? 0) * Number(right.risk ?? 0) - Number(left.stakes ?? 0) * Number(left.risk ?? 0)).map((affair) => ({
-      id: affair.id,
-      kind: "Affair",
-      title: affair.title
-    })),
-    ...[...interests].sort((left, right) => Number(right.convexity ?? 0) - Number(left.convexity ?? 0)).map((interest) => ({
-      id: interest.id,
-      kind: "Interest",
-      title: interest.title
-    }))
-  ].slice(0, 6);
+  const doctrineGapByDomain = useMemo(() => unresolvedDoctrineGapByDomain(sources, responseLogic ?? []), [responseLogic, sources]);
+  const recommendedOrder = useMemo(
+    () => buildMissionRecommendedOrder({ affairs, interests, doctrineGapByDomain }),
+    [affairs, doctrineGapByDomain, interests]
+  );
 
   return (
     <section className="glass p-5 rounded-xl border border-white/10 mb-6">
@@ -62,12 +73,22 @@ export function WarGameMission({ missionId, missionGraph, affairs, interests }: 
         </div>
       </div>
       <div className="mt-4 rounded-lg border border-white/10 bg-zinc-900/40 p-3">
-        <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Default Mission Ordering</div>
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <div className="text-[10px] uppercase tracking-widest text-zinc-500">Default Mission Ordering</div>
+          <div className="text-[10px] text-amber-300">Doctrine gap penalties: {recommendedOrder.filter((item) => item.penalizedByDoctrineGap).length}</div>
+        </div>
         <div className="space-y-2 text-xs">
           {recommendedOrder.length ? (
             recommendedOrder.map((item, index) => (
               <div key={item.id} className="rounded border border-white/10 bg-zinc-950/30 px-3 py-2 text-zinc-200">
-                {index + 1}. {item.kind}: {item.title}
+                <div>
+                  {index + 1}. {item.kind}: {item.title}
+                </div>
+                {item.penalizedByDoctrineGap ? (
+                  <div className="mt-1 inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-amber-200">
+                    penalized due to doctrine gap{item.doctrineGapReason ? ` (${item.doctrineGapReason})` : ""}
+                  </div>
+                ) : null}
               </div>
             ))
           ) : (
@@ -78,4 +99,3 @@ export function WarGameMission({ missionId, missionGraph, affairs, interests }: 
     </section>
   );
 }
-

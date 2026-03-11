@@ -6,6 +6,9 @@ import { loadRuntimeProjection } from "./runtime/authority";
 import { toMonolithAppData } from "./api/app-data";
 import { fail, ok, withDb, withStore, type AnyRow } from "./api/shared";
 import { readOperatorProfile } from "./api/operator";
+import { loadSourceMapProfiles } from "./api/source-map";
+import { loadWarGameDoctrineChains } from "./api/wargaming-doctrine";
+import { confidenceToSignalBand } from "./war-room/signal-language";
 export { fail, ok, withDb, withStore } from "./api/shared";
 export {
   handleCalendarIcs,
@@ -84,15 +87,73 @@ export async function handleState() {
   return withDb((db, dbPath) => ok(loadRuntimeProjection({ db, dbPath })));
 }
 
+function buildDoctrineAwareAppData(db: Database.Database, dbPath: string) {
+  const projection = loadRuntimeProjection({ db, dbPath });
+  const operator = readOperatorProfile(db);
+  const responseLogic = loadWarGameDoctrineChains(db);
+  const sourceMapProfiles = loadSourceMapProfiles(db);
+  const profilesBySourceId = new Map<string, typeof sourceMapProfiles>();
+  for (const profile of sourceMapProfiles) {
+    const list = profilesBySourceId.get(profile.sourceId) ?? [];
+    list.push(profile);
+    profilesBySourceId.set(profile.sourceId, list);
+  }
+  const monolith = toMonolithAppData(projection);
+  return {
+    ...monolith,
+    sources: (monolith.sources ?? []).map((source: (typeof monolith.sources)[number]) => ({
+      ...source,
+      mapProfiles: profilesBySourceId.get(source.id) ?? []
+    })),
+    responseLogic,
+    signalBand: confidenceToSignalBand(monolith.confidence),
+    user: operator.user,
+    onboarding: { onboarded: operator.onboarded },
+    runtimeInvariants: projection.runtimeInvariants
+  };
+}
+
 export async function handleData() {
+  return withDb((db, dbPath) => ok(buildDoctrineAwareAppData(db, dbPath)));
+}
+
+export async function handleMissionCommandBootstrap() {
   return withDb((db, dbPath) => {
-    const projection = loadRuntimeProjection({ db, dbPath });
-    const operator = readOperatorProfile(db);
+    const appData = buildDoctrineAwareAppData(db, dbPath);
     return ok({
-      ...toMonolithAppData(projection),
-      user: operator.user,
-      onboarding: { onboarded: operator.onboarded },
-      runtimeInvariants: projection.runtimeInvariants
+      user: appData.user,
+      strategyMatrix: appData.strategyMatrix,
+      laws: appData.laws,
+      domains: appData.domains,
+      crafts: appData.crafts,
+      interests: appData.interests,
+      affairs: appData.affairs,
+      tasks: appData.tasks,
+      sources: appData.sources,
+      missionGraph: appData.missionGraph,
+      lineages: appData.lineages,
+      lineageRisks: appData.lineageRisks,
+      doctrine: appData.doctrine,
+      decisionAcceleration: appData.decisionAcceleration,
+      decisionAccelerationMeta: appData.decisionAccelerationMeta,
+      tripwire: appData.tripwire,
+      ruinLedger: appData.ruinLedger,
+      violationFeed: appData.violationFeed,
+      latency: appData.latency,
+      counterfactual: appData.counterfactual,
+      confidence: appData.confidence,
+      signalBand: appData.signalBand,
+      optionalityBudget: appData.optionalityBudget,
+      responseLogic: appData.responseLogic,
+      fragilityTimeline: appData.fragilityTimeline,
+      decisionReplay: appData.decisionReplay,
+      blastRadius: appData.blastRadius,
+      missionBottlenecks: appData.missionBottlenecks,
+      hedgeCoverage: appData.hedgeCoverage,
+      convexityPipeline: appData.convexityPipeline,
+      outcomeAttribution: appData.outcomeAttribution,
+      assumptions: appData.assumptions,
+      recoveryPlaybooks: appData.recoveryPlaybooks
     });
   });
 }

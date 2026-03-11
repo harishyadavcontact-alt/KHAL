@@ -4,6 +4,7 @@ import { HeatGrid } from "./charts/HeatGrid";
 import { FlowLanes } from "./charts/FlowLanes";
 import { StackedBalanceBar } from "./charts/StackedBalanceBar";
 import { buildMissionVisualSnapshot } from "../../lib/war-room/visual-encodings";
+import { doctrineGapReason, unresolvedDoctrineGapByDomain } from "../../lib/doctrine/gaps";
 import { isInterestProtocolReady } from "../../lib/war-room/operational-metrics";
 import { VirtueSpiralPanel } from "./VirtueSpiralPanel";
 import { DoNowCopilotCard } from "./DoNowCopilotCard";
@@ -14,6 +15,7 @@ import {
   RecoveryPlaybooksPanel
 } from "./panels/RobustnessPanels";
 import { v03Flags } from "../../lib/war-room/feature-flags";
+import { confidenceToSignalBand, signalBandTone } from "../../lib/war-room/signal-language";
 
 export const MissionCommand = ({
   data,
@@ -52,6 +54,7 @@ export const MissionCommand = ({
   }, [data.affairs, data.interests, data.lineageRisks]);
 
   const missionSnapshot = useMemo(() => buildMissionVisualSnapshot(data), [data]);
+  const doctrineGapByDomain = useMemo(() => unresolvedDoctrineGapByDomain(data.sources ?? [], data.responseLogic ?? []), [data.responseLogic, data.sources]);
   const activeTier = missionSnapshot.rows[activeTierIndex] ?? null;
 
   useEffect(() => {
@@ -141,10 +144,16 @@ export const MissionCommand = ({
       ).length,
     [data.interests]
   );
+  const operatorSignal = useMemo(() => data.signalBand ?? confidenceToSignalBand(data.confidence), [data.confidence, data.signalBand]);
+  const operatorSignalTone = signalBandTone(operatorSignal);
 
   return (
     <div className="max-w-7xl mx-auto px-3 py-5">
       <ProtocolStatusStrip meta={data.decisionAccelerationMeta} />
+      <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] uppercase tracking-widest text-[var(--color-text-muted)]">
+        <span>Operator Signal</span>
+        <span className={`font-semibold ${operatorSignalTone}`}>{operatorSignal}</span>
+      </div>
       {v03Flags.confidence && <ConfidenceEvidenceStrip confidence={data.confidence} protocolState={data.decisionAccelerationMeta?.protocolState} />}
       <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-4 mb-5">
         <VirtueSpiralPanel spiral={decisionAcceleration.virtueSpiral} />
@@ -254,6 +263,15 @@ export const MissionCommand = ({
                     <div className="khal-title text-xs font-semibold">Tier {tier.tier}: {tier.title}</div>
                     <span className="khal-tone-danger text-[10px] font-mono">F:{tier.fragility}</span>
                   </div>
+                  {(() => {
+                    const gap = doctrineGapByDomain.get(tier.domainId);
+                    if (!gap) return null;
+                    return (
+                      <div className="mt-1 inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-amber-200">
+                        Penalized due to doctrine gap ({doctrineGapReason(gap)})
+                      </div>
+                    );
+                  })()}
                   <div className="khal-meta mt-1 text-[10px]">Serial</div>
                   <div className="text-xs text-[var(--color-text-muted)]">{tier.serialAffairs.join(" | ") || "No linked affairs yet"}</div>
                   <div className="khal-meta mt-1 text-[10px]">Parallel</div>

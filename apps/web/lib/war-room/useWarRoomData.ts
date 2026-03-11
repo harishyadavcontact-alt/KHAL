@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { AppData } from "../../components/war-room-v2/types";
-import { mockAppData } from "./mock-app-data";
 
 const CACHE_TTL_MS = 20_000;
 const SESSION_CACHE_KEY = "khal.warRoomData.cache.v1";
@@ -10,8 +9,6 @@ const SESSION_CACHE_MAX_AGE_MS = CACHE_TTL_MS * 6;
 let cachedData: AppData | null = null;
 let cachedAt = 0;
 let inflightRequest: Promise<AppData> | null = null;
-const FRONTEND_ONLY_MODE = process.env.NEXT_PUBLIC_FRONTEND_ONLY === "1";
-
 const hasFreshCache = () => cachedData && Date.now() - cachedAt < CACHE_TTL_MS;
 
 type SessionCachePayload = {
@@ -51,10 +48,6 @@ function hydrateModuleCacheFromSession() {
 }
 
 async function fetchWarRoomData(): Promise<AppData> {
-  if (FRONTEND_ONLY_MODE) {
-    return mockAppData;
-  }
-
   hydrateModuleCacheFromSession();
   if (hasFreshCache()) return cachedData as AppData;
   if (inflightRequest) return inflightRequest;

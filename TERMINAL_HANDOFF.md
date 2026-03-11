@@ -107,3 +107,12 @@ Session log:
 Recommended opening prompt for the new Codex terminal:
 
 Continue in E:\KHAL from current main. Read TERMINAL_HANDOFF.md and docs/agent-log/2026-03.md, inspect the current repo state, and continue the War Gaming rewrite by exploiting the new doctrine-aware source-mode triage signal in downstream planning: quick actions, generated Affairs/Interests, and mission guidance.
+
+
+Strict closure update:
+- Added `docs/release/plan1-100-closure-checklist.md` with ordered GREEN/RED closure tracking by file/test.
+- Mission bootstrap now uses dedicated handler (`handleMissionCommandBootstrap`) instead of calling generic `/api/war-room-data` path.
+- Canonical war-room-data route/hook no longer return frontend mock payloads.
+- App payloads now include `signalBand` normalized from confidence at contract boundary.
+
+- Added mission bootstrap parity contract test (`apps/web/test/mission-bootstrap-parity-contract.test.ts`) to lock doctrine/signal payload alignment with war-room data.
