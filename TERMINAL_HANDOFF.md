@@ -3,13 +3,13 @@ KHAL terminal handoff
 - Snapshot date: 2026-03-11
 - Repo: E:\KHAL
 - Branch: main
-- Current head: working tree pending commit for curated PR #2 integration
+- Current head: `815fb17` (`Integrate curated doctrine playbook slice`)
 - Runtime authority: operator-scoped SQLite via data/operators/*.sqlite selected through .khal.local.json
 - Excel: Genesis.xlsx is archival only
 
 Current clean commit chain:
 
-- pending: curated doctrine-playbook / mission-bootstrap slice
+- `815fb17` `Integrate curated doctrine playbook slice`
 - `58aef61` `Make source-mode triage doctrine-aware`
 - `f7f700b` `Use doctrine response logic in source war gaming`
 - `55539b2` `Bridge generated interests into portfolio command`
