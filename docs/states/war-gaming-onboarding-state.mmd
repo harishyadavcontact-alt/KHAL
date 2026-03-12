@@ -1,0 +1,24 @@
+stateDiagram-v2
+  [*] --> Bootstrapping
+  Bootstrapping --> Ready : bootstrap.ok
+  Bootstrapping --> LoadError : bootstrap.fail
+  LoadError --> Bootstrapping : user.retry
+
+  Ready --> OnboardingDraft : route.source.onboarding [hasSources == false]
+  Ready --> InteractiveWarGaming : route.non_source_or_has_sources [hasSources == true OR mode != source]
+
+  OnboardingDraft --> OnboardingValidationError : user.saveSources [namesCount <= 0]
+  OnboardingDraft --> SavingSources : user.saveSources [namesCount > 0]
+  OnboardingValidationError --> OnboardingDraft : user.editDraft
+
+  SavingSources --> RefreshingAfterSave : sources.save.ok
+  SavingSources --> OnboardingSaveError : sources.save.fail
+  OnboardingSaveError --> SavingSources : user.retrySave
+  OnboardingSaveError --> OnboardingDraft : user.editDraft
+
+  RefreshingAfterSave --> InteractiveWarGaming : bootstrap.refresh.ok
+  RefreshingAfterSave --> LoadError : bootstrap.refresh.fail
+
+  InteractiveWarGaming --> RefreshingAfterSave : sourceMap.saved
+  InteractiveWarGaming --> RefreshingAfterSave : protocol.addTask
+  InteractiveWarGaming --> Ready : route.changed

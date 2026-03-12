@@ -1,0 +1,27 @@
+sequenceDiagram
+  autonumber
+  actor User
+  participant Browser as WarGamingModeClient
+  participant Hook as useWarGamingBootstrap
+  participant API as GET /api/war-gaming/bootstrap
+  participant Handler as handleWarGamingBootstrapGet
+  participant DB as SQLite
+
+  User->>Browser: Open /war-gaming/{mode}?target=...
+  Browser->>Hook: mount + refresh()
+  Hook->>API: GET /api/war-gaming/bootstrap
+  API->>Handler: handleWarGamingBootstrapGet()
+  Handler->>DB: loadRuntimeProjection/readOperator/loadDoctrine/loadSourceMap
+  DB-->>Handler: rows
+
+  alt bootstrap failure (db/read error)
+    Handler-->>API: throw error
+    API-->>Hook: 500 {error,traceId}
+    Hook-->>Browser: setError("Failed loading War Gaming bootstrap")
+    Browser-->>User: Loading failure state
+  else bootstrap success
+    Handler-->>API: 200 JSON bootstrap payload
+    API-->>Hook: payload
+    Hook-->>Browser: setData(payload) + session cache write
+    Browser-->>User: Render onboarding or WarGaming view
+  end

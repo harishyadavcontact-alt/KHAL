@@ -1,0 +1,14 @@
+stateDiagram-v2
+  [*] --> RequestReceived
+  RequestReceived --> LoadWarRoom : route.war-room-data
+  RequestReceived --> LoadWarGaming : route.war-gaming-bootstrap
+  RequestReceived --> LoadMissionCommand : route.mission-command-bootstrap
+
+  LoadWarRoom --> ReturnWarRoom : db.ok
+  LoadWarRoom --> ReturnError : db.fail
+
+  LoadWarGaming --> ReturnWarGaming : db.ok
+  LoadWarGaming --> ReturnError : db.fail
+
+  LoadMissionCommand --> ReturnMissionCommand : db.ok
+  LoadMissionCommand --> ReturnError : db.fail

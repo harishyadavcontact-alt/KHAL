@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml xmlns="http://www.w3.org/2005/07/scxml" initial="Bootstrapping">
+  <state id="Bootstrapping">
+    <transition event="bootstrap.ok" target="Ready"/>
+    <transition event="bootstrap.fail" target="LoadError"/>
+  </state>
+
+  <state id="LoadError">
+    <transition event="user.retry" target="Bootstrapping"/>
+  </state>
+
+  <state id="Ready">
+    <transition event="route.source.onboarding" cond="hasSources eq false" target="OnboardingDraft"/>
+    <transition event="route.non_source_or_has_sources" target="InteractiveWarGaming"/>
+  </state>
+
+  <state id="OnboardingDraft">
+    <transition event="user.saveSources" cond="namesCount lte 0" target="OnboardingValidationError"/>
+    <transition event="user.saveSources" cond="namesCount gt 0" target="SavingSources"/>
+  </state>
+
+  <state id="OnboardingValidationError">
+    <transition event="user.editDraft" target="OnboardingDraft"/>
+  </state>
+
+  <state id="SavingSources">
+    <transition event="sources.save.ok" target="RefreshingAfterSave"/>
+    <transition event="sources.save.fail" target="OnboardingSaveError"/>
+  </state>
+
+  <state id="OnboardingSaveError">
+    <transition event="user.retrySave" target="SavingSources"/>
+    <transition event="user.editDraft" target="OnboardingDraft"/>
+  </state>
+
+  <state id="RefreshingAfterSave">
+    <transition event="bootstrap.refresh.ok" target="InteractiveWarGaming"/>
+    <transition event="bootstrap.refresh.fail" target="LoadError"/>
+  </state>
+
+  <state id="InteractiveWarGaming">
+    <transition event="sourceMap.saved" target="RefreshingAfterSave"/>
+    <transition event="protocol.addTask" target="RefreshingAfterSave"/>
+    <transition event="route.changed" target="Ready"/>
+  </state>
+</scxml>

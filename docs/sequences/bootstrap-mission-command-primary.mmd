@@ -1,0 +1,24 @@
+sequenceDiagram
+  autonumber
+  actor User
+  participant UI as MissionCommand page
+  participant API as GET /api/mission-command/bootstrap
+  participant Handler as handleMissionCommandBootstrapGet
+  participant DB as SQLite
+
+  User->>UI: Open /missionCommand
+  UI->>API: GET /api/mission-command/bootstrap
+  API->>Handler: withDb(load projection + operator + doctrine + source maps)
+  Handler->>DB: SELECT runtime projection datasets
+
+  alt query/db failure
+    DB-->>Handler: error
+    Handler-->>API: throw
+    API-->>UI: 500 {error,traceId}
+    UI-->>User: mission bootstrap error state
+  else success
+    DB-->>Handler: rows
+    Handler-->>API: 200 bootstrap payload
+    API-->>UI: JSON payload
+    UI-->>User: render mission hierarchy + warnings
+  end

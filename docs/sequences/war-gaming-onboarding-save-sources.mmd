@@ -1,0 +1,27 @@
+sequenceDiagram
+  autonumber
+  actor User
+  participant Client as WarGamingModeClient
+  participant SourceAPI as POST /api/volatility-sources
+  participant SourceHandler as handleVolatilitySourcesPost
+  participant DB as SQLite
+  participant Bootstrap as GET /api/war-gaming/bootstrap
+
+  User->>Client: Click "Save Volatility Sources"
+  Client->>SourceAPI: POST /api/volatility-sources {names[]}
+  SourceAPI->>SourceHandler: validate zod names[]
+
+  alt validation/insert failure
+    SourceHandler-->>SourceAPI: throw/parse error
+    SourceAPI-->>Client: 4xx/500 {error,traceId}
+    Client-->>User: show saveState.error
+  else success
+    SourceHandler->>DB: SELECT existing names + MAX(sort_order)
+    SourceHandler->>DB: INSERT missing volatility_sources
+    DB-->>SourceHandler: createdSourceIds + firstSourceId
+    SourceHandler-->>SourceAPI: 201 {createdSourceIds, firstSourceId}
+    SourceAPI-->>Client: success response
+    Client->>Bootstrap: refresh() -> GET /api/war-gaming/bootstrap
+    Bootstrap-->>Client: refreshed bootstrap payload
+    Client-->>User: router.replace(/war-gaming/source?target=...&onboarding=1)
+  end
