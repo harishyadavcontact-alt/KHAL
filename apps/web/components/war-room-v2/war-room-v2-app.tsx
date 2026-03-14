@@ -379,6 +379,7 @@ const App = () => {
   };
 
   const createExecutionTask = async (payload: {
+    id?: string;
     title: string;
     sourceType: string;
     sourceId: string;
@@ -393,6 +394,7 @@ const App = () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        id: payload.id,
         sourceType: ensureTaskSourceType(payload.sourceType),
         sourceId: payload.sourceId,
         parentTaskId: payload.parentTaskId,
