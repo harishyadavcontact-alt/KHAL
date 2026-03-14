@@ -19,15 +19,6 @@
       "height": 280
     },
     {
-      "id": "n3",
-      "type": "file",
-      "file": "docs/data/schema.dbml",
-      "x": 920,
-      "y": 0,
-      "width": 420,
-      "height": 280
-    },
-    {
       "id": "n4",
       "type": "file",
       "file": "docs/states/war-gaming-onboarding-state.scxml",
@@ -165,12 +156,6 @@
   ],
   "edges": [
     {
-      "id": "e1",
-      "fromNode": "n1",
-      "toNode": "n3",
-      "label": "services own data"
-    },
-    {
       "id": "e2",
       "fromNode": "n2",
       "toNode": "n5",
@@ -189,18 +174,6 @@
       "label": "state drives onboarding flow"
     },
     {
-      "id": "e5",
-      "fromNode": "n6",
-      "toNode": "n3",
-      "label": "bootstrap reads schema"
-    },
-    {
-      "id": "e6",
-      "fromNode": "n7",
-      "toNode": "n3",
-      "label": "source creation writes schema"
-    },
-    {
       "id": "e7",
       "fromNode": "n10",
       "toNode": "n5",
@@ -217,12 +190,6 @@
       "fromNode": "n1",
       "toNode": "n11",
       "label": "deployed/executed via"
-    },
-    {
-      "id": "e10",
-      "fromNode": "n11",
-      "toNode": "n3",
-      "label": "runtime persistence"
     },
     {
       "id": "e11",
