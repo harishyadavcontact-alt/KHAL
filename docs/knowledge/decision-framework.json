@@ -1,0 +1,868 @@
+{
+  "_meta": {
+    "status": "derived",
+    "confidence": "medium",
+    "version": "v0.1.0",
+    "purpose": "Canonical source of truth for KHAL decision logic, hierarchy, progression, and dependency structure.",
+    "source_files": [
+      "packages/domain/src/types.ts",
+      "packages/domain/src/ontology.ts",
+      "apps/web/components/war-room-v2/types.ts",
+      "apps/web/components/war-room-v2/war-game-protocol.ts",
+      "apps/web/lib/decision-spec/index.ts",
+      "apps/web/lib/decision-tree/registry.ts",
+      "apps/web/lib/api.ts",
+      "apps/web/lib/api/wargaming-doctrine.ts",
+      "packages/sqlite-core/migrations/0001_init.sql",
+      "packages/sqlite-core/migrations/0002_crafts_graph.sql"
+    ],
+    "notes": [
+      "This file is the canonical spec. Visual maps should be generated from it.",
+      "It models structural logic and progression rules that are explicit in code today.",
+      "Some conceptual labels are normalized to improve inspection across modules."
+    ]
+  },
+  "layers": [
+    {
+      "id": "orientation",
+      "label": "Orientation",
+      "description": "Top-level environmental framing and War Room source material."
+    },
+    {
+      "id": "decision_modes",
+      "label": "Decision Modes",
+      "description": "War Game protocol stages and predecessor ordering."
+    },
+    {
+      "id": "decision_objects",
+      "label": "Decision Objects",
+      "description": "Core runtime entities that hold obligations, options, and means."
+    },
+    {
+      "id": "craft_ladder",
+      "label": "Craft Ladder",
+      "description": "Knowledge-to-edge conversion from heaps to heuristics plus doctrine chains."
+    },
+    {
+      "id": "governance",
+      "label": "Governance",
+      "description": "Doctrine gates, readiness scoring, and rulebook overlays."
+    },
+    {
+      "id": "planning_execution",
+      "label": "Planning And Execution",
+      "description": "Plans, tasks, mission hierarchy, and execution dependencies."
+    },
+    {
+      "id": "scaling",
+      "label": "Scaling",
+      "description": "Lineage exposure, blast radius, and mission-level aggregation."
+    }
+  ],
+  "nodes": [
+    {
+      "id": "war_room_matrix",
+      "label": "War Room Matrix",
+      "kind": "knowledge_source",
+      "layer": "orientation",
+      "summary": "Authoritative framing substrate for state-of-the-art and state-of-affairs inputs.",
+      "storage_tables": [
+        "war_room_matrix_meta",
+        "war_room_matrix_columns",
+        "war_room_matrix_rows",
+        "war_room_sections",
+        "war_room_nodes"
+      ],
+      "ui_surfaces": [
+        "/war-room",
+        "/dashboard"
+      ],
+      "source_files": [
+        "packages/sqlite-core/migrations/0001_init.sql",
+        "packages/sync-engine/src/index.ts"
+      ]
+    },
+    {
+      "id": "volatility_source",
+      "label": "Volatility Source",
+      "kind": "risk_source",
+      "layer": "orientation",
+      "summary": "State-of-the-art source that propagates across domains and seeds source-mode war gaming.",
+      "storage_tables": [
+        "volatility_sources",
+        "volatility_source_domain_links",
+        "source_map_profiles"
+      ],
+      "ui_surfaces": [
+        "/source-of-volatility",
+        "/war-gaming/source"
+      ],
+      "source_files": [
+        "packages/sqlite-core/migrations/0004_volatility_sources.sql",
+        "apps/web/lib/api/source-map.ts",
+        "apps/web/components/ops-pages/WarGamingModeClient.tsx"
+      ]
+    },
+    {
+      "id": "law",
+      "label": "Law",
+      "kind": "governing_principle",
+      "layer": "orientation",
+      "summary": "Named volatility or operating law that anchors domains and craft associations.",
+      "storage_tables": [
+        "laws",
+        "law_craft_links"
+      ],
+      "ui_surfaces": [
+        "/laws"
+      ],
+      "source_files": [
+        "packages/sqlite-core/migrations/0002_crafts_graph.sql",
+        "packages/domain/src/ontology.ts"
+      ]
+    },
+    {
+      "id": "domain",
+      "label": "Domain",
+      "kind": "decision_scope",
+      "layer": "decision_objects",
+      "summary": "Shared scope for obligations and options. Receives source propagation and posture shaping.",
+      "storage_tables": [
+        "domains"
+      ],
+      "ui_surfaces": [
+        "/dashboard",
+        "/war-gaming/domain"
+      ],
+      "source_files": [
+        "packages/domain/src/types.ts",
+        "packages/sqlite-core/migrations/0001_init.sql",
+        "apps/web/lib/decision-spec/index.ts"
+      ]
+    },
+    {
+      "id": "source_mode",
+      "label": "Source Mode",
+      "kind": "decision_mode",
+      "layer": "decision_modes",
+      "summary": "Maps propagation, semantic domains, tail class, quadrant, ends, and admissible means.",
+      "ui_surfaces": [
+        "/war-gaming/source"
+      ],
+      "source_files": [
+        "apps/web/lib/decision-tree/registry.ts",
+        "apps/web/lib/decision-spec/index.ts",
+        "apps/web/components/war-room-v2/war-game-protocol.ts"
+      ]
+    },
+    {
+      "id": "domain_mode",
+      "label": "Domain Mode",
+      "kind": "decision_mode",
+      "layer": "decision_modes",
+      "summary": "Maps stakes, risk structure, fragility profile, and hedge-plus-edge posture.",
+      "ui_surfaces": [
+        "/war-gaming/domain"
+      ],
+      "source_files": [
+        "apps/web/lib/decision-tree/registry.ts",
+        "apps/web/lib/decision-spec/index.ts",
+        "apps/web/components/war-room-v2/war-game-protocol.ts"
+      ]
+    },
+    {
+      "id": "affair_mode",
+      "label": "Affair Mode",
+      "kind": "decision_mode",
+      "layer": "decision_modes",
+      "summary": "War-games obligations, preparation, thresholds, and execution chain readiness.",
+      "ui_surfaces": [
+        "/war-gaming/affair"
+      ],
+      "source_files": [
+        "apps/web/lib/decision-tree/registry.ts",
+        "apps/web/lib/decision-spec/index.ts",
+        "apps/web/components/war-room-v2/DecisionChamber.tsx"
+      ]
+    },
+    {
+      "id": "interest_mode",
+      "label": "Interest Mode",
+      "kind": "decision_mode",
+      "layer": "decision_modes",
+      "summary": "War-games convex options through hypothesis, max loss, expiry, kill criteria, and barbell split.",
+      "ui_surfaces": [
+        "/war-gaming/interest"
+      ],
+      "source_files": [
+        "apps/web/lib/decision-tree/registry.ts",
+        "apps/web/lib/decision-spec/index.ts",
+        "apps/web/components/war-room-v2/war-game-protocol.ts"
+      ]
+    },
+    {
+      "id": "craft_mode",
+      "label": "Craft Mode",
+      "kind": "decision_mode",
+      "layer": "decision_modes",
+      "summary": "War-games whether the knowledge ladder produces reusable edge rather than scattered inputs.",
+      "ui_surfaces": [
+        "/war-gaming/craft",
+        "/crafts-library"
+      ],
+      "source_files": [
+        "apps/web/lib/decision-tree/registry.ts",
+        "apps/web/lib/decision-spec/index.ts",
+        "apps/web/components/war-room-v2/CraftsView.tsx"
+      ]
+    },
+    {
+      "id": "lineage_mode",
+      "label": "Lineage Mode",
+      "kind": "decision_mode",
+      "layer": "decision_modes",
+      "summary": "War-games exposure scaling, blast radius, and irreversibility across lineage levels.",
+      "ui_surfaces": [
+        "/war-gaming/lineage",
+        "/lineage-map"
+      ],
+      "source_files": [
+        "apps/web/lib/decision-tree/registry.ts",
+        "apps/web/lib/decision-spec/index.ts",
+        "apps/web/components/war-room-v2/LineageMapView.tsx"
+      ]
+    },
+    {
+      "id": "mission_mode",
+      "label": "Mission Mode",
+      "kind": "decision_mode",
+      "layer": "decision_modes",
+      "summary": "War-games hierarchy, dependency integrity, readiness, and no-ruin mission synthesis.",
+      "ui_surfaces": [
+        "/war-gaming/mission",
+        "/mission-command"
+      ],
+      "source_files": [
+        "apps/web/lib/decision-tree/registry.ts",
+        "apps/web/lib/decision-spec/index.ts",
+        "apps/web/lib/api.ts"
+      ]
+    },
+    {
+      "id": "affair",
+      "label": "Affair",
+      "kind": "obligation",
+      "layer": "decision_objects",
+      "summary": "Obligation node for removing fragility through robust execution and preparation.",
+      "storage_tables": [
+        "affairs",
+        "affair_means",
+        "affair_selected_heuristics"
+      ],
+      "ui_surfaces": [
+        "/affairs",
+        "/war-gaming/affair",
+        "/surgical-execution"
+      ],
+      "source_files": [
+        "packages/domain/src/types.ts",
+        "apps/web/components/war-room-v2/DecisionChamber.tsx",
+        "packages/sync-engine/src/index.ts"
+      ]
+    },
+    {
+      "id": "interest",
+      "label": "Interest",
+      "kind": "option",
+      "layer": "decision_objects",
+      "summary": "Option node for convexity, capped downside, and evidence-backed bets.",
+      "storage_tables": [
+        "interests"
+      ],
+      "ui_surfaces": [
+        "/interests",
+        "/war-gaming/interest",
+        "/surgical-execution"
+      ],
+      "source_files": [
+        "packages/domain/src/types.ts",
+        "apps/web/lib/decision-spec/index.ts",
+        "apps/web/components/war-room-v2/InterestsView.tsx"
+      ]
+    },
+    {
+      "id": "craft",
+      "label": "Craft",
+      "kind": "means_system",
+      "layer": "decision_objects",
+      "summary": "Reusable means system that converts knowledge assets into heuristics and doctrine chains.",
+      "storage_tables": [
+        "crafts"
+      ],
+      "ui_surfaces": [
+        "/crafts-library",
+        "/war-gaming/craft"
+      ],
+      "source_files": [
+        "packages/domain/src/types.ts",
+        "apps/web/lib/api.ts",
+        "packages/sync-engine/src/index.ts"
+      ]
+    },
+    {
+      "id": "heap",
+      "label": "Heap",
+      "kind": "craft_component",
+      "layer": "craft_ladder",
+      "summary": "Raw source material and references collected under a craft.",
+      "storage_tables": [
+        "craft_heaps"
+      ],
+      "source_files": [
+        "packages/sqlite-core/migrations/0002_crafts_graph.sql",
+        "apps/web/lib/api.ts"
+      ]
+    },
+    {
+      "id": "model",
+      "label": "Model",
+      "kind": "craft_component",
+      "layer": "craft_ladder",
+      "summary": "Extracted conceptual model linked to heaps.",
+      "storage_tables": [
+        "craft_models",
+        "craft_model_heap_links"
+      ],
+      "source_files": [
+        "packages/sqlite-core/migrations/0002_crafts_graph.sql",
+        "apps/web/lib/api.ts"
+      ]
+    },
+    {
+      "id": "framework",
+      "label": "Framework",
+      "kind": "craft_component",
+      "layer": "craft_ladder",
+      "summary": "Assembled decision frame linked to one or more models.",
+      "storage_tables": [
+        "craft_frameworks",
+        "craft_framework_model_links"
+      ],
+      "source_files": [
+        "packages/sqlite-core/migrations/0002_crafts_graph.sql",
+        "apps/web/lib/api.ts"
+      ]
+    },
+    {
+      "id": "barbell",
+      "label": "Barbell Strategy",
+      "kind": "craft_component",
+      "layer": "craft_ladder",
+      "summary": "Hedge-plus-edge expression assembled from frameworks.",
+      "storage_tables": [
+        "craft_barbell_strategies",
+        "craft_barbell_framework_links"
+      ],
+      "source_files": [
+        "packages/sqlite-core/migrations/0002_crafts_graph.sql",
+        "apps/web/lib/api.ts"
+      ]
+    },
+    {
+      "id": "heuristic",
+      "label": "Heuristic",
+      "kind": "craft_component",
+      "layer": "craft_ladder",
+      "summary": "Operator-usable rule of thumb linked to barbell strategies and selected into affairs.",
+      "storage_tables": [
+        "craft_heuristics",
+        "craft_heuristic_barbell_links",
+        "affair_selected_heuristics"
+      ],
+      "source_files": [
+        "packages/sqlite-core/migrations/0002_crafts_graph.sql",
+        "apps/web/lib/api.ts"
+      ]
+    },
+    {
+      "id": "wargame",
+      "label": "Doctrine Wargame",
+      "kind": "craft_component",
+      "layer": "craft_ladder",
+      "summary": "Named doctrine chain inside a craft that expands into scenarios, threats, and responses.",
+      "storage_tables": [
+        "knowledge_wargames"
+      ],
+      "source_files": [
+        "apps/web/lib/api.ts",
+        "apps/web/lib/api/wargaming-doctrine.ts"
+      ]
+    },
+    {
+      "id": "scenario",
+      "label": "Scenario",
+      "kind": "craft_component",
+      "layer": "craft_ladder",
+      "summary": "Scenario branch inside a doctrine wargame.",
+      "storage_tables": [
+        "knowledge_scenarios"
+      ],
+      "source_files": [
+        "apps/web/lib/api.ts",
+        "apps/web/lib/api/wargaming-doctrine.ts"
+      ]
+    },
+    {
+      "id": "threat",
+      "label": "Threat",
+      "kind": "craft_component",
+      "layer": "craft_ladder",
+      "summary": "Threat inside a scenario, scored by severity.",
+      "storage_tables": [
+        "knowledge_threats"
+      ],
+      "source_files": [
+        "apps/web/lib/api.ts",
+        "apps/web/lib/api/wargaming-doctrine.ts"
+      ]
+    },
+    {
+      "id": "response",
+      "label": "Response",
+      "kind": "craft_component",
+      "layer": "craft_ladder",
+      "summary": "Operational response attached to a specific threat.",
+      "storage_tables": [
+        "knowledge_responses"
+      ],
+      "source_files": [
+        "apps/web/lib/api.ts",
+        "apps/web/lib/api/wargaming-doctrine.ts"
+      ]
+    },
+    {
+      "id": "doctrine_rulebook",
+      "label": "Doctrine Rulebook",
+      "kind": "governance_object",
+      "layer": "governance",
+      "summary": "Scoped doctrine overlay for global, mode, or entity-level rules.",
+      "storage_tables": [
+        "doctrine_rulebooks"
+      ],
+      "ui_surfaces": [
+        "/api/doctrine/rulebooks"
+      ],
+      "source_files": [
+        "packages/sqlite-core/migrations/0006_doctrine_engine.sql",
+        "apps/web/lib/api/doctrine.ts"
+      ]
+    },
+    {
+      "id": "doctrine_rule",
+      "label": "Doctrine Rule",
+      "kind": "governance_object",
+      "layer": "governance",
+      "summary": "Hard-gate or soft rule applied during readiness and triage evaluation.",
+      "storage_tables": [
+        "doctrine_rules"
+      ],
+      "ui_surfaces": [
+        "/api/doctrine/rules",
+        "/api/decision/evaluate",
+        "/api/decision/triage"
+      ],
+      "source_files": [
+        "packages/sqlite-core/migrations/0006_doctrine_engine.sql",
+        "apps/web/lib/decision-spec/index.ts"
+      ]
+    },
+    {
+      "id": "plan",
+      "label": "Plan Blueprint",
+      "kind": "planning_object",
+      "layer": "planning_execution",
+      "summary": "Structured plan generated per mode/source that stores schedule, criteria, thresholds, and readiness extras.",
+      "storage_tables": [
+        "plans"
+      ],
+      "ui_surfaces": [
+        "/api/plans",
+        "/war-gaming/*"
+      ],
+      "source_files": [
+        "apps/web/lib/war-room/actions.ts",
+        "apps/web/lib/api/plans.ts",
+        "apps/web/components/war-room-v2/types.ts"
+      ]
+    },
+    {
+      "id": "task",
+      "label": "Execution Task",
+      "kind": "execution_object",
+      "layer": "planning_execution",
+      "summary": "Execution atom derived from affairs, interests, plans, or preparation chains.",
+      "storage_tables": [
+        "tasks",
+        "task_dependencies"
+      ],
+      "ui_surfaces": [
+        "/surgical-execution",
+        "/api/tasks"
+      ],
+      "source_files": [
+        "packages/domain/src/types.ts",
+        "apps/web/lib/api.ts",
+        "apps/web/components/war-room-v2/SurgicalExecution.tsx"
+      ]
+    },
+    {
+      "id": "mission_graph",
+      "label": "Mission Graph",
+      "kind": "execution_object",
+      "layer": "planning_execution",
+      "summary": "Hierarchy and dependency graph over mission-scoped refs including tasks, affairs, interests, and lineage.",
+      "storage_tables": [
+        "mission_nodes",
+        "mission_dependencies"
+      ],
+      "ui_surfaces": [
+        "/mission-command",
+        "/api/missions/[id]/hierarchy"
+      ],
+      "source_files": [
+        "packages/domain/src/types.ts",
+        "apps/web/lib/api.ts",
+        "apps/web/lib/api/mission-command.ts"
+      ]
+    },
+    {
+      "id": "lineage_node",
+      "label": "Lineage Node",
+      "kind": "scaling_object",
+      "layer": "scaling",
+      "summary": "Actor or generational scope node used to scale exposure across self, family, state, nation, and beyond.",
+      "storage_tables": [
+        "lineage_nodes",
+        "lineage_entities"
+      ],
+      "ui_surfaces": [
+        "/lineages",
+        "/war-gaming/lineage"
+      ],
+      "source_files": [
+        "packages/sqlite-core/migrations/0005_lineage_risk_model.sql",
+        "packages/domain/src/types.ts"
+      ]
+    },
+    {
+      "id": "lineage_risk",
+      "label": "Lineage Risk",
+      "kind": "scaling_object",
+      "layer": "scaling",
+      "summary": "Exposure register that quantifies dependency, irreversibility, optionality, and blast radius.",
+      "storage_tables": [
+        "lineage_risk_register"
+      ],
+      "ui_surfaces": [
+        "/lineage-map",
+        "/api/lineage-risks",
+        "/war-gaming/lineage"
+      ],
+      "source_files": [
+        "packages/sqlite-core/migrations/0005_lineage_risk_model.sql",
+        "apps/web/lib/decision-spec/index.ts",
+        "packages/sync-engine/src/index.ts"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "war_room_matrix",
+      "to": "domain",
+      "relation": "projects_into",
+      "why": "War Room matrix rows materialize domain posture, interests, and affairs framing."
+    },
+    {
+      "from": "law",
+      "to": "domain",
+      "relation": "governs",
+      "why": "Ontology backbone constrains domains to belong to laws."
+    },
+    {
+      "from": "volatility_source",
+      "to": "domain",
+      "relation": "propagates_into",
+      "why": "Source maps connect volatility sources to downstream domains."
+    },
+    {
+      "from": "volatility_source",
+      "to": "source_mode",
+      "relation": "war_games_through",
+      "why": "Source-mode protocol uses source profiles as the first decision substrate."
+    },
+    {
+      "from": "source_mode",
+      "to": "domain_mode",
+      "relation": "predecessor_of",
+      "why": "Domain mode cannot complete without source-mode predecessor coverage."
+    },
+    {
+      "from": "domain_mode",
+      "to": "affair_mode",
+      "relation": "predecessor_of",
+      "why": "Affair mode inherits fragility structure and posture from domain mode."
+    },
+    {
+      "from": "domain_mode",
+      "to": "interest_mode",
+      "relation": "predecessor_of",
+      "why": "Interest mode inherits stakes, risk map, and posture from domain mode."
+    },
+    {
+      "from": "interest_mode",
+      "to": "craft_mode",
+      "relation": "predecessor_of",
+      "why": "Craft mode is evaluated after an option path exists."
+    },
+    {
+      "from": "source_mode",
+      "to": "lineage_mode",
+      "relation": "predecessor_of",
+      "why": "Lineage mode requires source propagation context."
+    },
+    {
+      "from": "domain_mode",
+      "to": "lineage_mode",
+      "relation": "predecessor_of",
+      "why": "Lineage mode also depends on domain-level risk framing."
+    },
+    {
+      "from": "affair_mode",
+      "to": "mission_mode",
+      "relation": "predecessor_of",
+      "why": "Mission mode composes executed obligations."
+    },
+    {
+      "from": "interest_mode",
+      "to": "mission_mode",
+      "relation": "predecessor_of",
+      "why": "Mission mode composes option paths as parallel edges."
+    },
+    {
+      "from": "lineage_mode",
+      "to": "mission_mode",
+      "relation": "predecessor_of",
+      "why": "Mission mode must absorb blast radius and no-ruin constraints."
+    },
+    {
+      "from": "domain",
+      "to": "affair",
+      "relation": "contains_obligation",
+      "why": "Affairs belong to domains and represent obligations."
+    },
+    {
+      "from": "domain",
+      "to": "interest",
+      "relation": "contains_option",
+      "why": "Interests belong to domains and represent options."
+    },
+    {
+      "from": "affair_mode",
+      "to": "affair",
+      "relation": "evaluates",
+      "why": "Affair mode computes readiness for a specific obligation."
+    },
+    {
+      "from": "interest_mode",
+      "to": "interest",
+      "relation": "evaluates",
+      "why": "Interest mode computes convexity and loss protocol for an option."
+    },
+    {
+      "from": "craft_mode",
+      "to": "craft",
+      "relation": "evaluates",
+      "why": "Craft mode checks the knowledge ladder for reusable edge."
+    },
+    {
+      "from": "craft",
+      "to": "heap",
+      "relation": "contains",
+      "why": "Crafts collect heaps as raw knowledge material."
+    },
+    {
+      "from": "heap",
+      "to": "model",
+      "relation": "extracts_into",
+      "why": "Models are assembled from selected heaps."
+    },
+    {
+      "from": "model",
+      "to": "framework",
+      "relation": "assembles_into",
+      "why": "Frameworks group multiple models into a usable frame."
+    },
+    {
+      "from": "framework",
+      "to": "barbell",
+      "relation": "supports",
+      "why": "Barbell strategies are linked to frameworks."
+    },
+    {
+      "from": "barbell",
+      "to": "heuristic",
+      "relation": "condenses_into",
+      "why": "Heuristics are the operator-facing output of barbell-linked craft reasoning."
+    },
+    {
+      "from": "craft",
+      "to": "wargame",
+      "relation": "contains",
+      "why": "Craft doctrine chains begin at the wargame level."
+    },
+    {
+      "from": "wargame",
+      "to": "scenario",
+      "relation": "branches_into",
+      "why": "Scenarios capture alternate paths inside a doctrine chain."
+    },
+    {
+      "from": "scenario",
+      "to": "threat",
+      "relation": "contains",
+      "why": "Threats operationalize scenario-specific hazards."
+    },
+    {
+      "from": "threat",
+      "to": "response",
+      "relation": "responds_via",
+      "why": "Responses are attached directly to threats."
+    },
+    {
+      "from": "craft",
+      "to": "affair",
+      "relation": "means_for",
+      "why": "Affairs select a craft and heuristics through affair_means."
+    },
+    {
+      "from": "heuristic",
+      "to": "affair",
+      "relation": "guides",
+      "why": "Selected heuristics shape affair execution means."
+    },
+    {
+      "from": "doctrine_rulebook",
+      "to": "doctrine_rule",
+      "relation": "contains",
+      "why": "Rulebooks scope one or more doctrine rules."
+    },
+    {
+      "from": "doctrine_rule",
+      "to": "source_mode",
+      "relation": "gates",
+      "why": "Doctrine evaluation blocks source-mode readiness when logic is missing."
+    },
+    {
+      "from": "doctrine_rule",
+      "to": "domain_mode",
+      "relation": "gates",
+      "why": "Domain mode is blocked when hard doctrine conditions fail."
+    },
+    {
+      "from": "doctrine_rule",
+      "to": "affair_mode",
+      "relation": "gates",
+      "why": "Affair mode carries hard and soft doctrine penalties."
+    },
+    {
+      "from": "doctrine_rule",
+      "to": "interest_mode",
+      "relation": "gates",
+      "why": "Interest mode requires max loss, expiry, and convex setup."
+    },
+    {
+      "from": "doctrine_rule",
+      "to": "mission_mode",
+      "relation": "gates",
+      "why": "Mission mode must respect no-ruin constraints."
+    },
+    {
+      "from": "affair_mode",
+      "to": "plan",
+      "relation": "emits_plan",
+      "why": "War game planning actions emit plan blueprints tied to affair sources."
+    },
+    {
+      "from": "interest_mode",
+      "to": "plan",
+      "relation": "emits_plan",
+      "why": "Interest mode emits plan blueprints for optionality execution."
+    },
+    {
+      "from": "craft_mode",
+      "to": "plan",
+      "relation": "emits_plan",
+      "why": "Craft mode can emit plan blueprints from means ladders."
+    },
+    {
+      "from": "lineage_mode",
+      "to": "plan",
+      "relation": "emits_plan",
+      "why": "Lineage mode plans mitigation for scaled exposure."
+    },
+    {
+      "from": "mission_mode",
+      "to": "plan",
+      "relation": "emits_plan",
+      "why": "Mission mode outputs hierarchy-level plans once readiness passes."
+    },
+    {
+      "from": "plan",
+      "to": "task",
+      "relation": "decomposes_into",
+      "why": "Execution tasks are created from plans and preparation chains."
+    },
+    {
+      "from": "affair",
+      "to": "task",
+      "relation": "executes_via",
+      "why": "Affair-linked tasks reduce fragility through direct execution."
+    },
+    {
+      "from": "interest",
+      "to": "task",
+      "relation": "explores_via",
+      "why": "Interest-linked tasks run attempts and campaigns for optionality."
+    },
+    {
+      "from": "mission_mode",
+      "to": "mission_graph",
+      "relation": "synthesizes",
+      "why": "Mission mode expresses readiness through hierarchy and dependencies."
+    },
+    {
+      "from": "mission_graph",
+      "to": "task",
+      "relation": "orchestrates",
+      "why": "Mission nodes can point at tasks and control execution ordering."
+    },
+    {
+      "from": "lineage_node",
+      "to": "lineage_risk",
+      "relation": "scales_exposure",
+      "why": "Lineage risk register entries attach to lineage nodes."
+    },
+    {
+      "from": "lineage_mode",
+      "to": "lineage_risk",
+      "relation": "evaluates",
+      "why": "Lineage mode reads exposure, dependency, irreversibility, and blast radius."
+    },
+    {
+      "from": "lineage_risk",
+      "to": "mission_mode",
+      "relation": "constrains",
+      "why": "Mission synthesis must respect blast radius and no-ruin risk."
+    }
+  ]
+}

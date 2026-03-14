@@ -118,6 +118,24 @@
       "height": 280
     },
     {
+      "id": "n14b",
+      "type": "file",
+      "file": "docs/knowledge/decision-framework.json",
+      "x": 2300,
+      "y": 1020,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n14c",
+      "type": "file",
+      "file": "docs/knowledge/decision-framework.canvas",
+      "x": 2760,
+      "y": 1020,
+      "width": 420,
+      "height": 280
+    },
+    {
       "id": "n15",
       "type": "file",
       "file": "docs/knowledge/docs-index.canvas",
@@ -150,6 +168,15 @@
       "file": "docs/sequences/bootstrap-mission-command-primary.mmd",
       "x": 4140,
       "y": 680,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n19",
+      "type": "file",
+      "file": "docs/architecture/decision-framework.dot",
+      "x": 3220,
+      "y": 1020,
       "width": 420,
       "height": 280
     }
@@ -202,6 +229,24 @@
       "fromNode": "n11",
       "toNode": "n13",
       "label": "governs docs migration"
+    },
+    {
+      "id": "e12b",
+      "fromNode": "n14",
+      "toNode": "n14b",
+      "label": "indexes decision ontology"
+    },
+    {
+      "id": "e12c",
+      "fromNode": "n14b",
+      "toNode": "n14c",
+      "label": "renders inspectable canvas"
+    },
+    {
+      "id": "e12d",
+      "fromNode": "n14b",
+      "toNode": "n19",
+      "label": "renders topology graph"
     },
     {
       "id": "e13",

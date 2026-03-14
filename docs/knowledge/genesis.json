@@ -1,0 +1,1407 @@
+{
+  "_meta": {
+    "status": "derived",
+    "confidence": "medium",
+    "version": "v0.1.0",
+    "purpose": "Conceptual source of truth for the War Room decision hierarchy and downstream decomposition.",
+    "source_files": [
+      "docs/decision-tree/war-room-fractal-decision-tree.md",
+      "docs/reports/state-of-the-art-alignment-2026-03-10.md",
+      "packages/sqlite-core/migrations/0001_init.sql",
+      "apps/web/components/war-room-v2/types.ts",
+      "apps/web/components/war-room-v2/wargame_volatility.tsx",
+      "apps/web/components/war-room-v2/wargame_affair.tsx",
+      "apps/web/components/war-room-v2/wargame_interest.tsx",
+      "apps/web/components/war-room-v2/WarGaming.tsx",
+      "apps/web/components/war-room-v2/DomainModal.tsx",
+      "apps/web/components/war-room-v2/WarRoomView.tsx",
+      "apps/web/components/war-room-v2/DecisionModal.tsx",
+      "apps/web/components/war-room-v2/DecisionChamber.tsx",
+      "apps/web/components/war-room-v2/CraftDetail.tsx",
+      "apps/web/components/war-room-v2/DashboardView.tsx",
+      "apps/web/components/war-room-v2/LabView.tsx",
+      "apps/web/lib/decision-tree/registry.ts",
+      "apps/web/lib/decision-spec/index.ts",
+      "apps/web/lib/war-room/operational-metrics.ts",
+      "packages/sync-engine/src/index.ts"
+    ],
+    "notes": [
+      "This file models the conceptual operator tree, not the implementation dependency graph.",
+      "Use this to inspect whether the thinking framework itself is complete and correctly connected."
+    ]
+  },
+  "implementation": {
+    "statuses": {
+      "war_room": "partial",
+      "state_of_the_art": "partial",
+      "state_of_affairs": "implemented",
+      "lineages": "partial",
+      "mission": "partial",
+      "map_navigation": "partial",
+      "source_of_volatility": "implemented",
+      "source_map_profiles": "implemented",
+      "state_of_art_projection": "implemented",
+      "state_of_art_protocol": "implemented",
+      "drift_parity_checks": "partial",
+      "context_narrative": "partial",
+      "fragility_narrative": "partial",
+      "risk_reward_summary": "partial",
+      "concavity_profile": "partial",
+      "short_vol_exposure": "partial",
+      "long_vol_exposure": "partial",
+      "skin_breach_penalty": "partial",
+      "barrier_rules": "partial",
+      "checklist_rules": "partial",
+      "policy_acknowledgements": "partial",
+      "domain": "implemented",
+      "decision_type": "partial",
+      "tail_class": "partial",
+      "quadrant": "partial",
+      "method_posture": "partial",
+      "philosophers_stone": "partial",
+      "asymmetry": "partial",
+      "skin_in_the_game": "partial",
+      "skin_capital": "partial",
+      "skin_time": "partial",
+      "skin_reputation": "partial",
+      "stakes": "partial",
+      "risks": "partial",
+      "players_fragilistas": "doctrine_only",
+      "lineage_exposure": "partial",
+      "non_linearity": "partial",
+      "fragility": "implemented",
+      "short_volatility": "implemented",
+      "vulnerabilities": "implemented",
+      "propagation": "implemented",
+      "irreversibility": "partial",
+      "ends": "partial",
+      "hedge": "implemented",
+      "edge": "implemented",
+      "means": "partial",
+      "avoid_methods": "implemented",
+      "crafts": "implemented",
+      "knowledge_stacks": "implemented",
+      "knowledge_protocols": "implemented",
+      "knowledge_rules": "implemented",
+      "heaps": "implemented",
+      "models": "implemented",
+      "frameworks": "implemented",
+      "barbell_strategies": "implemented",
+      "heuristics": "implemented",
+      "wargames": "implemented",
+      "scenarios": "implemented",
+      "threats": "implemented",
+      "responses": "implemented",
+      "affairs": "implemented",
+      "interests": "implemented",
+      "thresholds": "partial",
+      "kpis": "partial",
+      "bets": "partial",
+      "lab": "implemented",
+      "forge": "implemented",
+      "wield": "implemented",
+      "tinker": "implemented",
+      "plans": "implemented",
+      "tasks": "implemented",
+      "omission_cadence": "partial",
+      "preparation_notes": "partial",
+      "domain_pnl_signal": "partial",
+      "inherited_preparation_context": "partial",
+      "strategy_posture": "implemented",
+      "strategy_positioning": "implemented",
+      "allies": "implemented",
+      "enemies": "implemented",
+      "execution_readiness": "partial",
+      "fragility_entities": "partial",
+      "active_threat_list": "implemented",
+      "mission_hierarchy": "implemented",
+      "mission_serial_refs": "partial",
+      "mission_parallel_refs": "partial",
+      "mission_dependency_notes": "partial",
+      "dependency_chain": "implemented",
+      "readiness": "partial",
+      "no_ruin": "partial",
+      "lineage_nodes": "implemented",
+      "lineage_risks": "implemented",
+      "blast_radius": "implemented",
+      "lineage_self": "implemented",
+      "lineage_family": "implemented",
+      "lineage_state": "implemented",
+      "lineage_nation": "implemented",
+      "lineage_humanity": "implemented",
+      "lineage_nature": "implemented",
+      "drafts": "implemented",
+      "structural_anchors": "implemented",
+      "promotion_events": "implemented",
+      "portfolio_war_room": "implemented",
+      "portfolio_projects": "implemented",
+      "portfolio_experiments": "implemented",
+      "portfolio_decision_gates": "implemented",
+      "portfolio_evidence": "implemented",
+      "portfolio_ship_logs": "implemented",
+      "operator_dashboard": "implemented",
+      "fog_of_maya": "implemented",
+      "operational_do_now": "implemented",
+      "stakes_triad": "implemented",
+      "asymmetry_curve": "implemented",
+      "virtue_spiral": "implemented",
+      "do_now_copilot": "implemented",
+      "protocol_status": "implemented",
+      "life_clock": "implemented",
+      "alert_queue": "implemented",
+      "no_ruin_tripwire_panel": "implemented",
+      "ruin_ledger_panel": "implemented",
+      "via_negativa_panel": "implemented",
+      "black_swan_readiness": "implemented",
+      "execution_distribution": "implemented",
+      "fragility_hierarchy": "implemented",
+      "strategic_posture_filter": "implemented",
+      "war_gaming": "implemented",
+      "decision_surface": "implemented",
+      "operational_filters": "implemented",
+      "quadrant_heatgrid": "implemented",
+      "source_volatility_flow": "implemented",
+      "readiness_penalty_profile": "implemented",
+      "fragility_radar": "implemented",
+      "task_kill_chain": "implemented",
+      "risk_logic_continuum": "implemented",
+      "optionality_budget": "implemented",
+      "source_register": "implemented",
+      "dual_path_comparator": "implemented",
+      "fragilista_watchlist": "implemented",
+      "doctrine_violation_feed": "implemented",
+      "hedge_coverage_matrix": "implemented",
+      "dependency_blast_radius": "implemented",
+      "correlation_risk": "implemented",
+      "confidence_evidence": "implemented",
+      "fractal_flow_rail": "implemented",
+      "triage_actions": "implemented",
+      "doctrine_fixes": "implemented",
+      "dependency_warnings": "implemented",
+      "hud_status": "implemented",
+      "system_anatomy": "implemented",
+      "campaign_snapshots": "implemented",
+      "barbell_guardrail": "implemented",
+      "asymmetry_snapshot": "implemented",
+      "domain_posture": "implemented",
+      "barbell_means_coverage": "implemented",
+      "lineage_risk_heatgrid": "implemented",
+      "active_domain_affairs": "implemented",
+      "lineage_risk_register": "implemented"
+    },
+    "legend": {
+      "implemented": "backed by runtime schema and active code paths",
+      "partial": "present in code or docs, but compressed, incomplete, or not first-class end to end",
+      "doctrine_only": "conceptually important but not yet explicitly represented in runtime/code"
+    }
+  },
+  "nodes": [
+    {
+      "id": "war_room",
+      "label": "War Room",
+      "kind": "root",
+      "summary": "Top-level decision environment."
+    },
+    {
+      "id": "state_of_the_art",
+      "label": "State of the Art",
+      "kind": "macro_section",
+      "summary": "Environmental framing, topology, and admissible posture."
+    },
+    {
+      "id": "state_of_affairs",
+      "label": "State of Affairs",
+      "kind": "macro_section",
+      "summary": "Live obligations and options."
+    },
+    {
+      "id": "lineages",
+      "label": "Lineages",
+      "kind": "downstream_section",
+      "summary": "Scaled exposure, blast radius, and intergenerational consequence."
+    },
+    {
+      "id": "mission",
+      "label": "Mission",
+      "kind": "downstream_section",
+      "summary": "Hierarchy, dependency ordering, and no-ruin execution synthesis."
+    },
+    {
+      "id": "map_navigation",
+      "label": "Map Navigation Framework",
+      "kind": "state_of_the_art_element",
+      "summary": "The orienting map that situates where a decision lives."
+    },
+    {
+      "id": "philosophers_stone",
+      "label": "Philosopher's Stone",
+      "kind": "state_of_the_art_element",
+      "summary": "Core operating doctrine lens."
+    },
+    {
+      "id": "source_of_volatility",
+      "label": "Source of Volatility",
+      "kind": "state_of_the_art_element",
+      "summary": "Upstream shock or propagation source."
+    },
+    {
+      "id": "source_map_profiles",
+      "label": "Source Map Profiles",
+      "kind": "state_of_the_art_element",
+      "summary": "Canonical persisted source-domain doctrine records."
+    },
+    {
+      "id": "state_of_art_projection",
+      "label": "State of the Art Projection",
+      "kind": "state_of_the_art_element",
+      "summary": "Shared runtime projection that turns source-map rows into readable Stone / Ends / Means structure."
+    },
+    {
+      "id": "state_of_art_protocol",
+      "label": "State of the Art Protocol",
+      "kind": "state_of_the_art_element",
+      "summary": "Backend-defined Map / Stone / Ends / Means flow, doctrine prompts, creation gates, and chain guidance for source mode."
+    },
+    {
+      "id": "context_narrative",
+      "label": "Context Narrative",
+      "kind": "state_of_the_art_element",
+      "summary": "Scenario framing text that situates the target before formal evaluation."
+    },
+    {
+      "id": "fragility_narrative",
+      "label": "Fragility Narrative",
+      "kind": "state_of_the_art_element",
+      "summary": "Readable explanation of how exposure, dependency, and irreversibility make the situation brittle."
+    },
+    {
+      "id": "risk_reward_summary",
+      "label": "Risk / Reward Summary",
+      "kind": "state_of_the_art_element",
+      "summary": "Operator-facing synthesis of downside, upside, and boundedness."
+    },
+    {
+      "id": "concavity_profile",
+      "label": "Concavity Profile",
+      "kind": "state_of_the_art_element",
+      "summary": "Whether the structure is concave, neutral, or convex under stress."
+    },
+    {
+      "id": "short_vol_exposure",
+      "label": "Short Vol Exposure",
+      "kind": "state_of_the_art_element",
+      "summary": "Explicit flag that the operator is harmed by disorder and variance."
+    },
+    {
+      "id": "long_vol_exposure",
+      "label": "Long Vol Exposure",
+      "kind": "state_of_the_art_element",
+      "summary": "Explicit flag that the operator benefits from disorder or optionality."
+    },
+    {
+      "id": "barrier_rules",
+      "label": "Barrier Rules",
+      "kind": "state_of_the_art_element",
+      "summary": "Hard execute barriers that must be satisfied before action."
+    },
+    {
+      "id": "checklist_rules",
+      "label": "Checklist Rules",
+      "kind": "state_of_the_art_element",
+      "summary": "Non-barrier doctrine checks that structure judgment and acknowledgement."
+    },
+    {
+      "id": "policy_acknowledgements",
+      "label": "Policy Acknowledgements",
+      "kind": "state_of_the_art_element",
+      "summary": "Explicit acknowledgements that the operator has seen and accepted doctrine constraints."
+    },
+    {
+      "id": "drift_parity_checks",
+      "label": "Drift / Parity Checks",
+      "kind": "state_of_the_art_element",
+      "summary": "Checks that live domain, affair, and interest records still match their source-backed doctrine."
+    },
+    {
+      "id": "domain",
+      "label": "Semantic Domain",
+      "kind": "state_of_the_art_element",
+      "summary": "Semantic domain touched by the source of volatility."
+    },
+    {
+      "id": "decision_type",
+      "label": "Decision Type",
+      "kind": "map_element",
+      "summary": "Simple or complex decision structure."
+    },
+    {
+      "id": "tail_class",
+      "label": "Domain Tail Class",
+      "kind": "map_element",
+      "summary": "Thin-tailed, fat-tailed, or unknown probabilistic regime."
+    },
+    {
+      "id": "quadrant",
+      "label": "Quadrant",
+      "kind": "map_element",
+      "summary": "Combined map classification that determines admissible reasoning posture."
+    },
+    {
+      "id": "method_posture",
+      "label": "Method Posture",
+      "kind": "map_element",
+      "summary": "Statistical, bounded-inference, precautionary, or tail-clipping stance."
+    },
+    {
+      "id": "asymmetry",
+      "label": "Asymmetry",
+      "kind": "state_of_the_art_element",
+      "summary": "Upside/downside shape, skin in the game, and payoff skew."
+    },
+    {
+      "id": "skin_in_the_game",
+      "label": "Skin in the Game",
+      "kind": "stone_element",
+      "summary": "The readable operator bucket for what is truly on the line: stakes, risks, and lineage exposure."
+    },
+    {
+      "id": "players_fragilistas",
+      "label": "Players / Fragilistas",
+      "kind": "stone_element",
+      "summary": "Who bears downside, who exports fragility, and where incentives are misaligned."
+    },
+    {
+      "id": "lineage_exposure",
+      "label": "Lineage",
+      "kind": "stone_element",
+      "summary": "Which levels of the lineage ladder are exposed if the decision is wrong."
+    },
+    {
+      "id": "non_linearity",
+      "label": "Non-Linearity",
+      "kind": "state_of_the_art_element",
+      "summary": "Sensitivity to shocks and nonlinear response."
+    },
+    {
+      "id": "stakes",
+      "label": "Stakes",
+      "kind": "state_of_the_art_element",
+      "summary": "What matters if wrong."
+    },
+    {
+      "id": "skin_capital",
+      "label": "Capital at Risk",
+      "kind": "state_of_the_art_element",
+      "summary": "Direct financial or resource exposure borne by the operator."
+    },
+    {
+      "id": "skin_time",
+      "label": "Time at Risk",
+      "kind": "state_of_the_art_element",
+      "summary": "Time, attention, and life-energy committed to the position."
+    },
+    {
+      "id": "skin_reputation",
+      "label": "Reputation at Risk",
+      "kind": "state_of_the_art_element",
+      "summary": "Credibility, trust, and social downside borne by the operator."
+    },
+    {
+      "id": "skin_breach_penalty",
+      "label": "Breach Penalty",
+      "kind": "state_of_the_art_element",
+      "summary": "The explicit cost borne if the operator violates the stated downside boundary."
+    },
+    {
+      "id": "risks",
+      "label": "Risks",
+      "kind": "state_of_the_art_element",
+      "summary": "Known threats and downside vectors."
+    },
+    {
+      "id": "fragility",
+      "label": "Fragility",
+      "kind": "state_of_the_art_element",
+      "summary": "How badly the system suffers from disorder."
+    },
+    {
+      "id": "short_volatility",
+      "label": "Short Volatility",
+      "kind": "state_of_the_art_element",
+      "summary": "UI-facing expression of fragility: harmed by disorder, variance, or tight coupling."
+    },
+    {
+      "id": "vulnerabilities",
+      "label": "Vulnerabilities",
+      "kind": "state_of_the_art_element",
+      "summary": "Specific weak points, exposures, and failure surfaces."
+    },
+    {
+      "id": "propagation",
+      "label": "Propagation",
+      "kind": "state_of_the_art_element",
+      "summary": "How the harm travels across systems, domains, or actors."
+    },
+    {
+      "id": "irreversibility",
+      "label": "Irreversibility",
+      "kind": "state_of_the_art_element",
+      "summary": "Whether a failure crosses an absorbing barrier and ends the game."
+    },
+    {
+      "id": "ends",
+      "label": "Ends / Barbell Posture",
+      "kind": "state_of_the_art_element",
+      "summary": "Desired posture expressed as hedge plus edge."
+    },
+    {
+      "id": "hedge",
+      "label": "Hedge",
+      "kind": "ends_split",
+      "summary": "Protect downside and ensure survival."
+    },
+    {
+      "id": "edge",
+      "label": "Edge",
+      "kind": "ends_split",
+      "summary": "Preserve or create asymmetric upside."
+    },
+    {
+      "id": "means",
+      "label": "Means",
+      "kind": "state_of_the_art_element",
+      "summary": "Admissible methods, heuristics, and operator instruments."
+    },
+    {
+      "id": "avoid_methods",
+      "label": "Avoid / Disallowed Methods",
+      "kind": "means_branch",
+      "summary": "Methods the operator should explicitly avoid in this quadrant or lineage condition."
+    },
+    {
+      "id": "crafts",
+      "label": "Crafts",
+      "kind": "means_branch",
+      "summary": "Reusable knowledge systems that produce execution means."
+    },
+    {
+      "id": "heaps",
+      "label": "Heaps",
+      "kind": "craft_decomposition",
+      "summary": "Raw material and references."
+    },
+    {
+      "id": "models",
+      "label": "Models",
+      "kind": "craft_decomposition",
+      "summary": "Extracted conceptual structures."
+    },
+    {
+      "id": "frameworks",
+      "label": "Frameworks",
+      "kind": "craft_decomposition",
+      "summary": "Structured lenses assembled from models."
+    },
+    {
+      "id": "barbell_strategies",
+      "label": "Barbell Strategies",
+      "kind": "craft_decomposition",
+      "summary": "Hedge-plus-edge expression of a craft."
+    },
+    {
+      "id": "heuristics",
+      "label": "Heuristics",
+      "kind": "craft_decomposition",
+      "summary": "Operator-usable rules distilled from methods, crafts, and barbells."
+    },
+    {
+      "id": "wargames",
+      "label": "Wargames",
+      "kind": "craft_decomposition",
+      "summary": "Scenario-driven doctrine chains."
+    },
+    {
+      "id": "scenarios",
+      "label": "Scenarios",
+      "kind": "craft_decomposition",
+      "summary": "Alternative futures inside a wargame."
+    },
+    {
+      "id": "threats",
+      "label": "Threats",
+      "kind": "craft_decomposition",
+      "summary": "Specific hostile or failure vectors."
+    },
+    {
+      "id": "responses",
+      "label": "Responses",
+      "kind": "craft_decomposition",
+      "summary": "Concrete countermeasures and response moves."
+    },
+    {
+      "id": "knowledge_stacks",
+      "label": "Knowledge Stacks",
+      "kind": "craft_decomposition",
+      "summary": "Named craft sub-stacks that organize protocols, rules, and heuristics."
+    },
+    {
+      "id": "knowledge_protocols",
+      "label": "Protocols",
+      "kind": "craft_decomposition",
+      "summary": "Executable procedures and operating constraints within a craft."
+    },
+    {
+      "id": "knowledge_rules",
+      "label": "Rules",
+      "kind": "craft_decomposition",
+      "summary": "Codified statements and barriers that constrain action."
+    },
+    {
+      "id": "affairs",
+      "label": "Affairs",
+      "kind": "state_of_affairs_element",
+      "summary": "Obligations that remove fragility."
+    },
+    {
+      "id": "interests",
+      "label": "Interests",
+      "kind": "state_of_affairs_element",
+      "summary": "Options that create convexity."
+    },
+    {
+      "id": "thresholds",
+      "label": "Thresholds",
+      "kind": "state_of_affairs_element",
+      "summary": "Operational tripwires that define when an obligation is off-course."
+    },
+    {
+      "id": "kpis",
+      "label": "KPIs",
+      "kind": "state_of_affairs_element",
+      "summary": "Measures that show whether the obligation is actually reducing fragility."
+    },
+    {
+      "id": "bets",
+      "label": "Bets",
+      "kind": "state_of_affairs_element",
+      "summary": "Explicit optional positions with thesis, max loss, and expiry."
+    },
+    {
+      "id": "plans",
+      "label": "Plans",
+      "kind": "execution_branch",
+      "summary": "Mode-specific planning blueprints."
+    },
+    {
+      "id": "tasks",
+      "label": "Tasks",
+      "kind": "execution_branch",
+      "summary": "Execution atoms and campaigns."
+    },
+    {
+      "id": "preparation_notes",
+      "label": "Preparation Notes",
+      "kind": "execution_branch",
+      "summary": "Specific preparation work required before commitment or motion."
+    },
+    {
+      "id": "omission_cadence",
+      "label": "Omission Cadence",
+      "kind": "state_of_affairs_element",
+      "summary": "Deliberate review rhythm for what not to do, not just what to do."
+    },
+    {
+      "id": "domain_pnl_signal",
+      "label": "Domain P&L Signal",
+      "kind": "state_of_affairs_element",
+      "summary": "Recorded signal of fragility removed, robustness gained, and optionality created."
+    },
+    {
+      "id": "inherited_preparation_context",
+      "label": "Inherited Preparation Context",
+      "kind": "state_of_affairs_element",
+      "summary": "Planning context inherited from State of the Art into the affair chamber."
+    },
+    {
+      "id": "lab",
+      "label": "Lab",
+      "kind": "interest_execution_branch",
+      "summary": "Interest protocol surface where options move through controlled experimentation."
+    },
+    {
+      "id": "forge",
+      "label": "Forge",
+      "kind": "lab_stage",
+      "summary": "Hypothesis formation and protocol scaffolding."
+    },
+    {
+      "id": "wield",
+      "label": "Wield",
+      "kind": "lab_stage",
+      "summary": "Protocol-ready execution under bounded downside."
+    },
+    {
+      "id": "tinker",
+      "label": "Tinker",
+      "kind": "lab_stage",
+      "summary": "Iterative refinement after execution evidence appears."
+    },
+    {
+      "id": "strategy_posture",
+      "label": "Strategy Posture",
+      "kind": "state_of_affairs_element",
+      "summary": "Offense/defense posture used to deploy the affair."
+    },
+    {
+      "id": "strategy_positioning",
+      "label": "Strategy Positioning",
+      "kind": "state_of_affairs_element",
+      "summary": "The chosen strategic placement and stance for the current obligation."
+    },
+    {
+      "id": "allies",
+      "label": "Allies",
+      "kind": "state_of_affairs_element",
+      "summary": "Friendly actors and support mapping attached to the affair strategy."
+    },
+    {
+      "id": "enemies",
+      "label": "Enemies",
+      "kind": "state_of_affairs_element",
+      "summary": "Adversarial actors and hostility mapping attached to the affair strategy."
+    },
+    {
+      "id": "execution_readiness",
+      "label": "Execution Readiness",
+      "kind": "state_of_affairs_element",
+      "summary": "Whether the affair is ready to push tasks into Surgical Execution."
+    },
+    {
+      "id": "fragility_entities",
+      "label": "Fragility Entities",
+      "kind": "state_of_affairs_element",
+      "summary": "Entity-level fragility markers used in the affair chamber."
+    },
+    {
+      "id": "active_threat_list",
+      "label": "Active Threat List",
+      "kind": "craft_decomposition",
+      "summary": "The currently surfaced threat shortlist for a craft."
+    },
+    {
+      "id": "mission_hierarchy",
+      "label": "Mission Hierarchy",
+      "kind": "mission_element",
+      "summary": "Ordered execution structure."
+    },
+    {
+      "id": "mission_serial_refs",
+      "label": "Mission Serial Refs",
+      "kind": "mission_element",
+      "summary": "Ordered refs that must execute in sequence."
+    },
+    {
+      "id": "mission_parallel_refs",
+      "label": "Mission Parallel Refs",
+      "kind": "mission_element",
+      "summary": "Refs that can execute concurrently without breaking order."
+    },
+    {
+      "id": "mission_dependency_notes",
+      "label": "Mission Dependency Notes",
+      "kind": "mission_element",
+      "summary": "Operator-visible notes explaining dependency logic."
+    },
+    {
+      "id": "dependency_chain",
+      "label": "Dependency Chain",
+      "kind": "mission_element",
+      "summary": "Serialized or parallelized dependency structure."
+    },
+    {
+      "id": "readiness",
+      "label": "Readiness",
+      "kind": "mission_element",
+      "summary": "Eligibility to act under doctrine constraints."
+    },
+    {
+      "id": "no_ruin",
+      "label": "No-Ruin Constraint",
+      "kind": "mission_element",
+      "summary": "Execution may not cross irreversible ruin boundaries."
+    },
+    {
+      "id": "lineage_nodes",
+      "label": "Lineage Nodes",
+      "kind": "lineage_element",
+      "summary": "Self to nature scaling layers."
+    },
+    {
+      "id": "lineage_risks",
+      "label": "Lineage Risks",
+      "kind": "lineage_element",
+      "summary": "Exposure register across scale."
+    },
+    {
+      "id": "blast_radius",
+      "label": "Blast Radius",
+      "kind": "lineage_element",
+      "summary": "How far failure propagates."
+    },
+    {
+      "id": "lineage_self",
+      "label": "Self",
+      "kind": "lineage_level",
+      "summary": "Personal survival and direct exposure layer."
+    },
+    {
+      "id": "lineage_family",
+      "label": "Family",
+      "kind": "lineage_level",
+      "summary": "Immediate kin and close dependents."
+    },
+    {
+      "id": "lineage_state",
+      "label": "State",
+      "kind": "lineage_level",
+      "summary": "Institutional and civic survival layer."
+    },
+    {
+      "id": "lineage_nation",
+      "label": "Nation",
+      "kind": "lineage_level",
+      "summary": "National continuity layer."
+    },
+    {
+      "id": "lineage_humanity",
+      "label": "Humanity",
+      "kind": "lineage_level",
+      "summary": "Species-wide survival layer."
+    },
+    {
+      "id": "lineage_nature",
+      "label": "Nature",
+      "kind": "lineage_level",
+      "summary": "Ecosystem and biosphere layer."
+    },
+    {
+      "id": "drafts",
+      "label": "Drafts",
+      "kind": "pre_commit_surface",
+      "summary": "Prose-first structural thinking surface before canonical commitment."
+    },
+    {
+      "id": "structural_anchors",
+      "label": "Structural Anchors",
+      "kind": "pre_commit_surface",
+      "summary": "Intermediate handles between prose and canonical entities."
+    },
+    {
+      "id": "promotion_events",
+      "label": "Promotion Events",
+      "kind": "pre_commit_surface",
+      "summary": "Transitions where draft structure becomes a durable runtime entity."
+    },
+    {
+      "id": "portfolio_war_room",
+      "label": "Portfolio War Room",
+      "kind": "mission_command_surface",
+      "summary": "Mission Command surface above bets and projects."
+    },
+    {
+      "id": "portfolio_projects",
+      "label": "Portfolio Projects",
+      "kind": "mission_command_surface",
+      "summary": "Named bets or projects tracked at command level."
+    },
+    {
+      "id": "portfolio_experiments",
+      "label": "Portfolio Experiments",
+      "kind": "mission_command_surface",
+      "summary": "Project-level learning loops and probes."
+    },
+    {
+      "id": "portfolio_decision_gates",
+      "label": "Portfolio Decision Gates",
+      "kind": "mission_command_surface",
+      "summary": "Continue, scale, pause, archive, or kill gates per project."
+    },
+    {
+      "id": "portfolio_evidence",
+      "label": "Portfolio Evidence",
+      "kind": "mission_command_surface",
+      "summary": "Recorded evidence that justifies project decisions."
+    },
+    {
+      "id": "portfolio_ship_logs",
+      "label": "Portfolio Ship Logs",
+      "kind": "mission_command_surface",
+      "summary": "Shipping and output cadence across portfolio projects."
+    },
+    {
+      "id": "operator_dashboard",
+      "label": "Operator Dashboard",
+      "kind": "operator_surface",
+      "summary": "Top-level monitoring and orientation surface for the whole operating system."
+    },
+    {
+      "id": "protocol_status",
+      "label": "Protocol Status",
+      "kind": "operator_surface",
+      "summary": "Current system protocol state, confidence, and meta-health."
+    },
+    {
+      "id": "life_clock",
+      "label": "Life Clock",
+      "kind": "operator_surface",
+      "summary": "Time-horizon framing of operator runway and urgency."
+    },
+    {
+      "id": "alert_queue",
+      "label": "Alert Queue",
+      "kind": "operator_surface",
+      "summary": "Immediate surfaced alerts and operator warnings."
+    },
+    {
+      "id": "fog_of_maya",
+      "label": "Fog of Maya",
+      "kind": "operator_surface",
+      "summary": "Visibility layer for opacity, confusion, and interpretive distortion."
+    },
+    {
+      "id": "operational_do_now",
+      "label": "Operational Do Now",
+      "kind": "operator_surface",
+      "summary": "Current ranked operational actions derived from the live system state."
+    },
+    {
+      "id": "stakes_triad",
+      "label": "Stakes Triad",
+      "kind": "operator_surface",
+      "summary": "Life, time, and soul weighting surface for current stakes."
+    },
+    {
+      "id": "asymmetry_curve",
+      "label": "Asymmetry Curve",
+      "kind": "operator_surface",
+      "summary": "Visual surface for convexity versus fragility balance."
+    },
+    {
+      "id": "virtue_spiral",
+      "label": "Virtue Spiral",
+      "kind": "operator_surface",
+      "summary": "Progression surface from fragility reduction to dominance."
+    },
+    {
+      "id": "do_now_copilot",
+      "label": "Do-Now Copilot",
+      "kind": "operator_surface",
+      "summary": "Suggested immediate action synthesized from the current state."
+    },
+    {
+      "id": "no_ruin_tripwire_panel",
+      "label": "No-Ruin Tripwire",
+      "kind": "operator_surface",
+      "summary": "Panel that blocks or warns when no-ruin constraints are threatened."
+    },
+    {
+      "id": "ruin_ledger_panel",
+      "label": "Ruin Ledger",
+      "kind": "operator_surface",
+      "summary": "Ledger of highest-severity ruin candidates and hedge state."
+    },
+    {
+      "id": "via_negativa_panel",
+      "label": "Via Negativa",
+      "kind": "operator_surface",
+      "summary": "Subtractive action surface for what should be removed or stopped."
+    },
+    {
+      "id": "black_swan_readiness",
+      "label": "Black Swan Readiness",
+      "kind": "operator_surface",
+      "summary": "Readiness posture for low-frequency, high-severity disorder."
+    },
+    {
+      "id": "execution_distribution",
+      "label": "Execution Distribution",
+      "kind": "operator_surface",
+      "summary": "Offense/defense execution balance across the current task set."
+    },
+    {
+      "id": "fragility_hierarchy",
+      "label": "Fragility Hierarchy",
+      "kind": "operator_surface",
+      "summary": "Hierarchical view of domains, sources, and lineages under fragility pressure."
+    },
+    {
+      "id": "strategic_posture_filter",
+      "label": "Strategic Posture Filter",
+      "kind": "operator_surface",
+      "summary": "Segmented operator filter for allies, enemies, offense, defense, domains, interests, and affairs."
+    },
+    {
+      "id": "war_gaming",
+      "label": "War Gaming",
+      "kind": "operator_surface",
+      "summary": "Primary planning and operator synthesis layer between ontology and execution."
+    },
+    {
+      "id": "decision_surface",
+      "label": "Decision Surface",
+      "kind": "operator_surface",
+      "summary": "Top-level interaction layer for active mode, target, and doctrine context."
+    },
+    {
+      "id": "operational_filters",
+      "label": "Operational Filters",
+      "kind": "operator_surface",
+      "summary": "Source, domain, and lineage filters that constrain blast context and execution focus."
+    },
+    {
+      "id": "quadrant_heatgrid",
+      "label": "Quadrant HeatGrid",
+      "kind": "operator_surface",
+      "summary": "Randomness-by-impact field of open risks."
+    },
+    {
+      "id": "source_volatility_flow",
+      "label": "Source Volatility Flow",
+      "kind": "operator_surface",
+      "summary": "Lane view from live sources into cave versus convex postures."
+    },
+    {
+      "id": "readiness_penalty_profile",
+      "label": "Readiness Penalty Profile",
+      "kind": "operator_surface",
+      "summary": "Stacked penalty breakdown for readiness degradation."
+    },
+    {
+      "id": "fragility_radar",
+      "label": "Fragility Radar",
+      "kind": "operator_surface",
+      "summary": "Cross-domain fragility scan over domains and affairs."
+    },
+    {
+      "id": "task_kill_chain",
+      "label": "Task Kill Chain",
+      "kind": "operator_surface",
+      "summary": "Execution chain view across tasks and dependencies."
+    },
+    {
+      "id": "risk_logic_continuum",
+      "label": "Risk Logic Continuum",
+      "kind": "operator_surface",
+      "summary": "Operator summary of hedge-versus-edge balance and asymmetry bias."
+    },
+    {
+      "id": "optionality_budget",
+      "label": "Optionality Budget",
+      "kind": "operator_surface",
+      "summary": "Budgeted view of optionality capacity and spend."
+    },
+    {
+      "id": "source_register",
+      "label": "Source Register",
+      "kind": "operator_surface",
+      "summary": "Filterable register of volatility sources and linked domains."
+    },
+    {
+      "id": "dual_path_comparator",
+      "label": "Dual Path Comparator",
+      "kind": "operator_surface",
+      "summary": "Prepared-versus-unprepared path comparison for the current scope."
+    },
+    {
+      "id": "fragilista_watchlist",
+      "label": "Fragilista Watchlist",
+      "kind": "operator_surface",
+      "summary": "Watchlist of actors or areas externalizing fragility."
+    },
+    {
+      "id": "doctrine_violation_feed",
+      "label": "Doctrine Violation Feed",
+      "kind": "operator_surface",
+      "summary": "Live stream of doctrine breaches and rule violations."
+    },
+    {
+      "id": "hedge_coverage_matrix",
+      "label": "Hedge Coverage Matrix",
+      "kind": "operator_surface",
+      "summary": "Coverage map of hedge posture against obligations and exposures."
+    },
+    {
+      "id": "dependency_blast_radius",
+      "label": "Dependency Blast Radius",
+      "kind": "operator_surface",
+      "summary": "Projected spread of failure across linked dependencies."
+    },
+    {
+      "id": "correlation_risk",
+      "label": "Correlation Risk",
+      "kind": "operator_surface",
+      "summary": "Concentration and coupling signal across active bets and obligations."
+    },
+    {
+      "id": "confidence_evidence",
+      "label": "Confidence Evidence",
+      "kind": "operator_surface",
+      "summary": "Confidence state with evidence depth and recency."
+    },
+    {
+      "id": "fractal_flow_rail",
+      "label": "Fractal Flow Rail",
+      "kind": "operator_surface",
+      "summary": "Mode-aware rail that situates the current target inside the doctrine flow."
+    },
+    {
+      "id": "triage_actions",
+      "label": "Triage Actions",
+      "kind": "operator_surface",
+      "summary": "Immediate fix-or-advance actions derived from evaluation and triage."
+    },
+    {
+      "id": "doctrine_fixes",
+      "label": "Doctrine Fixes",
+      "kind": "operator_surface",
+      "summary": "Suggested repairs for doctrine gaps and blocked posture."
+    },
+    {
+      "id": "dependency_warnings",
+      "label": "Dependency Warnings",
+      "kind": "operator_surface",
+      "summary": "Warnings about blocked predecessors and dependency breaks."
+    },
+    {
+      "id": "hud_status",
+      "label": "HUD Status",
+      "kind": "operator_surface",
+      "summary": "Compact protocol and system status strip."
+    },
+    {
+      "id": "system_anatomy",
+      "label": "System Anatomy",
+      "kind": "operator_surface",
+      "summary": "Mini-map of dependency topology and blast structure."
+    },
+    {
+      "id": "campaign_snapshots",
+      "label": "Campaign Snapshots",
+      "kind": "runtime_projection",
+      "summary": "Live campaign view over interest-rooted execution attempts and convergence."
+    },
+    {
+      "id": "barbell_guardrail",
+      "label": "Barbell Guardrail",
+      "kind": "runtime_projection",
+      "summary": "Runtime measure of obligation mass, option mass, and middle concentration."
+    },
+    {
+      "id": "asymmetry_snapshot",
+      "label": "Asymmetry Snapshot",
+      "kind": "runtime_projection",
+      "summary": "Computed balance of fragility mass versus convexity mass."
+    },
+    {
+      "id": "domain_posture",
+      "label": "Domain Posture",
+      "kind": "operator_surface",
+      "summary": "Quick posture view of stakes, risk, and fragility at the domain level."
+    },
+    {
+      "id": "barbell_means_coverage",
+      "label": "Barbell + Means Coverage",
+      "kind": "operator_surface",
+      "summary": "Coverage view over hedge, edge, means density, and fragility trend."
+    },
+    {
+      "id": "lineage_risk_heatgrid",
+      "label": "Lineage Risk HeatGrid",
+      "kind": "operator_surface",
+      "summary": "Grid view of domain-linked lineage risks by exposure and dependency."
+    },
+    {
+      "id": "active_domain_affairs",
+      "label": "Active Domain Affairs",
+      "kind": "operator_surface",
+      "summary": "List of live affairs currently attached to a domain."
+    },
+    {
+      "id": "lineage_risk_register",
+      "label": "Lineage Risk Register",
+      "kind": "operator_surface",
+      "summary": "Editable register of domain-specific lineage risks."
+    }
+  ],
+  "edges": [
+    { "from": "war_room", "to": "state_of_the_art", "relation": "contains" },
+    { "from": "war_room", "to": "state_of_affairs", "relation": "contains" },
+
+    { "from": "state_of_the_art", "to": "map_navigation", "relation": "contains" },
+    { "from": "state_of_the_art", "to": "philosophers_stone", "relation": "contains" },
+    { "from": "state_of_the_art", "to": "ends", "relation": "contains" },
+    { "from": "state_of_the_art", "to": "means", "relation": "contains" },
+    { "from": "state_of_the_art", "to": "source_map_profiles", "relation": "contains" },
+    { "from": "state_of_the_art", "to": "state_of_art_projection", "relation": "contains" },
+    { "from": "state_of_the_art", "to": "context_narrative", "relation": "contains" },
+    { "from": "state_of_the_art", "to": "fragility_narrative", "relation": "contains" },
+    { "from": "state_of_the_art", "to": "risk_reward_summary", "relation": "contains" },
+    { "from": "state_of_the_art", "to": "concavity_profile", "relation": "contains" },
+    { "from": "state_of_the_art", "to": "drift_parity_checks", "relation": "contains" },
+    { "from": "state_of_the_art", "to": "state_of_affairs", "relation": "prepares" },
+
+    { "from": "map_navigation", "to": "source_of_volatility", "relation": "contains" },
+    { "from": "map_navigation", "to": "domain", "relation": "contains" },
+    { "from": "map_navigation", "to": "decision_type", "relation": "contains" },
+    { "from": "map_navigation", "to": "tail_class", "relation": "contains" },
+    { "from": "map_navigation", "to": "quadrant", "relation": "contains" },
+    { "from": "map_navigation", "to": "method_posture", "relation": "contains" },
+
+    { "from": "source_of_volatility", "to": "domain", "relation": "propagates_into" },
+    { "from": "source_of_volatility", "to": "source_map_profiles", "relation": "persists_into" },
+    { "from": "source_map_profiles", "to": "state_of_art_projection", "relation": "compiled_into" },
+    { "from": "state_of_art_projection", "to": "state_of_art_protocol", "relation": "compiled_into" },
+    { "from": "state_of_art_protocol", "to": "barrier_rules", "relation": "contains" },
+    { "from": "state_of_art_protocol", "to": "checklist_rules", "relation": "contains" },
+    { "from": "checklist_rules", "to": "policy_acknowledgements", "relation": "requires" },
+    { "from": "barrier_rules", "to": "readiness", "relation": "gates" },
+    { "from": "state_of_art_projection", "to": "drift_parity_checks", "relation": "evaluated_by" },
+    { "from": "decision_type", "to": "quadrant", "relation": "constrains" },
+    { "from": "tail_class", "to": "quadrant", "relation": "constrains" },
+    { "from": "quadrant", "to": "method_posture", "relation": "recommends" },
+    { "from": "domain", "to": "philosophers_stone", "relation": "frames" },
+    { "from": "context_narrative", "to": "map_navigation", "relation": "frames" },
+
+    { "from": "philosophers_stone", "to": "asymmetry", "relation": "contains" },
+    { "from": "philosophers_stone", "to": "non_linearity", "relation": "contains" },
+
+    { "from": "asymmetry", "to": "skin_in_the_game", "relation": "contains" },
+    { "from": "skin_in_the_game", "to": "stakes", "relation": "contains" },
+    { "from": "skin_in_the_game", "to": "skin_capital", "relation": "contains" },
+    { "from": "skin_in_the_game", "to": "skin_time", "relation": "contains" },
+    { "from": "skin_in_the_game", "to": "skin_reputation", "relation": "contains" },
+    { "from": "skin_in_the_game", "to": "skin_breach_penalty", "relation": "contains" },
+    { "from": "skin_in_the_game", "to": "risks", "relation": "contains" },
+    { "from": "asymmetry", "to": "players_fragilistas", "relation": "contains" },
+    { "from": "skin_in_the_game", "to": "lineage_exposure", "relation": "contains" },
+
+    { "from": "non_linearity", "to": "fragility", "relation": "contains" },
+    { "from": "non_linearity", "to": "vulnerabilities", "relation": "contains" },
+    { "from": "fragility", "to": "short_volatility", "relation": "presents_as" },
+    { "from": "non_linearity", "to": "propagation", "relation": "contains" },
+    { "from": "non_linearity", "to": "irreversibility", "relation": "contains" },
+    { "from": "fragility_narrative", "to": "non_linearity", "relation": "describes" },
+    { "from": "risk_reward_summary", "to": "asymmetry", "relation": "describes" },
+    { "from": "concavity_profile", "to": "non_linearity", "relation": "classifies" },
+    { "from": "concavity_profile", "to": "short_vol_exposure", "relation": "can_mark" },
+    { "from": "concavity_profile", "to": "long_vol_exposure", "relation": "can_mark" },
+
+    { "from": "philosophers_stone", "to": "ends", "relation": "resolves_into" },
+    { "from": "fragility", "to": "hedge", "relation": "requires" },
+    { "from": "asymmetry", "to": "edge", "relation": "supports" },
+    { "from": "ends", "to": "hedge", "relation": "splits_into" },
+    { "from": "ends", "to": "edge", "relation": "splits_into" },
+
+    { "from": "means", "to": "heuristics", "relation": "materializes_as" },
+    { "from": "means", "to": "crafts", "relation": "materializes_as" },
+    { "from": "means", "to": "avoid_methods", "relation": "materializes_as" },
+    { "from": "crafts", "to": "knowledge_stacks", "relation": "organizes_into" },
+    { "from": "knowledge_stacks", "to": "knowledge_protocols", "relation": "contains" },
+    { "from": "knowledge_protocols", "to": "knowledge_rules", "relation": "contains" },
+    { "from": "knowledge_rules", "to": "heuristics", "relation": "sharpens" },
+    { "from": "crafts", "to": "heaps", "relation": "decomposes_into" },
+    { "from": "heaps", "to": "models", "relation": "refines_into" },
+    { "from": "models", "to": "frameworks", "relation": "refines_into" },
+    { "from": "frameworks", "to": "barbell_strategies", "relation": "composes_into" },
+    { "from": "barbell_strategies", "to": "heuristics", "relation": "distills_into" },
+    { "from": "heuristics", "to": "wargames", "relation": "branches_into" },
+    { "from": "wargames", "to": "scenarios", "relation": "branches_into" },
+    { "from": "scenarios", "to": "threats", "relation": "contains" },
+    { "from": "threats", "to": "responses", "relation": "responded_by" },
+    { "from": "threats", "to": "active_threat_list", "relation": "surfaces_as" },
+
+    { "from": "state_of_affairs", "to": "affairs", "relation": "contains" },
+    { "from": "state_of_affairs", "to": "interests", "relation": "contains" },
+    { "from": "affairs", "to": "thresholds", "relation": "contains" },
+    { "from": "affairs", "to": "kpis", "relation": "contains" },
+    { "from": "interests", "to": "bets", "relation": "contains" },
+    { "from": "domain", "to": "affairs", "relation": "generates" },
+    { "from": "domain", "to": "interests", "relation": "generates" },
+    { "from": "state_of_art_projection", "to": "affairs", "relation": "seeds" },
+    { "from": "state_of_art_projection", "to": "interests", "relation": "seeds" },
+    { "from": "state_of_art_protocol", "to": "affairs", "relation": "enables" },
+    { "from": "state_of_art_protocol", "to": "interests", "relation": "enables" },
+    { "from": "drift_parity_checks", "to": "affairs", "relation": "verifies" },
+    { "from": "drift_parity_checks", "to": "interests", "relation": "verifies" },
+    { "from": "crafts", "to": "affairs", "relation": "supports" },
+    { "from": "crafts", "to": "interests", "relation": "supports" },
+    { "from": "heuristics", "to": "affairs", "relation": "guides" },
+    { "from": "heuristics", "to": "interests", "relation": "guides" },
+    { "from": "means", "to": "omission_cadence", "relation": "disciplines" },
+    { "from": "plans", "to": "preparation_notes", "relation": "contains" },
+    { "from": "state_of_art_projection", "to": "inherited_preparation_context", "relation": "supplies" },
+    { "from": "inherited_preparation_context", "to": "plans", "relation": "seeds" },
+    { "from": "inherited_preparation_context", "to": "means", "relation": "suggests" },
+    { "from": "affairs", "to": "strategy_posture", "relation": "contains" },
+    { "from": "affairs", "to": "strategy_positioning", "relation": "contains" },
+    { "from": "strategy_positioning", "to": "allies", "relation": "maps" },
+    { "from": "strategy_positioning", "to": "enemies", "relation": "maps" },
+    { "from": "affairs", "to": "fragility_entities", "relation": "contains" },
+    { "from": "tasks", "to": "execution_readiness", "relation": "signals" },
+    { "from": "state_of_affairs", "to": "domain_pnl_signal", "relation": "measures" },
+    { "from": "hedge", "to": "affairs", "relation": "biases" },
+    { "from": "edge", "to": "interests", "relation": "biases" },
+    { "from": "interests", "to": "lab", "relation": "enters" },
+    { "from": "lab", "to": "forge", "relation": "starts_at" },
+    { "from": "forge", "to": "wield", "relation": "graduates_to" },
+    { "from": "wield", "to": "tinker", "relation": "graduates_to" },
+    { "from": "wield", "to": "tasks", "relation": "queues_execution_into" },
+    { "from": "affairs", "to": "plans", "relation": "decomposes_into" },
+    { "from": "interests", "to": "plans", "relation": "decomposes_into" },
+    { "from": "plans", "to": "tasks", "relation": "decomposes_into" },
+
+    { "from": "state_of_affairs", "to": "lineages", "relation": "scales_into" },
+    { "from": "lineages", "to": "lineage_nodes", "relation": "contains" },
+    { "from": "lineage_nodes", "to": "lineage_self", "relation": "roots_at" },
+    { "from": "lineage_self", "to": "lineage_family", "relation": "scales_into" },
+    { "from": "lineage_family", "to": "lineage_state", "relation": "scales_into" },
+    { "from": "lineage_state", "to": "lineage_nation", "relation": "scales_into" },
+    { "from": "lineage_nation", "to": "lineage_humanity", "relation": "scales_into" },
+    { "from": "lineage_humanity", "to": "lineage_nature", "relation": "scales_into" },
+    { "from": "lineage_nodes", "to": "lineage_risks", "relation": "surfaces" },
+    { "from": "lineage_risks", "to": "blast_radius", "relation": "expresses" },
+    { "from": "affairs", "to": "lineage_risks", "relation": "creates_exposure" },
+    { "from": "interests", "to": "lineage_risks", "relation": "creates_exposure" },
+    { "from": "lineage_exposure", "to": "lineage_risks", "relation": "registers_into" },
+    { "from": "stakes", "to": "lineage_exposure", "relation": "weighted_by" },
+    { "from": "risks", "to": "lineage_exposure", "relation": "weighted_by" },
+
+    { "from": "tasks", "to": "mission", "relation": "executes_into" },
+    { "from": "mission", "to": "mission_hierarchy", "relation": "contains" },
+    { "from": "mission", "to": "do_now_copilot", "relation": "surfaces_through" },
+    { "from": "mission_hierarchy", "to": "mission_serial_refs", "relation": "contains" },
+    { "from": "mission_hierarchy", "to": "mission_parallel_refs", "relation": "contains" },
+    { "from": "mission_hierarchy", "to": "mission_dependency_notes", "relation": "contains" },
+    { "from": "mission_hierarchy", "to": "dependency_chain", "relation": "contains" },
+    { "from": "dependency_chain", "to": "readiness", "relation": "determines" },
+    { "from": "readiness", "to": "no_ruin", "relation": "gates" },
+    { "from": "affairs", "to": "mission_hierarchy", "relation": "feeds" },
+    { "from": "interests", "to": "mission_hierarchy", "relation": "feeds" },
+    { "from": "lineage_risks", "to": "no_ruin", "relation": "constrains" },
+    { "from": "lineage_risks", "to": "ruin_ledger_panel", "relation": "feeds" },
+    { "from": "lineages", "to": "fragility_hierarchy", "relation": "surfaces_as" },
+    { "from": "stakes", "to": "stakes_triad", "relation": "surfaces_as" },
+    { "from": "asymmetry", "to": "asymmetry_curve", "relation": "surfaces_as" },
+    { "from": "fragility", "to": "via_negativa_panel", "relation": "surfaces_as" },
+    { "from": "readiness", "to": "black_swan_readiness", "relation": "surfaces_as" },
+    { "from": "no_ruin", "to": "no_ruin_tripwire_panel", "relation": "surfaces_as" },
+    { "from": "tasks", "to": "execution_distribution", "relation": "surfaces_as" },
+    { "from": "state_of_affairs", "to": "strategic_posture_filter", "relation": "filters" },
+
+    { "from": "war_room", "to": "war_gaming", "relation": "contains" },
+    { "from": "war_gaming", "to": "decision_surface", "relation": "contains" },
+    { "from": "decision_surface", "to": "operational_filters", "relation": "contains" },
+    { "from": "war_gaming", "to": "confidence_evidence", "relation": "contains" },
+    { "from": "war_gaming", "to": "triage_actions", "relation": "contains" },
+    { "from": "war_gaming", "to": "doctrine_fixes", "relation": "contains" },
+    { "from": "war_gaming", "to": "fractal_flow_rail", "relation": "contains" },
+    { "from": "war_gaming", "to": "dependency_warnings", "relation": "contains" },
+    { "from": "war_gaming", "to": "dual_path_comparator", "relation": "contains" },
+    { "from": "war_gaming", "to": "fragilista_watchlist", "relation": "contains" },
+    { "from": "war_gaming", "to": "quadrant_heatgrid", "relation": "contains" },
+    { "from": "war_gaming", "to": "source_volatility_flow", "relation": "contains" },
+    { "from": "war_gaming", "to": "readiness_penalty_profile", "relation": "contains" },
+    { "from": "war_gaming", "to": "fragility_radar", "relation": "contains" },
+    { "from": "war_gaming", "to": "task_kill_chain", "relation": "contains" },
+    { "from": "war_gaming", "to": "risk_logic_continuum", "relation": "contains" },
+    { "from": "war_gaming", "to": "optionality_budget", "relation": "contains" },
+    { "from": "war_gaming", "to": "source_register", "relation": "contains" },
+    { "from": "war_gaming", "to": "dependency_blast_radius", "relation": "contains" },
+    { "from": "war_gaming", "to": "hedge_coverage_matrix", "relation": "contains" },
+    { "from": "war_gaming", "to": "doctrine_violation_feed", "relation": "contains" },
+    { "from": "war_gaming", "to": "correlation_risk", "relation": "contains" },
+    { "from": "war_gaming", "to": "campaign_snapshots", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "hud_status", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "system_anatomy", "relation": "contains" },
+    { "from": "war_room", "to": "domain_posture", "relation": "contains" },
+    { "from": "war_room", "to": "barbell_means_coverage", "relation": "contains" },
+    { "from": "war_room", "to": "lineage_risk_heatgrid", "relation": "contains" },
+    { "from": "war_room", "to": "active_domain_affairs", "relation": "contains" },
+    { "from": "war_room", "to": "lineage_risk_register", "relation": "contains" },
+    { "from": "war_room", "to": "source_register", "relation": "contains" },
+    { "from": "state_of_the_art", "to": "domain_posture", "relation": "surfaces_as" },
+    { "from": "state_of_the_art", "to": "barbell_means_coverage", "relation": "surfaces_as" },
+    { "from": "state_of_the_art", "to": "quadrant_heatgrid", "relation": "surfaces_as" },
+    { "from": "state_of_the_art", "to": "source_volatility_flow", "relation": "surfaces_as" },
+    { "from": "state_of_affairs", "to": "campaign_snapshots", "relation": "surfaces_as" },
+    { "from": "state_of_affairs", "to": "active_domain_affairs", "relation": "surfaces_as" },
+    { "from": "lineages", "to": "lineage_risk_heatgrid", "relation": "surfaces_as" },
+    { "from": "lineages", "to": "lineage_risk_register", "relation": "surfaces_as" },
+    { "from": "fragility", "to": "fragility_radar", "relation": "surfaces_as" },
+    { "from": "tasks", "to": "task_kill_chain", "relation": "surfaces_as" },
+    { "from": "readiness", "to": "readiness_penalty_profile", "relation": "surfaces_as" },
+    { "from": "barbell_strategies", "to": "barbell_guardrail", "relation": "measured_by" },
+    { "from": "asymmetry", "to": "asymmetry_snapshot", "relation": "measured_by" },
+    { "from": "barbell_guardrail", "to": "risk_logic_continuum", "relation": "surfaces_into" },
+    { "from": "asymmetry_snapshot", "to": "risk_logic_continuum", "relation": "surfaces_into" },
+    { "from": "interests", "to": "optionality_budget", "relation": "budgeted_by" },
+    { "from": "lineage_risks", "to": "fragilista_watchlist", "relation": "informs" },
+    { "from": "lineage_risks", "to": "dependency_blast_radius", "relation": "informs" },
+    { "from": "lineage_risks", "to": "lineage_risk_register", "relation": "registered_in" },
+    { "from": "doctrine_violation_feed", "to": "doctrine_fixes", "relation": "prompts" },
+    { "from": "triage_actions", "to": "doctrine_fixes", "relation": "can_apply" },
+    { "from": "source_map_profiles", "to": "source_register", "relation": "indexes" },
+    { "from": "mission", "to": "campaign_snapshots", "relation": "surfaces_as" },
+    { "from": "mission", "to": "decision_surface", "relation": "feeds" },
+    { "from": "decision_surface", "to": "hud_status", "relation": "reports_to" },
+    { "from": "dependency_chain", "to": "system_anatomy", "relation": "maps_into" },
+    { "from": "correlation_risk", "to": "optionality_budget", "relation": "constrains" },
+    { "from": "source_of_volatility", "to": "source_volatility_flow", "relation": "surfaces_as" },
+    { "from": "stakes", "to": "domain_posture", "relation": "surfaces_as" },
+    { "from": "risks", "to": "domain_posture", "relation": "surfaces_as" },
+    { "from": "fragility", "to": "domain_posture", "relation": "surfaces_as" },
+    { "from": "hedge", "to": "barbell_means_coverage", "relation": "surfaces_as" },
+    { "from": "edge", "to": "barbell_means_coverage", "relation": "surfaces_as" },
+    { "from": "means", "to": "barbell_means_coverage", "relation": "surfaces_as" },
+
+    { "from": "war_room", "to": "drafts", "relation": "prefigures_through" },
+    { "from": "war_room", "to": "operator_dashboard", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "protocol_status", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "life_clock", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "alert_queue", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "fog_of_maya", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "operational_do_now", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "stakes_triad", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "asymmetry_curve", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "virtue_spiral", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "do_now_copilot", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "no_ruin_tripwire_panel", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "ruin_ledger_panel", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "via_negativa_panel", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "black_swan_readiness", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "execution_distribution", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "fragility_hierarchy", "relation": "contains" },
+    { "from": "operator_dashboard", "to": "strategic_posture_filter", "relation": "contains" },
+    { "from": "drafts", "to": "structural_anchors", "relation": "yields" },
+    { "from": "structural_anchors", "to": "promotion_events", "relation": "promotes_via" },
+    { "from": "promotion_events", "to": "affairs", "relation": "can_create" },
+    { "from": "promotion_events", "to": "interests", "relation": "can_create" },
+    { "from": "promotion_events", "to": "crafts", "relation": "can_create" },
+    { "from": "promotion_events", "to": "knowledge_stacks", "relation": "can_create" },
+    { "from": "promotion_events", "to": "knowledge_protocols", "relation": "can_create" },
+    { "from": "promotion_events", "to": "knowledge_rules", "relation": "can_create" },
+    { "from": "promotion_events", "to": "heuristics", "relation": "can_create" },
+    { "from": "promotion_events", "to": "wargames", "relation": "can_create" },
+    { "from": "promotion_events", "to": "scenarios", "relation": "can_create" },
+    { "from": "promotion_events", "to": "threats", "relation": "can_create" },
+    { "from": "promotion_events", "to": "responses", "relation": "can_create" },
+
+    { "from": "mission", "to": "portfolio_war_room", "relation": "commands_through" },
+    { "from": "portfolio_war_room", "to": "portfolio_projects", "relation": "contains" },
+    { "from": "portfolio_projects", "to": "portfolio_experiments", "relation": "contains" },
+    { "from": "portfolio_projects", "to": "portfolio_decision_gates", "relation": "contains" },
+    { "from": "portfolio_projects", "to": "portfolio_evidence", "relation": "contains" },
+    { "from": "portfolio_projects", "to": "portfolio_ship_logs", "relation": "contains" },
+    { "from": "interests", "to": "portfolio_projects", "relation": "optionally_links_into" }
+  ]
+}

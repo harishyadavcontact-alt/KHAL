@@ -21,6 +21,26 @@ export function TriageActionPanel({
         </div>
       </div>
       <div className="text-xs text-zinc-300 mb-2">Next: {triage.nextAction}</div>
+      {triage.stateOfArt ? (
+        <div className="mb-2 rounded border border-sky-400/20 bg-sky-500/5 px-2.5 py-2 text-[11px] text-sky-100">
+          state of the art {triage.stateOfArt.dominantQuadrant ? `| ${triage.stateOfArt.dominantQuadrant.toLowerCase()}` : ""} | posture {triage.stateOfArt.recommendedPosture}
+          <div className="mt-1 text-sky-100/80">
+            {triage.stateOfArt.stages.map((stage) => `${stage.id}:${stage.complete ? "ok" : "gap"}`).join(" | ")}
+          </div>
+        </div>
+      ) : null}
+      {triage.lineagePressure ? (
+        <div className="mb-2 rounded border border-amber-400/20 bg-amber-500/5 px-2.5 py-2 text-[11px] text-amber-100">
+          lineage {triage.lineagePressure.maxLevel.toLowerCase()} | band {triage.lineagePressure.policyBand.toLowerCase()} | posture {triage.lineagePressure.requiredPosture.toLowerCase().replace("_", "-")}
+          <div className="mt-1 text-amber-100/80">
+            stakes {Math.round(triage.lineagePressure.stakeSignal)} | risk {Math.round(triage.lineagePressure.riskSignal)} | dependency {Math.round(triage.lineagePressure.dependencyWeight)} | irreversibility {Math.round(triage.lineagePressure.irreversibilityWeight)}
+          </div>
+          <div className="mt-1 text-amber-100/80">
+            open risks {triage.lineagePressure.openRiskCount} | weighted exposure {Math.round(triage.lineagePressure.weightedExposure)}
+            {triage.lineagePressure.hedgeRequired ? " | hedge required" : ""}
+          </div>
+        </div>
+      ) : null}
       <div className="space-y-2">
         {triage.suggestions.slice(0, 6).map((item) => (
           <div key={item.id} className="rounded border border-white/10 bg-zinc-950/55 px-2.5 py-2 text-xs">
@@ -44,4 +64,3 @@ export function TriageActionPanel({
     </section>
   );
 }
-

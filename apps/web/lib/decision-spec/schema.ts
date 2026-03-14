@@ -41,6 +41,43 @@ export const pipelineStageStatusSchema = z.object({
   missingItems: z.array(z.string()).default([])
 });
 
+export const lineagePolicyBandSchema = z.enum(["LOCAL", "ELEVATED", "SYSTEMIC", "CIVILIZATIONAL", "EXISTENTIAL"]);
+
+export const lineageRequiredPostureSchema = z.enum(["OBSERVE", "CAP_DOWNSIDE", "HEDGE", "NO_RUIN"]);
+
+export const stateOfArtStepSchema = z.enum(["map", "stone", "ends", "means"]);
+
+export const stateOfArtStageStatusSchema = z.object({
+  id: stateOfArtStepSchema,
+  complete: z.boolean(),
+  message: z.string()
+});
+
+export const stateOfArtAssessmentSchema = z.object({
+  dominantQuadrant: z.string().optional(),
+  recommendedPosture: z.string(),
+  lineageAtThreat: z.string().optional(),
+  requiredEnds: z.array(z.string()).default([]),
+  admissibleMeans: z.array(z.string()).default([]),
+  stages: z.array(stateOfArtStageStatusSchema)
+});
+
+export const lineagePressureSummarySchema = z.object({
+  maxLevel: z.string(),
+  maxLevelWeight: z.number().min(0),
+  openRiskCount: z.number().int().min(0),
+  stakeSignal: z.number().min(0),
+  riskSignal: z.number().min(0),
+  dependencyWeight: z.number().min(0),
+  irreversibilityWeight: z.number().min(0),
+  policyBand: lineagePolicyBandSchema,
+  requiredPosture: lineageRequiredPostureSchema,
+  weightedExposure: z.number().min(0),
+  weightedFragility: z.number().min(0),
+  highestRiskTitle: z.string().optional(),
+  hedgeRequired: z.boolean().default(false)
+});
+
 export const decisionEvaluationResultSchema = z.object({
   mode: warGameModeSchema,
   targetId: z.string(),
@@ -49,7 +86,9 @@ export const decisionEvaluationResultSchema = z.object({
   missingRequiredFields: z.array(z.string()),
   blockReasons: z.array(decisionBlockReasonSchema),
   stages: z.array(pipelineStageStatusSchema),
-  nextStage: z.string().optional()
+  nextStage: z.string().optional(),
+  lineagePressure: lineagePressureSummarySchema.optional(),
+  stateOfArt: stateOfArtAssessmentSchema.optional()
 });
 
 export const doctrineQuickActionKindSchema = z.enum([
@@ -99,7 +138,9 @@ export const triageEvaluationSnapshotSchema = z.object({
   readinessScore: z.number().min(0).max(100),
   nextAction: z.string(),
   suggestions: z.array(triageSuggestionSchema),
-  generatedAtIso: z.string()
+  generatedAtIso: z.string(),
+  lineagePressure: lineagePressureSummarySchema.optional(),
+  stateOfArt: stateOfArtAssessmentSchema.optional()
 });
 
 export type WarGameModeSpec = z.infer<typeof warGameModeSchema>;
@@ -108,6 +149,9 @@ export type DecisionModeSpecDto = z.infer<typeof decisionModeSpecSchema>;
 export type DecisionGuardDto = z.infer<typeof decisionGuardSchema>;
 export type DecisionBlockReasonDto = z.infer<typeof decisionBlockReasonSchema>;
 export type PipelineStageStatusDto = z.infer<typeof pipelineStageStatusSchema>;
+export type LineagePressureSummaryDto = z.infer<typeof lineagePressureSummarySchema>;
+export type StateOfArtStageStatusDto = z.infer<typeof stateOfArtStageStatusSchema>;
+export type StateOfArtAssessmentDto = z.infer<typeof stateOfArtAssessmentSchema>;
 export type DecisionEvaluationResultDto = z.infer<typeof decisionEvaluationResultSchema>;
 export type DoctrineQuickActionKindDto = z.infer<typeof doctrineQuickActionKindSchema>;
 export type DoctrineQuickActionDto = z.infer<typeof doctrineQuickActionSchema>;

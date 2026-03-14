@@ -1,0 +1,2740 @@
+{
+  "nodes": [
+    {
+      "id": "group-root",
+      "type": "group",
+      "label": "War Room",
+      "x": -120,
+      "y": 970,
+      "width": 440,
+      "height": 180,
+      "color": "6"
+    },
+    {
+      "id": "group-wargame",
+      "type": "group",
+      "label": "War Gaming",
+      "x": 420,
+      "y": 440,
+      "width": 5000,
+      "height": 820,
+      "color": "3"
+    },
+    {
+      "id": "group-soa",
+      "type": "group",
+      "label": "State of the Art",
+      "x": 420,
+      "y": -520,
+      "width": 4780,
+      "height": 2220,
+      "color": "4"
+    },
+    {
+      "id": "group-sof",
+      "type": "group",
+      "label": "State of Affairs",
+      "x": 420,
+      "y": 820,
+      "width": 2920,
+      "height": 1060,
+      "color": "2"
+    },
+    {
+      "id": "group-lineage",
+      "type": "group",
+      "label": "Lineages",
+      "x": 420,
+      "y": 1660,
+      "width": 3500,
+      "height": 420,
+      "color": "5"
+    },
+    {
+      "id": "group-mission",
+      "type": "group",
+      "label": "Mission",
+      "x": 420,
+      "y": 2240,
+      "width": 2440,
+      "height": 320,
+      "color": "1"
+    },
+    {
+      "id": "group-drafts",
+      "type": "group",
+      "label": "Drafts",
+      "x": 420,
+      "y": 2660,
+      "width": 1740,
+      "height": 220,
+      "color": "3"
+    },
+    {
+      "id": "group-portfolio",
+      "type": "group",
+      "label": "Portfolio War Room",
+      "x": 420,
+      "y": 2960,
+      "width": 1920,
+      "height": 360,
+      "color": "6"
+    },
+    {
+      "id": "group-dashboard",
+      "type": "group",
+      "label": "Operator Dashboard",
+      "x": 420,
+      "y": 3180,
+      "width": 4000,
+      "height": 540,
+      "color": "5"
+    },
+    {
+      "id": "branch-wargame-label",
+      "type": "text",
+      "text": "War Gaming\nOperator synthesis -> filters -> diagnostics -> triage",
+      "x": 660,
+      "y": 520,
+      "width": 360,
+      "height": 80
+    },
+    {
+      "id": "branch-soa-label",
+      "type": "text",
+      "text": "State of the Art\nFraming -> posture -> ends -> means",
+      "x": 660,
+      "y": 40,
+      "width": 320,
+      "height": 80
+    },
+    {
+      "id": "branch-sof-label",
+      "type": "text",
+      "text": "State of Affairs\nObligations + options -> plans -> tasks",
+      "x": 660,
+      "y": 1120,
+      "width": 320,
+      "height": 80
+    },
+    {
+      "id": "branch-lineage-label",
+      "type": "text",
+      "text": "Lineages\nScale -> exposure -> blast radius",
+      "x": 660,
+      "y": 1700,
+      "width": 320,
+      "height": 80
+    },
+    {
+      "id": "branch-mission-label",
+      "type": "text",
+      "text": "Mission\nHierarchy -> dependency -> readiness -> no ruin",
+      "x": 660,
+      "y": 2280,
+      "width": 320,
+      "height": 80
+    },
+    {
+      "id": "branch-dashboard-label",
+      "type": "text",
+      "text": "Operator Dashboard\nProtocol -> tripwires -> operator command surface",
+      "x": 660,
+      "y": 3240,
+      "width": 360,
+      "height": 80
+    },
+    {
+      "id": "war_room",
+      "type": "text",
+      "text": "War Room",
+      "x": 0,
+      "y": 1040,
+      "width": 360,
+      "height": 110,
+      "color": "6"
+    },
+    {
+      "id": "state_of_the_art",
+      "type": "text",
+      "text": "State of the Art",
+      "x": 520,
+      "y": 140,
+      "width": 220,
+      "height": 72,
+      "color": "4"
+    },
+    {
+      "id": "state_of_affairs",
+      "type": "text",
+      "text": "State of Affairs",
+      "x": 520,
+      "y": 1120,
+      "width": 220,
+      "height": 72,
+      "color": "2"
+    },
+    {
+      "id": "lineages",
+      "type": "text",
+      "text": "Lineages",
+      "x": 520,
+      "y": 1780,
+      "width": 220,
+      "height": 72,
+      "color": "5"
+    },
+    {
+      "id": "mission",
+      "type": "text",
+      "text": "Mission",
+      "x": 520,
+      "y": 2380,
+      "width": 220,
+      "height": 72,
+      "color": "1"
+    },
+    {
+      "id": "map_navigation",
+      "type": "text",
+      "text": "Map Navigation Framework",
+      "x": 1040,
+      "y": 0,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "philosophers_stone",
+      "type": "text",
+      "text": "Philosopher's Stone",
+      "x": 1040,
+      "y": 420,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "source_of_volatility",
+      "type": "text",
+      "text": "Source of Volatility",
+      "x": 1560,
+      "y": 0,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "source_map_profiles",
+      "type": "text",
+      "text": "Source Map Profiles",
+      "x": 2080,
+      "y": -180,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "state_of_art_projection",
+      "type": "text",
+      "text": "State of the Art Projection",
+      "x": 2600,
+      "y": -180,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "state_of_art_protocol",
+      "type": "text",
+      "text": "State of the Art Protocol",
+      "x": 3120,
+      "y": -180,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "context_narrative",
+      "type": "text",
+      "text": "Context Narrative",
+      "x": 2600,
+      "y": -360,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "fragility_narrative",
+      "type": "text",
+      "text": "Fragility Narrative",
+      "x": 3120,
+      "y": -360,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "risk_reward_summary",
+      "type": "text",
+      "text": "Risk / Reward Summary",
+      "x": 3640,
+      "y": -360,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "concavity_profile",
+      "type": "text",
+      "text": "Concavity Profile",
+      "x": 4160,
+      "y": -360,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "short_vol_exposure",
+      "type": "text",
+      "text": "Short Vol Exposure",
+      "x": 4680,
+      "y": -440,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "long_vol_exposure",
+      "type": "text",
+      "text": "Long Vol Exposure",
+      "x": 4680,
+      "y": -280,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "barrier_rules",
+      "type": "text",
+      "text": "Barrier Rules",
+      "x": 3640,
+      "y": -20,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "checklist_rules",
+      "type": "text",
+      "text": "Checklist Rules",
+      "x": 4160,
+      "y": -20,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "policy_acknowledgements",
+      "type": "text",
+      "text": "Policy Acknowledgements",
+      "x": 4680,
+      "y": -20,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "drift_parity_checks",
+      "type": "text",
+      "text": "Drift / Parity Checks",
+      "x": 3640,
+      "y": -180,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "domain",
+      "type": "text",
+      "text": "Semantic Domain",
+      "x": 2080,
+      "y": 20,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "decision_type",
+      "type": "text",
+      "text": "Decision Type",
+      "x": 2600,
+      "y": -20,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "tail_class",
+      "type": "text",
+      "text": "Domain Tail Class",
+      "x": 2600,
+      "y": 140,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "quadrant",
+      "type": "text",
+      "text": "Quadrant",
+      "x": 3120,
+      "y": 60,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "method_posture",
+      "type": "text",
+      "text": "Method Posture",
+      "x": 3640,
+      "y": 60,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "asymmetry",
+      "type": "text",
+      "text": "Asymmetry",
+      "x": 1560,
+      "y": 300,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "skin_in_the_game",
+      "type": "text",
+      "text": "Skin in the Game",
+      "x": 2080,
+      "y": 120,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "players_fragilistas",
+      "type": "text",
+      "text": "Players / Fragilistas",
+      "x": 2600,
+      "y": 360,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "lineage_exposure",
+      "type": "text",
+      "text": "Lineage",
+      "x": 2600,
+      "y": 520,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "non_linearity",
+      "type": "text",
+      "text": "Non-Linearity",
+      "x": 1560,
+      "y": 720,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "stakes",
+      "type": "text",
+      "text": "Stakes",
+      "x": 2600,
+      "y": 40,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "skin_capital",
+      "type": "text",
+      "text": "Capital at Risk",
+      "x": 3120,
+      "y": -80,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "skin_time",
+      "type": "text",
+      "text": "Time at Risk",
+      "x": 3120,
+      "y": 60,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "skin_reputation",
+      "type": "text",
+      "text": "Reputation at Risk",
+      "x": 3120,
+      "y": 200,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "skin_breach_penalty",
+      "type": "text",
+      "text": "Breach Penalty",
+      "x": 3640,
+      "y": 200,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "risks",
+      "type": "text",
+      "text": "Risks",
+      "x": 2600,
+      "y": 200,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "fragility",
+      "type": "text",
+      "text": "Fragility",
+      "x": 2080,
+      "y": 660,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "short_volatility",
+      "type": "text",
+      "text": "Short Volatility",
+      "x": 2600,
+      "y": 660,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "vulnerabilities",
+      "type": "text",
+      "text": "Vulnerabilities",
+      "x": 2080,
+      "y": 840,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "propagation",
+      "type": "text",
+      "text": "Propagation",
+      "x": 2600,
+      "y": 840,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "irreversibility",
+      "type": "text",
+      "text": "Irreversibility",
+      "x": 3120,
+      "y": 840,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "ends",
+      "type": "text",
+      "text": "Ends / Barbell Posture",
+      "x": 1560,
+      "y": 1080,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "hedge",
+      "type": "text",
+      "text": "Hedge",
+      "x": 2080,
+      "y": 1000,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "edge",
+      "type": "text",
+      "text": "Edge",
+      "x": 2080,
+      "y": 1160,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "means",
+      "type": "text",
+      "text": "Means",
+      "x": 1560,
+      "y": 1400,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "avoid_methods",
+      "type": "text",
+      "text": "Avoid / Disallowed Methods",
+      "x": 2080,
+      "y": 1640,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "crafts",
+      "type": "text",
+      "text": "Crafts",
+      "x": 2080,
+      "y": 1480,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "heaps",
+      "type": "text",
+      "text": "Heaps",
+      "x": 2600,
+      "y": 1320,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "models",
+      "type": "text",
+      "text": "Models",
+      "x": 3120,
+      "y": 1320,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "frameworks",
+      "type": "text",
+      "text": "Frameworks",
+      "x": 3640,
+      "y": 1320,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "barbell_strategies",
+      "type": "text",
+      "text": "Barbell Strategies",
+      "x": 4160,
+      "y": 1320,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "heuristics",
+      "type": "text",
+      "text": "Heuristics",
+      "x": 2080,
+      "y": 1320,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "wargames",
+      "type": "text",
+      "text": "Wargames",
+      "x": 2600,
+      "y": 1540,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "scenarios",
+      "type": "text",
+      "text": "Scenarios",
+      "x": 3120,
+      "y": 1540,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "threats",
+      "type": "text",
+      "text": "Threats",
+      "x": 3640,
+      "y": 1540,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "responses",
+      "type": "text",
+      "text": "Responses",
+      "x": 4160,
+      "y": 1540,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "knowledge_stacks",
+      "type": "text",
+      "text": "Knowledge Stacks",
+      "x": 2600,
+      "y": 1160,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "knowledge_protocols",
+      "type": "text",
+      "text": "Protocols",
+      "x": 3120,
+      "y": 1160,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "knowledge_rules",
+      "type": "text",
+      "text": "Rules",
+      "x": 3640,
+      "y": 1160,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "affairs",
+      "type": "text",
+      "text": "Affairs",
+      "x": 1040,
+      "y": 1080,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "interests",
+      "type": "text",
+      "text": "Interests",
+      "x": 1040,
+      "y": 1300,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "thresholds",
+      "type": "text",
+      "text": "Thresholds",
+      "x": 1560,
+      "y": 1020,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "kpis",
+      "type": "text",
+      "text": "KPIs",
+      "x": 1560,
+      "y": 1160,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "bets",
+      "type": "text",
+      "text": "Bets",
+      "x": 1560,
+      "y": 1320,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "plans",
+      "type": "text",
+      "text": "Plans",
+      "x": 1560,
+      "y": 1180,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "tasks",
+      "type": "text",
+      "text": "Tasks",
+      "x": 2080,
+      "y": 1240,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "preparation_notes",
+      "type": "text",
+      "text": "Preparation Notes",
+      "x": 2080,
+      "y": 1080,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "omission_cadence",
+      "type": "text",
+      "text": "Omission Cadence",
+      "x": 2600,
+      "y": 1180,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "domain_pnl_signal",
+      "type": "text",
+      "text": "Domain P&L Signal",
+      "x": 1560,
+      "y": 900,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "inherited_preparation_context",
+      "type": "text",
+      "text": "Inherited Preparation Context",
+      "x": 2080,
+      "y": 920,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "lab",
+      "type": "text",
+      "text": "Lab",
+      "x": 1560,
+      "y": 1600,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "forge",
+      "type": "text",
+      "text": "Forge",
+      "x": 2080,
+      "y": 1660,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "wield",
+      "type": "text",
+      "text": "Wield",
+      "x": 2600,
+      "y": 1660,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "tinker",
+      "type": "text",
+      "text": "Tinker",
+      "x": 3120,
+      "y": 1660,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "strategy_posture",
+      "type": "text",
+      "text": "Strategy Posture",
+      "x": 1560,
+      "y": 1460,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "strategy_positioning",
+      "type": "text",
+      "text": "Strategy Positioning",
+      "x": 2080,
+      "y": 1460,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "allies",
+      "type": "text",
+      "text": "Allies",
+      "x": 2600,
+      "y": 1400,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "enemies",
+      "type": "text",
+      "text": "Enemies",
+      "x": 2600,
+      "y": 1520,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "execution_readiness",
+      "type": "text",
+      "text": "Execution Readiness",
+      "x": 2600,
+      "y": 1240,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "fragility_entities",
+      "type": "text",
+      "text": "Fragility Entities",
+      "x": 2080,
+      "y": 900,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "active_threat_list",
+      "type": "text",
+      "text": "Active Threat List",
+      "x": 4680,
+      "y": 1540,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "mission_hierarchy",
+      "type": "text",
+      "text": "Mission Hierarchy",
+      "x": 1040,
+      "y": 2340,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "mission_serial_refs",
+      "type": "text",
+      "text": "Mission Serial Refs",
+      "x": 1560,
+      "y": 2240,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "mission_parallel_refs",
+      "type": "text",
+      "text": "Mission Parallel Refs",
+      "x": 1560,
+      "y": 2400,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "mission_dependency_notes",
+      "type": "text",
+      "text": "Mission Dependency Notes",
+      "x": 2080,
+      "y": 2240,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "dependency_chain",
+      "type": "text",
+      "text": "Dependency Chain",
+      "x": 1560,
+      "y": 2340,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "readiness",
+      "type": "text",
+      "text": "Readiness",
+      "x": 2080,
+      "y": 2340,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "no_ruin",
+      "type": "text",
+      "text": "No-Ruin Constraint",
+      "x": 2600,
+      "y": 2340,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "lineage_nodes",
+      "type": "text",
+      "text": "Lineage Nodes",
+      "x": 1040,
+      "y": 1740,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "lineage_risks",
+      "type": "text",
+      "text": "Lineage Risks",
+      "x": 1560,
+      "y": 1740,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "blast_radius",
+      "type": "text",
+      "text": "Blast Radius",
+      "x": 2080,
+      "y": 1740,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "lineage_self",
+      "type": "text",
+      "text": "Self",
+      "x": 1040,
+      "y": 1920,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "lineage_family",
+      "type": "text",
+      "text": "Family",
+      "x": 1560,
+      "y": 1920,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "lineage_state",
+      "type": "text",
+      "text": "State",
+      "x": 2080,
+      "y": 1920,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "lineage_nation",
+      "type": "text",
+      "text": "Nation",
+      "x": 2600,
+      "y": 1920,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "lineage_humanity",
+      "type": "text",
+      "text": "Humanity",
+      "x": 3120,
+      "y": 1920,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "lineage_nature",
+      "type": "text",
+      "text": "Nature",
+      "x": 3640,
+      "y": 1920,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "drafts",
+      "type": "text",
+      "text": "Drafts",
+      "x": 520,
+      "y": 2740,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "structural_anchors",
+      "type": "text",
+      "text": "Structural Anchors",
+      "x": 1040,
+      "y": 2740,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "promotion_events",
+      "type": "text",
+      "text": "Promotion Events",
+      "x": 1560,
+      "y": 2740,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "portfolio_war_room",
+      "type": "text",
+      "text": "Portfolio War Room",
+      "x": 520,
+      "y": 3140,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "portfolio_projects",
+      "type": "text",
+      "text": "Portfolio Projects",
+      "x": 1040,
+      "y": 3140,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "portfolio_experiments",
+      "type": "text",
+      "text": "Portfolio Experiments",
+      "x": 1560,
+      "y": 3040,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "portfolio_decision_gates",
+      "type": "text",
+      "text": "Portfolio Decision Gates",
+      "x": 1560,
+      "y": 3200,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "portfolio_evidence",
+      "type": "text",
+      "text": "Portfolio Evidence",
+      "x": 2080,
+      "y": 3040,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "portfolio_ship_logs",
+      "type": "text",
+      "text": "Portfolio Ship Logs",
+      "x": 2080,
+      "y": 3200,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "operator_dashboard",
+      "type": "text",
+      "text": "Operator Dashboard",
+      "x": 520,
+      "y": 3380,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "protocol_status",
+      "type": "text",
+      "text": "Protocol Status",
+      "x": 1040,
+      "y": 3260,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "life_clock",
+      "type": "text",
+      "text": "Life Clock",
+      "x": 1560,
+      "y": 3260,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "alert_queue",
+      "type": "text",
+      "text": "Alert Queue",
+      "x": 2080,
+      "y": 3260,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "fog_of_maya",
+      "type": "text",
+      "text": "Fog of Maya",
+      "x": 1040,
+      "y": 3420,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "operational_do_now",
+      "type": "text",
+      "text": "Operational Do Now",
+      "x": 1560,
+      "y": 3420,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "stakes_triad",
+      "type": "text",
+      "text": "Stakes Triad",
+      "x": 2080,
+      "y": 3420,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "asymmetry_curve",
+      "type": "text",
+      "text": "Asymmetry Curve",
+      "x": 2600,
+      "y": 3420,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "virtue_spiral",
+      "type": "text",
+      "text": "Virtue Spiral",
+      "x": 3120,
+      "y": 3420,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "do_now_copilot",
+      "type": "text",
+      "text": "Do-Now Copilot",
+      "x": 1040,
+      "y": 3580,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "no_ruin_tripwire_panel",
+      "type": "text",
+      "text": "No-Ruin Tripwire",
+      "x": 1560,
+      "y": 3580,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "ruin_ledger_panel",
+      "type": "text",
+      "text": "Ruin Ledger",
+      "x": 2080,
+      "y": 3580,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "via_negativa_panel",
+      "type": "text",
+      "text": "Via Negativa",
+      "x": 2600,
+      "y": 3580,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "black_swan_readiness",
+      "type": "text",
+      "text": "Black Swan Readiness",
+      "x": 3120,
+      "y": 3580,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "execution_distribution",
+      "type": "text",
+      "text": "Execution Distribution",
+      "x": 3640,
+      "y": 3580,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "fragility_hierarchy",
+      "type": "text",
+      "text": "Fragility Hierarchy",
+      "x": 4160,
+      "y": 3580,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "strategic_posture_filter",
+      "type": "text",
+      "text": "Strategic Posture Filter",
+      "x": 3640,
+      "y": 3420,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "war_gaming",
+      "type": "text",
+      "text": "War Gaming",
+      "x": 520,
+      "y": 740,
+      "width": 220,
+      "height": 72,
+      "color": "3"
+    },
+    {
+      "id": "decision_surface",
+      "type": "text",
+      "text": "Decision Surface",
+      "x": 1040,
+      "y": 720,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "operational_filters",
+      "type": "text",
+      "text": "Operational Filters",
+      "x": 1560,
+      "y": 720,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "quadrant_heatgrid",
+      "type": "text",
+      "text": "Quadrant HeatGrid",
+      "x": 3120,
+      "y": 720,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "source_volatility_flow",
+      "type": "text",
+      "text": "Source Volatility Flow",
+      "x": 3640,
+      "y": 720,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "readiness_penalty_profile",
+      "type": "text",
+      "text": "Readiness Penalty Profile",
+      "x": 4160,
+      "y": 720,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "fragility_radar",
+      "type": "text",
+      "text": "Fragility Radar",
+      "x": 3120,
+      "y": 880,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "task_kill_chain",
+      "type": "text",
+      "text": "Task Kill Chain",
+      "x": 3640,
+      "y": 880,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "risk_logic_continuum",
+      "type": "text",
+      "text": "Risk Logic Continuum",
+      "x": 4160,
+      "y": 880,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "optionality_budget",
+      "type": "text",
+      "text": "Optionality Budget",
+      "x": 4680,
+      "y": 880,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "source_register",
+      "type": "text",
+      "text": "Source Register",
+      "x": 4680,
+      "y": 720,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "dual_path_comparator",
+      "type": "text",
+      "text": "Dual Path Comparator",
+      "x": 3120,
+      "y": 560,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "fragilista_watchlist",
+      "type": "text",
+      "text": "Fragilista Watchlist",
+      "x": 3640,
+      "y": 560,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "doctrine_violation_feed",
+      "type": "text",
+      "text": "Doctrine Violation Feed",
+      "x": 4160,
+      "y": 1040,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "hedge_coverage_matrix",
+      "type": "text",
+      "text": "Hedge Coverage Matrix",
+      "x": 3640,
+      "y": 1040,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "dependency_blast_radius",
+      "type": "text",
+      "text": "Dependency Blast Radius",
+      "x": 3120,
+      "y": 1040,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "correlation_risk",
+      "type": "text",
+      "text": "Correlation Risk",
+      "x": 4680,
+      "y": 1040,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "confidence_evidence",
+      "type": "text",
+      "text": "Confidence Evidence",
+      "x": 1040,
+      "y": 560,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "fractal_flow_rail",
+      "type": "text",
+      "text": "Fractal Flow Rail",
+      "x": 2080,
+      "y": 720,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "triage_actions",
+      "type": "text",
+      "text": "Triage Actions",
+      "x": 1040,
+      "y": 880,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "doctrine_fixes",
+      "type": "text",
+      "text": "Doctrine Fixes",
+      "x": 1560,
+      "y": 880,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "dependency_warnings",
+      "type": "text",
+      "text": "Dependency Warnings",
+      "x": 2600,
+      "y": 720,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "hud_status",
+      "type": "text",
+      "text": "HUD Status",
+      "x": 1040,
+      "y": 3100,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "system_anatomy",
+      "type": "text",
+      "text": "System Anatomy",
+      "x": 3640,
+      "y": 3260,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "campaign_snapshots",
+      "type": "text",
+      "text": "Campaign Snapshots",
+      "x": 5200,
+      "y": 1040,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "barbell_guardrail",
+      "type": "text",
+      "text": "Barbell Guardrail",
+      "x": 4680,
+      "y": 1160,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "asymmetry_snapshot",
+      "type": "text",
+      "text": "Asymmetry Snapshot",
+      "x": 5200,
+      "y": 1160,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "domain_posture",
+      "type": "text",
+      "text": "Domain Posture",
+      "x": 3120,
+      "y": 1400,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "barbell_means_coverage",
+      "type": "text",
+      "text": "Barbell + Means Coverage",
+      "x": 3640,
+      "y": 1400,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "lineage_risk_heatgrid",
+      "type": "text",
+      "text": "Lineage Risk HeatGrid",
+      "x": 4160,
+      "y": 1400,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "active_domain_affairs",
+      "type": "text",
+      "text": "Active Domain Affairs",
+      "x": 4680,
+      "y": 1400,
+      "width": 220,
+      "height": 72
+    },
+    {
+      "id": "lineage_risk_register",
+      "type": "text",
+      "text": "Lineage Risk Register",
+      "x": 5200,
+      "y": 1400,
+      "width": 220,
+      "height": 72
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "fromNode": "war_room",
+      "fromSide": "top",
+      "fromEnd": "none",
+      "toNode": "state_of_the_art",
+      "toSide": "bottom",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e2",
+      "fromNode": "war_room",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "state_of_affairs",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e3",
+      "fromNode": "state_of_the_art",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "map_navigation",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e4",
+      "fromNode": "state_of_the_art",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "philosophers_stone",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e5",
+      "fromNode": "state_of_the_art",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "ends",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e6",
+      "fromNode": "state_of_the_art",
+      "fromSide": "bottom",
+      "fromEnd": "none",
+      "toNode": "means",
+      "toSide": "top",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e7",
+      "fromNode": "state_of_the_art",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "source_map_profiles",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e8",
+      "fromNode": "state_of_the_art",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "state_of_art_projection",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e9",
+      "fromNode": "state_of_the_art",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "context_narrative",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e10",
+      "fromNode": "state_of_the_art",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "fragility_narrative",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e11",
+      "fromNode": "state_of_the_art",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "risk_reward_summary",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e12",
+      "fromNode": "state_of_the_art",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "concavity_profile",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e13",
+      "fromNode": "state_of_the_art",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "drift_parity_checks",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e14",
+      "fromNode": "map_navigation",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "source_of_volatility",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e15",
+      "fromNode": "map_navigation",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "domain",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e16",
+      "fromNode": "map_navigation",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "decision_type",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e17",
+      "fromNode": "map_navigation",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "tail_class",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e18",
+      "fromNode": "map_navigation",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "quadrant",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e19",
+      "fromNode": "map_navigation",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "method_posture",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e20",
+      "fromNode": "state_of_art_protocol",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "barrier_rules",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e21",
+      "fromNode": "state_of_art_protocol",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "checklist_rules",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e22",
+      "fromNode": "philosophers_stone",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "asymmetry",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e23",
+      "fromNode": "philosophers_stone",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "non_linearity",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e24",
+      "fromNode": "asymmetry",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "skin_in_the_game",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e25",
+      "fromNode": "skin_in_the_game",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "stakes",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e26",
+      "fromNode": "skin_in_the_game",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "skin_capital",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e27",
+      "fromNode": "skin_in_the_game",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "skin_time",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e28",
+      "fromNode": "skin_in_the_game",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "skin_reputation",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e29",
+      "fromNode": "skin_in_the_game",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "skin_breach_penalty",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e30",
+      "fromNode": "skin_in_the_game",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "risks",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e31",
+      "fromNode": "asymmetry",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "players_fragilistas",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e32",
+      "fromNode": "skin_in_the_game",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "lineage_exposure",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e33",
+      "fromNode": "non_linearity",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "fragility",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e34",
+      "fromNode": "non_linearity",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "vulnerabilities",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e35",
+      "fromNode": "non_linearity",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "propagation",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e36",
+      "fromNode": "non_linearity",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "irreversibility",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e37",
+      "fromNode": "ends",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "hedge",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "splits_into"
+    },
+    {
+      "id": "e38",
+      "fromNode": "ends",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "edge",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "splits_into"
+    },
+    {
+      "id": "e39",
+      "fromNode": "means",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "heuristics",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "materializes_as"
+    },
+    {
+      "id": "e40",
+      "fromNode": "means",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "crafts",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "materializes_as"
+    },
+    {
+      "id": "e41",
+      "fromNode": "means",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "avoid_methods",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "materializes_as"
+    },
+    {
+      "id": "e42",
+      "fromNode": "knowledge_stacks",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "knowledge_protocols",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e43",
+      "fromNode": "knowledge_protocols",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "knowledge_rules",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e44",
+      "fromNode": "crafts",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "heaps",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "decomposes_into"
+    },
+    {
+      "id": "e45",
+      "fromNode": "heuristics",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "wargames",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "branches_into"
+    },
+    {
+      "id": "e46",
+      "fromNode": "wargames",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "scenarios",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "branches_into"
+    },
+    {
+      "id": "e47",
+      "fromNode": "scenarios",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "threats",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e48",
+      "fromNode": "state_of_affairs",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "affairs",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e49",
+      "fromNode": "state_of_affairs",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "interests",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e50",
+      "fromNode": "affairs",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "thresholds",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e51",
+      "fromNode": "affairs",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "kpis",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e52",
+      "fromNode": "interests",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "bets",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e53",
+      "fromNode": "plans",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "preparation_notes",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e54",
+      "fromNode": "affairs",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "strategy_posture",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e55",
+      "fromNode": "affairs",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "strategy_positioning",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e56",
+      "fromNode": "affairs",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "fragility_entities",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e57",
+      "fromNode": "affairs",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "plans",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "decomposes_into"
+    },
+    {
+      "id": "e58",
+      "fromNode": "interests",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "plans",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "decomposes_into"
+    },
+    {
+      "id": "e59",
+      "fromNode": "plans",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "tasks",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "decomposes_into"
+    },
+    {
+      "id": "e60",
+      "fromNode": "lineages",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "lineage_nodes",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e61",
+      "fromNode": "mission",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "mission_hierarchy",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e62",
+      "fromNode": "mission_hierarchy",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "mission_serial_refs",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e63",
+      "fromNode": "mission_hierarchy",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "mission_parallel_refs",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e64",
+      "fromNode": "mission_hierarchy",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "mission_dependency_notes",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e65",
+      "fromNode": "mission_hierarchy",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "dependency_chain",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e66",
+      "fromNode": "war_room",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "war_gaming",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e67",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "decision_surface",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e68",
+      "fromNode": "decision_surface",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "operational_filters",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e69",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "confidence_evidence",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e70",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "triage_actions",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e71",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "doctrine_fixes",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e72",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "fractal_flow_rail",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e73",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "dependency_warnings",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e74",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "dual_path_comparator",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e75",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "fragilista_watchlist",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e76",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "quadrant_heatgrid",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e77",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "source_volatility_flow",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e78",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "readiness_penalty_profile",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e79",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "fragility_radar",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e80",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "task_kill_chain",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e81",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "risk_logic_continuum",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e82",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "optionality_budget",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e83",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "source_register",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e84",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "dependency_blast_radius",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e85",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "hedge_coverage_matrix",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e86",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "doctrine_violation_feed",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e87",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "correlation_risk",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e88",
+      "fromNode": "war_gaming",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "campaign_snapshots",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e89",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "hud_status",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e90",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "system_anatomy",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e91",
+      "fromNode": "war_room",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "domain_posture",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e92",
+      "fromNode": "war_room",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "barbell_means_coverage",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e93",
+      "fromNode": "war_room",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "lineage_risk_heatgrid",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e94",
+      "fromNode": "war_room",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "active_domain_affairs",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e95",
+      "fromNode": "war_room",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "lineage_risk_register",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e96",
+      "fromNode": "war_room",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "source_register",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e97",
+      "fromNode": "war_room",
+      "fromSide": "bottom",
+      "fromEnd": "none",
+      "toNode": "operator_dashboard",
+      "toSide": "top",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e98",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "protocol_status",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e99",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "life_clock",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e100",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "alert_queue",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e101",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "fog_of_maya",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e102",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "operational_do_now",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e103",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "stakes_triad",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e104",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "asymmetry_curve",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e105",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "virtue_spiral",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e106",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "do_now_copilot",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e107",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "no_ruin_tripwire_panel",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e108",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "ruin_ledger_panel",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e109",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "via_negativa_panel",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e110",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "black_swan_readiness",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e111",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "execution_distribution",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e112",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "fragility_hierarchy",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e113",
+      "fromNode": "operator_dashboard",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "strategic_posture_filter",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e114",
+      "fromNode": "portfolio_war_room",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "portfolio_projects",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e115",
+      "fromNode": "portfolio_projects",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "portfolio_experiments",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e116",
+      "fromNode": "portfolio_projects",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "portfolio_decision_gates",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e117",
+      "fromNode": "portfolio_projects",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "portfolio_evidence",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    },
+    {
+      "id": "e118",
+      "fromNode": "portfolio_projects",
+      "fromSide": "right",
+      "fromEnd": "none",
+      "toNode": "portfolio_ship_logs",
+      "toSide": "left",
+      "toEnd": "arrow",
+      "label": "contains"
+    }
+  ]
+}

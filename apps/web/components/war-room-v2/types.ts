@@ -829,6 +829,37 @@ export interface PipelineStageStatus {
   missingItems: string[];
 }
 
+export interface LineagePressureSummary {
+  maxLevel: string;
+  maxLevelWeight: number;
+  openRiskCount: number;
+  stakeSignal: number;
+  riskSignal: number;
+  dependencyWeight: number;
+  irreversibilityWeight: number;
+  policyBand: "LOCAL" | "ELEVATED" | "SYSTEMIC" | "CIVILIZATIONAL" | "EXISTENTIAL";
+  requiredPosture: "OBSERVE" | "CAP_DOWNSIDE" | "HEDGE" | "NO_RUIN";
+  weightedExposure: number;
+  weightedFragility: number;
+  highestRiskTitle?: string;
+  hedgeRequired: boolean;
+}
+
+export interface StateOfArtStageStatus {
+  id: "map" | "stone" | "ends" | "means";
+  complete: boolean;
+  message: string;
+}
+
+export interface StateOfArtAssessment {
+  dominantQuadrant?: string;
+  recommendedPosture: string;
+  lineageAtThreat?: string;
+  requiredEnds: string[];
+  admissibleMeans: string[];
+  stages: StateOfArtStageStatus[];
+}
+
 export interface DecisionEvaluationResult {
   mode: WarGameMode;
   targetId: string;
@@ -838,6 +869,8 @@ export interface DecisionEvaluationResult {
   blockReasons: DecisionBlockReason[];
   stages: PipelineStageStatus[];
   nextStage?: string;
+  lineagePressure?: LineagePressureSummary;
+  stateOfArt?: StateOfArtAssessment;
 }
 
 export type DoctrineQuickActionKind =
@@ -887,6 +920,8 @@ export interface TriageEvaluationSnapshot {
   nextAction: string;
   suggestions: TriageSuggestion[];
   generatedAtIso: string;
+  lineagePressure?: LineagePressureSummary;
+  stateOfArt?: StateOfArtAssessment;
 }
 
 export interface DecisionOverrideRecord {
@@ -1027,6 +1062,104 @@ export interface SourceMapProfileDto {
   avoidText?: string;
   affairId?: string;
   interestId?: string;
+}
+
+export interface StateOfArtDriftCheck {
+  id: string;
+  label: string;
+  status: "aligned" | "drifted" | "missing";
+  detail: string;
+}
+
+export type StateOfArtStepId = "map" | "stone" | "ends" | "means";
+
+export interface StateOfArtStepProtocol {
+  id: StateOfArtStepId;
+  label: string;
+  prompt: string;
+  doctrinePrompt: string;
+  coverageCount: number;
+  totalCount: number;
+  complete: boolean;
+}
+
+export interface SourceDoctrineChainPreview {
+  id: string;
+  craftId: string;
+  craftName: string;
+  name: string;
+  objective?: string;
+  scenarioCount: number;
+  threatCount: number;
+  responseCount: number;
+}
+
+export interface SourceDomainProtocolSummary {
+  domainId: string;
+  domainName: string;
+  profileId?: string;
+  quadrant?: SourceMapQuadrant;
+  methodPosture?: string;
+  stepCompletion: Record<StateOfArtStepId, boolean>;
+  canCreateAffair: boolean;
+  canCreateInterest: boolean;
+  linkedAffairId?: string;
+  linkedInterestId?: string;
+  projection?: StateOfArtProjection;
+  doctrineChains: SourceDoctrineChainPreview[];
+}
+
+export interface SourceWarGameProtocol {
+  sourceId?: string;
+  sourceName?: string;
+  meansRule: string;
+  linkedDomainCount: number;
+  affectedLineages: string[];
+  riskCount: number;
+  completedMapCount: number;
+  steps: StateOfArtStepProtocol[];
+  domains: SourceDomainProtocolSummary[];
+}
+
+export interface StateOfArtProjection {
+  sourceId: string;
+  sourceName: string;
+  domainId: string;
+  domainName: string;
+  profileId: string;
+  quadrant: SourceMapQuadrant;
+  decisionType: SourceMapDecisionType;
+  tailClass: SourceMapTailClass;
+  methodPosture: string;
+  stone: {
+    asymmetry: {
+      skinInTheGame: {
+        stakes?: string;
+        risks?: string;
+        lineage?: string;
+        players?: string;
+      };
+    };
+    nonLinearity: {
+      fragilityPosture?: string;
+      shortVolatilityLabel?: string;
+      vulnerabilities?: string;
+    };
+  };
+  ends: {
+    hedge?: string;
+    edge?: string;
+  };
+  means: {
+    primaryCraftId?: string;
+    primaryCraftName?: string;
+    heuristics?: string;
+    avoid?: string;
+  };
+  links: {
+    affairId?: string;
+    interestId?: string;
+  };
 }
 
 export interface DomainStrategyDetailDto {

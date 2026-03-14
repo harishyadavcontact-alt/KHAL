@@ -6,6 +6,7 @@ import { HeatGrid } from "./charts/HeatGrid";
 import { StackedBalanceBar } from "./charts/StackedBalanceBar";
 import { MiniTrend } from "./charts/MiniTrend";
 import { buildDomainVisualSnapshot } from "../../lib/war-room/visual-encodings";
+import { projectionsByDomain } from "../../lib/war-room/state-of-art";
 
 interface DomainModalProps {
   selectedDomain: Domain | null;
@@ -56,6 +57,10 @@ export function DomainModal({ selectedDomain, data, onClose, onOpenAffair, onNav
   const sourceLabel = selectedDomain?.volatilitySourceName ?? selectedDomain?.volatility ?? selectedDomain?.volatilitySource;
   const activeSource = (data.sources ?? []).find((source) => source.name === sourceLabel) ?? (data.sources ?? [])[0];
   const lineageRisksForDomain = (data.lineageRisks ?? []).filter((risk) => risk.domainId === selectedDomain?.id);
+  const sourceBackedProjections = useMemo(() => {
+    if (!selectedDomain) return [];
+    return projectionsByDomain({ sources: data.sources ?? [], domains: data.domains, crafts: data.crafts }).get(selectedDomain.id) ?? [];
+  }, [data.crafts, data.domains, data.sources, selectedDomain]);
   const domainVisual = useMemo(() => {
     if (!selectedDomain) return null;
     return buildDomainVisualSnapshot({ domainId: selectedDomain.id, data });
@@ -272,6 +277,29 @@ export function DomainModal({ selectedDomain, data, onClose, onOpenAffair, onNav
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-xs font-mono uppercase text-zinc-500 tracking-widest">Source-Backed State of the Art</h4>
+                  </div>
+                  <div className="p-4 bg-zinc-800/50 rounded-xl border border-white/5 space-y-3">
+                    {!sourceBackedProjections.length ? <div className="text-xs text-zinc-500">No source-map profile linked to this domain yet.</div> : null}
+                    {sourceBackedProjections.map((projection) => (
+                      <div key={projection.profileId} className="rounded-lg border border-white/10 bg-zinc-950/30 p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="font-semibold text-zinc-100">{projection.sourceName}</div>
+                          <div className="text-[10px] uppercase tracking-widest text-zinc-500">{projection.quadrant}</div>
+                        </div>
+                        <div className="mt-2 text-xs text-zinc-300">Skin in the game: {projection.stone.asymmetry.skinInTheGame.stakes ?? "Undefined"}</div>
+                        <div className="mt-1 text-xs text-zinc-400">Risks: {projection.stone.asymmetry.skinInTheGame.risks ?? "Undefined"}</div>
+                        <div className="mt-1 text-xs text-zinc-400">Lineage: {projection.stone.asymmetry.skinInTheGame.lineage ?? "Undefined"}</div>
+                        <div className="mt-1 text-xs text-zinc-400">Short volatility: {projection.stone.nonLinearity.shortVolatilityLabel ?? "Undefined"}</div>
+                        <div className="mt-1 text-xs text-zinc-400">Hedge / Edge: {projection.ends.hedge ?? "Undefined"} / {projection.ends.edge ?? "Undefined"}</div>
+                        <div className="mt-1 text-xs text-zinc-400">Means: {projection.means.primaryCraftName ?? projection.means.primaryCraftId ?? "Unassigned"}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="text-xs font-mono uppercase text-zinc-500 tracking-widest">State of Affairs</h4>

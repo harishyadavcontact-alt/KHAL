@@ -208,6 +208,15 @@
       "height": 60
     },
     {
+      "id": "f24b",
+      "type": "file",
+      "file": "docs/architecture/decision-framework.dot",
+      "x": 760,
+      "y": 860,
+      "width": 340,
+      "height": 60
+    },
+    {
       "id": "f25",
       "type": "file",
       "file": "docs/architecture/v0.1-system-design.md",
@@ -258,6 +267,24 @@
       "file": "docs/knowledge/system.canvas",
       "x": 380,
       "y": 300,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f31b",
+      "type": "file",
+      "file": "docs/knowledge/decision-framework.json",
+      "x": 380,
+      "y": 370,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f31c",
+      "type": "file",
+      "file": "docs/knowledge/decision-framework.canvas",
+      "x": 380,
+      "y": 440,
       "width": 340,
       "height": 60
     },

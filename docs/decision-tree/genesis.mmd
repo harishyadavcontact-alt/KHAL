@@ -1,0 +1,459 @@
+flowchart LR
+  WR(("War Room"))
+
+  SOA["State of the Art"]
+  SOF["State of Affairs"]
+  LIN["Lineages"]
+  MIS["Mission"]
+  WGG["War Gaming"]
+  DFT["Drafts"]
+  POR["Portfolio War Room"]
+  LEG_OK["Implemented"]
+  LEG_PART["Partial"]
+  LEG_DOC["Doctrine Only"]
+
+  WR --> SOA
+  WR --> SOF
+  WR --> WGG
+  SOA -. prepares .-> SOF
+  WR -. prefigures .-> DFT
+
+  subgraph MAP_BRANCH["Map Navigation Framework"]
+    direction LR
+    SRC(["Source of Volatility"])
+    SMP["Source Map Profiles"]
+    SAP["State of the Art Projection"]
+    SAT["State of the Art Protocol"]
+    DPC["Drift / Parity Checks"]
+    DOM["Semantic Domain"]
+    DTP{"Decision Type"}
+    TAL{"Domain Tail Class"}
+    QDR{"Quadrant"}
+    MPS["Method Posture"]
+
+    SRC --> SMP --> SAP --> SAT --> DPC
+    SRC --> DOM
+    DOM --> DTP
+    DOM --> TAL
+    DTP --> QDR
+    TAL --> QDR
+    QDR --> MPS
+  end
+
+  subgraph PROTOCOL_BRANCH["State of the Art Protocol"]
+    direction LR
+    CTX["Context Narrative"]
+    FRN["Fragility Narrative"]
+    RRS["Risk / Reward Summary"]
+    CCP["Concavity Profile"]
+    SVE["Short Vol Exposure"]
+    LVE["Long Vol Exposure"]
+    BRR["Barrier Rules"]
+    CLR["Checklist Rules"]
+    PAC["Policy Acknowledgements"]
+
+    SAT --> BRR --> CLR --> PAC
+    SAP --> CTX
+    SAP --> FRN
+    SAP --> RRS
+    SAP --> CCP
+    CCP --> SVE
+    CCP --> LVE
+  end
+
+  subgraph STONE_BRANCH["Philosopher's Stone"]
+    direction TB
+    ASY["Asymmetry"]
+    SITG["Skin in the Game"]
+    STK["Stakes"]
+    SCA["Capital at Risk"]
+    STI["Time at Risk"]
+    SRP["Reputation at Risk"]
+    SBP["Breach Penalty"]
+    RSK["Risks"]
+    PLR["Players / Fragilistas"]
+    LEX["Lineage"]
+    NLR["Non-Linearity"]
+    FRG["Fragility"]
+    SVO["Short Volatility"]
+    VUL["Vulnerabilities"]
+    PRP["Propagation"]
+    IRV["Irreversibility"]
+
+    ASY --> SITG
+    SITG --> STK
+    SITG --> SCA
+    SITG --> STI
+    SITG --> SRP
+    SITG --> SBP
+    SITG --> RSK
+    SITG --> LEX
+    ASY --> PLR
+    NLR --> FRG
+    FRG --> SVO
+    NLR --> VUL
+    NLR --> PRP
+    NLR --> IRV
+  end
+
+  subgraph ENDS_BRANCH["Ends / Barbell Posture"]
+    direction TB
+    END["Ends"]
+    HED["Hedge"]
+    EDG["Edge"]
+
+    END --> HED
+    END --> EDG
+  end
+
+  subgraph MEANS_BRANCH["Means"]
+    direction TB
+    MEN["Means"]
+    HEU["Heuristics"]
+    CRF["Crafts"]
+    AVD["Avoid / Disallowed Methods"]
+    KST["Knowledge Stacks"]
+    KPR["Protocols"]
+    KRL["Rules"]
+    HPS["Heaps"]
+    MOD["Models"]
+    FRM["Frameworks"]
+    BAR["Craft Barbells"]
+    WGM["Wargames"]
+    SCN["Scenarios"]
+    THR["Threats"]
+    RSP["Responses"]
+    ATL["Active Threat List"]
+
+    MEN --> HEU
+    MEN --> CRF
+    MEN --> AVD
+    CRF --> KST --> KPR --> KRL --> HEU
+    CRF --> HPS --> MOD --> FRM --> BAR --> HEU
+    HEU --> WGM --> SCN --> THR --> RSP
+    THR --> ATL
+  end
+
+  subgraph SOF_BRANCH["State of Affairs"]
+    direction TB
+    DPS["Domain P&L Signal"]
+    AFF["Affairs"]
+    INT["Interests"]
+    THS["Thresholds"]
+    KPI["KPIs"]
+    BET["Bets"]
+    IPC["Inherited Preparation Context"]
+    PLN["Plans"]
+    PRN["Preparation Notes"]
+    TSK["Tasks"]
+    OMC["Omission Cadence"]
+    EDR["Execution Readiness"]
+    SPT["Strategy Posture"]
+    SPG["Strategy Positioning"]
+    ALL["Allies"]
+    ENM["Enemies"]
+    FEN["Fragility Entities"]
+
+    SOF --> DPS
+    AFF --> PLN
+    INT --> PLN
+    AFF --> THS
+    AFF --> KPI
+    INT --> BET
+    SAP --> IPC
+    IPC --> PLN
+    PLN --> PRN
+    PLN --> TSK
+    PLN -. reviewed by .-> OMC
+    TSK --> EDR
+    AFF --> SPT
+    AFF --> SPG
+    SPG --> ALL
+    SPG --> ENM
+    AFF --> FEN
+  end
+
+  subgraph LAB_BRANCH["Lab"]
+    direction LR
+    LAB["Lab"]
+    FOR["Forge"]
+    WIE["Wield"]
+    TIN["Tinker"]
+
+    LAB --> FOR --> WIE --> TIN
+  end
+
+  subgraph LIN_BRANCH["Lineages"]
+    direction TB
+    LNO["Lineage Nodes"]
+    LSELF["Self"]
+    LFAM["Family"]
+    LSTA["State"]
+    LNATN["Nation"]
+    LHUM["Humanity"]
+    LNAT["Nature"]
+    LRK["Lineage Risks"]
+    BRS["Blast Radius"]
+
+    LNO --> LSELF --> LFAM --> LSTA --> LNATN --> LHUM --> LNAT
+    LNO --> LRK --> BRS
+  end
+
+  subgraph MIS_BRANCH["Mission"]
+    direction TB
+    MHI["Mission Hierarchy"]
+    MSR["Mission Serial Refs"]
+    MPR["Mission Parallel Refs"]
+    MDN["Mission Dependency Notes"]
+    DEP["Dependency Chain"]
+    RDY["Readiness"]
+    NRN["No-Ruin Constraint"]
+
+    MHI --> MSR
+    MHI --> MPR
+    MHI --> MDN
+    MHI --> DEP --> RDY --> NRN
+  end
+
+  subgraph DRAFT_BRANCH["Draft Promotion"]
+    direction LR
+    ANK["Structural Anchors"]
+    PRM["Promotion Events"]
+
+    DFT --> ANK --> PRM
+  end
+
+  subgraph PORT_BRANCH["Portfolio War Room"]
+    direction LR
+    PPR["Portfolio Projects"]
+    PEX["Portfolio Experiments"]
+    PGT["Decision Gates"]
+    PEV["Evidence"]
+    PSL["Ship Logs"]
+
+    POR --> PPR
+    PPR --> PEX
+    PPR --> PGT
+    PPR --> PEV
+    PPR --> PSL
+  end
+
+  subgraph WARGAME_BRANCH["War Gaming"]
+    direction TB
+    DSV["Decision Surface"]
+    OPF["Operational Filters"]
+    CEV["Confidence Evidence"]
+    TRA["Triage Actions"]
+    DOF["Doctrine Fixes"]
+    FFR["Fractal Flow Rail"]
+    DPW["Dependency Warnings"]
+    DPCX["Dual Path Comparator"]
+    FWL["Fragilista Watchlist"]
+    QHG["Quadrant HeatGrid"]
+    SVF["Source Volatility Flow"]
+    RPP["Readiness Penalty Profile"]
+    FRA["Fragility Radar"]
+    TKC["Task Kill Chain"]
+    BRG["Barbell Guardrail"]
+    ASP["Asymmetry Snapshot"]
+    RLC["Risk Logic Continuum"]
+    OBG["Optionality Budget"]
+    SRG["Source Register"]
+    DBR["Dependency Blast Radius"]
+    HCM["Hedge Coverage Matrix"]
+    DVF["Doctrine Violation Feed"]
+    CRR["Correlation Risk"]
+    CPS["Campaign Snapshots"]
+
+    WGG --> DSV --> OPF
+    WGG --> CEV
+    WGG --> TRA --> DOF
+    WGG --> FFR
+    WGG --> DPW
+    WGG --> DPCX
+    WGG --> FWL
+    WGG --> QHG
+    WGG --> SVF
+    WGG --> RPP
+    WGG --> FRA
+    WGG --> TKC
+    WGG --> BRG
+    WGG --> ASP
+    WGG --> RLC
+    WGG --> OBG
+    WGG --> SRG
+    WGG --> DBR
+    WGG --> HCM
+    WGG --> DVF
+    WGG --> CRR
+    WGG --> CPS
+  end
+
+  subgraph DOMAIN_BRANCH["Domain Chamber"]
+    direction TB
+    DPO["Domain Posture"]
+    BMC["Barbell + Means Coverage"]
+    LRH["Lineage Risk HeatGrid"]
+    ADA["Active Domain Affairs"]
+    LRR["Lineage Risk Register"]
+
+    DPO --> BMC
+    DPO --> LRH
+    DPO --> ADA
+    DPO --> LRR
+  end
+
+  subgraph DASH_BRANCH["Operator Dashboard"]
+    direction LR
+    ODB["Operator Dashboard"]
+    PST["Protocol Status"]
+    HUD["HUD Status"]
+    LCK["Life Clock"]
+    ALQ["Alert Queue"]
+    FOM["Fog of Maya"]
+    ODN["Operational Do Now"]
+    STR["Stakes Triad"]
+    ACR["Asymmetry Curve"]
+    VSP["Virtue Spiral"]
+    DNC["Do Now Copilot"]
+    NRT["No-Ruin Tripwire"]
+    RLP["Ruin Ledger"]
+    VNP["Via Negativa"]
+    BSR["Black Swan Readiness"]
+    EXD["Execution Distribution"]
+    FRH["Fragility Hierarchy"]
+    SPF["Strategic Posture Filter"]
+    SAM["System Anatomy"]
+
+    ODB --> PST
+    ODB --> HUD
+    ODB --> LCK
+    ODB --> ALQ
+    ODB --> FOM
+    ODB --> ODN
+    ODB --> STR
+    ODB --> ACR
+    ODB --> VSP
+    ODB --> DNC
+    ODB --> NRT
+    ODB --> RLP
+    ODB --> VNP
+    ODB --> BSR
+    ODB --> EXD
+    ODB --> FRH
+    ODB --> SPF
+    ODB --> SAM
+  end
+
+  SOA --> SRC
+  SOA --> CTX
+  MPS --> ASY
+  MPS --> NLR
+  RRS -. describes .-> ASY
+  FRN -. describes .-> NLR
+  BRR -. gates .-> RDY
+  ASY --> END
+  NLR --> END
+  END --> MEN
+  SOF --> AFF
+  SOF --> INT
+  DOM --> AFF
+  DOM --> INT
+  SAP --> AFF
+  SAP --> INT
+  SAT --> AFF
+  SAT --> INT
+  DPC -. verifies .-> AFF
+  DPC -. verifies .-> INT
+  HED --> AFF
+  EDG --> INT
+  CRF --> AFF
+  CRF --> INT
+  HEU --> AFF
+  HEU --> INT
+  INT --> LAB
+  WIE --> TSK
+  AFF --> LIN
+  INT --> LIN
+  STK -. weighted by .-> LEX
+  RSK -. weighted by .-> LEX
+  LEX --> LRK
+  TSK --> MIS
+  AFF --> MHI
+  INT --> MHI
+  LRK --> NRN
+  WR --> ODB
+  STK -. surfaces .-> STR
+  ASY -. surfaces .-> ACR
+  FRG -. surfaces .-> VNP
+  RDY -. surfaces .-> BSR
+  TSK -. surfaces .-> EXD
+  LIN -. surfaces .-> FRH
+  SOF -. filters .-> SPF
+  MIS -. surfaces .-> DNC
+  NRN -. surfaces .-> NRT
+  LRK -. feeds .-> RLP
+  SOA -. surfaces .-> DPO
+  SOA -. surfaces .-> BMC
+  SOA -. surfaces .-> QHG
+  SOA -. surfaces .-> SVF
+  SOF -. surfaces .-> CPS
+  SOF -. surfaces .-> ADA
+  LIN -. surfaces .-> LRH
+  LIN -. surfaces .-> LRR
+  FRG -. surfaces .-> FRA
+  TSK -. surfaces .-> TKC
+  RDY -. surfaces .-> RPP
+  BAR -. measured by .-> RLC
+  ASY -. measured by .-> RLC
+  BRG -. surfaces into .-> RLC
+  ASP -. surfaces into .-> RLC
+  INT -. budgeted by .-> OBG
+  LRK -. informs .-> FWL
+  LRK -. informs .-> DBR
+  LRK -. registered in .-> LRR
+  DVF -. prompts .-> DOF
+  SAP -. indexes .-> SRG
+  MIS -. surfaces .-> CPS
+  MIS -. feeds .-> DSV
+  DSV -. reports to .-> PST
+  DEP -. maps into .-> SAM
+  CRR -. constrains .-> OBG
+  SRC -. surfaces .-> SVF
+  STK -. surfaces .-> DPO
+  RSK -. surfaces .-> DPO
+  FRG -. surfaces .-> DPO
+  HED -. surfaces .-> BMC
+  EDG -. surfaces .-> BMC
+  MEN -. surfaces .-> BMC
+  PRM -. creates .-> AFF
+  PRM -. creates .-> INT
+  PRM -. creates .-> CRF
+  PRM -. creates .-> KST
+  PRM -. creates .-> KPR
+  PRM -. creates .-> KRL
+  MIS --> POR
+  INT -. links .-> PPR
+  LEG_OK -.-> LEG_PART
+  LEG_PART -.-> LEG_DOC
+
+  classDef root fill:#3b2f63,stroke:#8b7ae6,color:#ffffff;
+  classDef macro fill:#1f3d2d,stroke:#4ade80,color:#ffffff;
+  classDef implemented fill:#10281c,stroke:#22c55e,color:#ffffff;
+  classDef partial fill:#3a2a10,stroke:#f59e0b,color:#ffffff;
+  classDef doctrine fill:#1d3b53,stroke:#7dd3fc,color:#ffffff;
+  classDef gate fill:#1f2937,stroke:#facc15,color:#ffffff;
+  classDef precommit fill:#1d3b53,stroke:#7dd3fc,color:#ffffff;
+  classDef critical fill:#3f1d1d,stroke:#f87171,color:#ffffff;
+
+  class WR root;
+  class SOA,SOF,LIN,MIS,WGG,POR,ODB macro;
+  class DTP,TAL,QDR gate;
+  class DFT,ANK,PRM precommit;
+  class NRN critical;
+  class SOF,WGG,DFT,POR,SRC,SMP,SAP,SAT,DOM,FRG,SVO,VUL,PRP,HED,EDG,AVD,CRF,KST,KPR,KRL,HPS,MOD,FRM,BAR,HEU,WGM,SCN,THR,RSP,ATL,AFF,INT,LAB,SPT,SPG,ALL,ENM,FOR,WIE,TIN,PLN,TSK,MHI,DEP,LNO,LRK,BRS,LSELF,LFAM,LSTA,LNATN,LHUM,LNAT,ANK,PRM,PPR,PEX,PGT,PEV,PSL,ODB,PST,HUD,LCK,ALQ,FOM,ODN,STR,ACR,VSP,DNC,NRT,RLP,VNP,BSR,EXD,FRH,SPF,DSV,OPF,QHG,SVF,RPP,FRA,TKC,RLC,OBG,SRG,DPCX,FWL,DVF,HCM,DBR,CRR,CEV,FFR,TRA,DOF,DPW,SAM,CPS,BRG,ASP,DPO,BMC,LRH,ADA,LRR implemented;
+  class WR,SOA,LIN,MIS,MAP_BRANCH,DPC,CTX,FRN,RRS,CCP,SVE,LVE,BRR,CLR,PAC,DTP,TAL,QDR,MPS,STONE_BRANCH,ASY,SITG,STK,SCA,STI,SRP,SBP,RSK,LEX,NLR,IRV,END,MEN,DPS,THS,KPI,BET,IPC,PRN,OMC,EDR,FEN,MSR,MPR,MDN,RDY,NRN partial;
+  class PLR doctrine;
+  class LEG_OK implemented;
+  class LEG_PART partial;
+  class LEG_DOC doctrine;

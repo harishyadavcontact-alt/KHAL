@@ -998,9 +998,9 @@ export const WarGaming = ({
           onSourceMapSaved={onSourceMapSaved}
         />
       )}
-      {mode === "domain" && <WarGameDomains domainId={modeTargetId} domains={domains} affairs={affairs} interests={interests} lineageRisks={lineageRisks} />}
+      {mode === "domain" && <WarGameDomains domainId={modeTargetId} domains={domains} sources={sources} crafts={crafts} affairs={affairs} interests={interests} lineageRisks={lineageRisks} />}
       {mode === "affair" && <WarGameAffair affairId={modeTargetId} affairs={affairs} domains={domains} sources={sources} crafts={crafts} />}
-      {mode === "interest" && <WarGameInterest interestId={modeTargetId} interests={interests} affairs={affairs} sources={sources} crafts={crafts} />}
+      {mode === "interest" && <WarGameInterest interestId={modeTargetId} interests={interests} affairs={affairs} domains={domains} sources={sources} crafts={crafts} />}
       {mode === "craft" && <WarGameCraft craftId={modeTargetId} crafts={crafts} />}
       {mode === "mission" && (
         <WarGameMission

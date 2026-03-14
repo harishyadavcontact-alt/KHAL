@@ -2,6 +2,7 @@ import type { Affair, Craft, Interest, KhalState, Task } from "@khal/domain";
 import type { SourceMapProfileDto } from "../../components/war-room-v2/types";
 import type { WarGameDoctrineChain } from "../war-room/bootstrap";
 import { missingDoctrineForSourceProfiles } from "../doctrine/gaps";
+import { methodPostureForQuadrant } from "../war-room/source-map";
 import {
   doctrineQuickActionSchema,
   decisionEvaluationResultSchema,
@@ -13,6 +14,8 @@ import {
   type DecisionSpecDto,
   type DoctrineQuickActionDto,
   type DoctrineQuickActionKindDto,
+  type LineagePressureSummaryDto,
+  type StateOfArtAssessmentDto,
   type TriageEvaluationSnapshotDto,
   type TriageSuggestionDto,
   type WarGameModeSpec
@@ -66,6 +69,355 @@ function hasDomainBarbellPosture(state: KhalState, domainId: string): { hedge: b
   const hedge = /\bhedge\b/.test(endText) || relatedInterests.some((interest) => (interest.hedgePct ?? 0) > 0);
   const edge = /\bedge\b/.test(endText) || relatedInterests.some((interest) => (interest.edgePct ?? 0) > 0);
   return { hedge, edge };
+}
+
+const LINEAGE_LEVEL_WEIGHT: Record<string, number> = {
+  SELF: 1,
+  FAMILY: 2,
+  FRIENDS: 2,
+  COMMUNITY: 3,
+  TRIBE: 3,
+  STATE: 4,
+  NATION: 5,
+  HUMANITY: 6,
+  NATURE: 7
+};
+
+const LINEAGE_POLICY_BAND_SCORE: Record<LineagePressureSummaryDto["policyBand"], number> = {
+  LOCAL: 0,
+  ELEVATED: 1,
+  SYSTEMIC: 2,
+  CIVILIZATIONAL: 3,
+  EXISTENTIAL: 4
+};
+
+function lineageLevelWeight(level?: string | null): number {
+  if (!level) return 1;
+  return LINEAGE_LEVEL_WEIGHT[String(level).toUpperCase()] ?? 1;
+}
+
+function lineageLevelLabel(state: KhalState, lineageNodeId?: string | null): string {
+  const node = state.lineages?.nodes?.find((item) => item.id === lineageNodeId);
+  return String(node?.level ?? "SELF").toUpperCase();
+}
+
+function relevantLineageRisks(mode: WarGameModeSpec, targetId: string, state: KhalState) {
+  const openRisks = (state.lineageRisks ?? []).filter((risk) => risk.status !== "RESOLVED");
+  if (mode === "source") return openRisks.filter((risk) => risk.sourceId === targetId);
+  if (mode === "domain") return openRisks.filter((risk) => risk.domainId === targetId);
+  if (mode === "affair") {
+    const affair = state.affairs.find((item) => item.id === targetId);
+    return affair ? openRisks.filter((risk) => risk.domainId === affair.domainId) : [];
+  }
+  if (mode === "interest") {
+    const interest = state.interests.find((item) => item.id === targetId);
+    return interest ? openRisks.filter((risk) => risk.domainId === interest.domainId) : [];
+  }
+  if (mode === "lineage") {
+    if (targetId === "global") return openRisks;
+    return openRisks.filter((risk) => risk.lineageNodeId === targetId);
+  }
+  if (mode === "mission") return openRisks;
+  return [];
+}
+
+function mean(values: number[]): number {
+  if (!values.length) return 0;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function numericStake(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function computeStakeSignal(mode: WarGameModeSpec, targetId: string, state: KhalState, risks: NonNullable<KhalState["lineageRisks"]>): number {
+  if (mode === "affair") {
+    const affair = state.affairs.find((item) => item.id === targetId);
+    return numericStake(affair?.stakes);
+  }
+  if (mode === "interest") {
+    const interest = state.interests.find((item) => item.id === targetId);
+    return numericStake(interest?.stakes) + Math.max(0, numericStake(interest?.convexity) / 2);
+  }
+  if (mode === "domain") {
+    const fragilityStake = state.fragilities.filter((item) => item.domainId === targetId).reduce((sum, item) => sum + numericStake(item.risk), 0);
+    const affairStake = state.affairs.filter((item) => item.domainId === targetId).reduce((sum, item) => sum + numericStake(item.stakes), 0);
+    const interestStake = state.interests.filter((item) => item.domainId === targetId).reduce((sum, item) => sum + numericStake(item.stakes), 0);
+    return fragilityStake + affairStake + interestStake;
+  }
+  if (mode === "mission") {
+    const affairStake = state.affairs.reduce((sum, item) => sum + numericStake(item.stakes), 0);
+    const interestStake = state.interests.reduce((sum, item) => sum + numericStake(item.stakes), 0);
+    return affairStake + interestStake;
+  }
+  return risks.reduce((sum, risk) => sum + numericStake(risk.exposure), 0);
+}
+
+function computeRiskSignal(mode: WarGameModeSpec, targetId: string, state: KhalState, risks: NonNullable<KhalState["lineageRisks"]>): number {
+  const lineageRiskMean = mean(risks.map((risk) => numericStake(risk.fragilityScore)));
+  if (mode === "affair") {
+    const affair = state.affairs.find((item) => item.id === targetId);
+    return numericStake(affair?.risk) + lineageRiskMean / 10;
+  }
+  if (mode === "interest") {
+    const interest = state.interests.find((item) => item.id === targetId);
+    return numericStake(interest?.risk) + numericStake(interest?.irreversibility) / 10 + lineageRiskMean / 10;
+  }
+  if (mode === "domain") {
+    const fragilityRisk = state.fragilities.filter((item) => item.domainId === targetId).reduce((sum, item) => sum + numericStake(item.risk), 0);
+    return fragilityRisk + lineageRiskMean / 10;
+  }
+  if (mode === "mission") {
+    const affairRisk = state.affairs.reduce((sum, item) => sum + numericStake(item.risk), 0);
+    const interestRisk = state.interests.reduce((sum, item) => sum + numericStake(item.risk), 0);
+    return affairRisk + interestRisk + lineageRiskMean / 10;
+  }
+  return lineageRiskMean / 10;
+}
+
+function computePolicyBand(args: {
+  maxLevelWeight: number;
+  dependencyWeight: number;
+  irreversibilityWeight: number;
+  stakeSignal: number;
+  riskSignal: number;
+}): LineagePressureSummaryDto["policyBand"] {
+  if (args.maxLevelWeight >= LINEAGE_LEVEL_WEIGHT.NATURE || args.irreversibilityWeight >= 70) return "EXISTENTIAL";
+  if (args.maxLevelWeight >= LINEAGE_LEVEL_WEIGHT.HUMANITY || args.irreversibilityWeight >= 45) return "CIVILIZATIONAL";
+  if (args.maxLevelWeight >= LINEAGE_LEVEL_WEIGHT.STATE || args.dependencyWeight >= 18) return "SYSTEMIC";
+  if (args.maxLevelWeight >= LINEAGE_LEVEL_WEIGHT.FAMILY || args.stakeSignal + args.riskSignal >= 10) return "ELEVATED";
+  return "LOCAL";
+}
+
+function computeRequiredPosture(args: {
+  policyBand: LineagePressureSummaryDto["policyBand"];
+  maxLevelWeight: number;
+  stakeSignal: number;
+  riskSignal: number;
+  irreversibilityWeight: number;
+}): LineagePressureSummaryDto["requiredPosture"] {
+  if (args.policyBand === "EXISTENTIAL" || args.irreversibilityWeight >= 70) return "NO_RUIN";
+  if (args.policyBand === "CIVILIZATIONAL" || args.policyBand === "SYSTEMIC") return "HEDGE";
+  if (args.stakeSignal >= 8 || args.riskSignal >= 8 || args.maxLevelWeight >= LINEAGE_LEVEL_WEIGHT.FAMILY) return "CAP_DOWNSIDE";
+  return "OBSERVE";
+}
+
+function computeLineagePressure(mode: WarGameModeSpec, targetId: string, state: KhalState): LineagePressureSummaryDto | null {
+  const risks = relevantLineageRisks(mode, targetId, state);
+  if (!risks.length) return null;
+
+  let maxLevelWeight = 0;
+  let maxLevel = "SELF";
+  let weightedExposure = 0;
+  let weightedFragility = 0;
+  let dependencyWeight = 0;
+  let irreversibilityWeight = 0;
+  let highestRiskTitle: string | undefined;
+  let highestRiskScore = -1;
+
+  for (const risk of risks) {
+    const level = lineageLevelLabel(state, risk.lineageNodeId);
+    const levelWeight = lineageLevelWeight(level);
+    const exposure = Number(risk.exposure ?? 0);
+    const dependency = Number(risk.dependency ?? 0);
+    const fragility = Number(risk.fragilityScore ?? 0);
+    const irreversibility = Number(risk.irreversibility ?? 0);
+    const weightedScore = levelWeight * (exposure + dependency);
+    weightedExposure += weightedScore;
+    weightedFragility += levelWeight * fragility;
+    dependencyWeight += levelWeight * dependency;
+    irreversibilityWeight += levelWeight * irreversibility;
+    if (levelWeight > maxLevelWeight) {
+      maxLevelWeight = levelWeight;
+      maxLevel = level;
+    }
+    if (weightedScore > highestRiskScore) {
+      highestRiskScore = weightedScore;
+      highestRiskTitle = risk.title;
+    }
+  }
+
+  const stakeSignal = Number(computeStakeSignal(mode, targetId, state, risks).toFixed(2));
+  const riskSignal = Number(computeRiskSignal(mode, targetId, state, risks).toFixed(2));
+  const normalizedDependencyWeight = Number((dependencyWeight / Math.max(1, risks.length)).toFixed(2));
+  const normalizedIrreversibilityWeight = Number((irreversibilityWeight / Math.max(1, risks.length)).toFixed(2));
+  const policyBand = computePolicyBand({
+    maxLevelWeight,
+    dependencyWeight: normalizedDependencyWeight,
+    irreversibilityWeight: normalizedIrreversibilityWeight,
+    stakeSignal,
+    riskSignal
+  });
+  const requiredPosture = computeRequiredPosture({
+    policyBand,
+    maxLevelWeight,
+    stakeSignal,
+    riskSignal,
+    irreversibilityWeight: normalizedIrreversibilityWeight
+  });
+
+  return {
+    maxLevel,
+    maxLevelWeight,
+    openRiskCount: risks.length,
+    stakeSignal,
+    riskSignal,
+    dependencyWeight: normalizedDependencyWeight,
+    irreversibilityWeight: normalizedIrreversibilityWeight,
+    policyBand,
+    requiredPosture,
+    weightedExposure: Number(weightedExposure.toFixed(2)),
+    weightedFragility: Number(weightedFragility.toFixed(2)),
+    highestRiskTitle,
+    hedgeRequired: requiredPosture === "HEDGE" || requiredPosture === "NO_RUIN"
+  };
+}
+
+function sourceProfilesForMode(
+  mode: WarGameModeSpec,
+  targetId: string,
+  state: KhalState,
+  sourceMapProfiles: SourceMapProfileDto[] = []
+): SourceMapProfileDto[] {
+  if (mode === "source") return sourceMapProfiles.filter((item) => item.sourceId === targetId);
+  if (mode === "domain") return sourceMapProfiles.filter((item) => item.domainId === targetId);
+  if (mode === "affair") {
+    const affair = state.affairs.find((item) => item.id === targetId);
+    return affair ? sourceMapProfiles.filter((item) => item.domainId === affair.domainId) : [];
+  }
+  if (mode === "interest") {
+    const interest = state.interests.find((item) => item.id === targetId);
+    return interest ? sourceMapProfiles.filter((item) => item.domainId === interest.domainId) : [];
+  }
+  return [];
+}
+
+function preferredQuadrant(profiles: SourceMapProfileDto[]): SourceMapProfileDto["quadrant"] | undefined {
+  const order: Record<SourceMapProfileDto["quadrant"], number> = { Q1: 1, Q2: 2, Q3: 3, Q4: 4 };
+  return [...profiles]
+    .sort((left, right) => (order[right.quadrant] ?? 0) - (order[left.quadrant] ?? 0))[0]
+    ?.quadrant;
+}
+
+function postureCompatible(methodPosture: string | undefined, requiredPosture: LineagePressureSummaryDto["requiredPosture"] | undefined): boolean {
+  if (!requiredPosture || requiredPosture === "OBSERVE") return true;
+  const hay = String(methodPosture ?? "").toLowerCase();
+  if (requiredPosture === "NO_RUIN") return hay.includes("no-ruin") || hay.includes("tail clipping") || hay.includes("limited intervention");
+  if (requiredPosture === "HEDGE") return hay.includes("no-ruin") || hay.includes("precaution") || hay.includes("bounded") || hay.includes("capped exposure");
+  return hay.includes("downside") || hay.includes("bounded") || hay.includes("heuristic") || hay.includes("capped");
+}
+
+function firstSentence(text?: string): string | null {
+  const value = String(text ?? "").trim();
+  if (!value) return null;
+  const [sentence] = value.split(/[.!?]\s/);
+  return sentence?.trim() || value;
+}
+
+function computeStateOfArtAssessment(args: {
+  mode: WarGameModeSpec;
+  targetId: string;
+  state: KhalState;
+  sourceMapProfiles?: SourceMapProfileDto[];
+  lineagePressure: LineagePressureSummaryDto | null;
+}): StateOfArtAssessmentDto | null {
+  if (!["source", "domain", "affair", "interest"].includes(args.mode)) return null;
+
+  const profiles = sourceProfilesForMode(args.mode, args.targetId, args.state, args.sourceMapProfiles);
+  const domainId =
+    args.mode === "domain" ? args.targetId :
+    args.mode === "affair" ? args.state.affairs.find((item) => item.id === args.targetId)?.domainId :
+    args.mode === "interest" ? args.state.interests.find((item) => item.id === args.targetId)?.domainId :
+    profiles[0]?.domainId;
+  const dominantQuadrant = preferredQuadrant(profiles);
+  const inheritedPosture = dominantQuadrant ? methodPostureForQuadrant(dominantQuadrant) : "Classify map first; default to precaution under uncertainty.";
+  const recommendedPosture =
+    args.lineagePressure?.requiredPosture === "NO_RUIN"
+      ? "No-ruin first. Tail clipping, capped exposure, and limited intervention override optimization."
+      : args.lineagePressure?.requiredPosture === "HEDGE"
+        ? "Precaution first. Protect downside before expressing any edge."
+        : args.lineagePressure?.requiredPosture === "CAP_DOWNSIDE"
+          ? "Cap downside explicitly. Keep exposure bounded and methods simple."
+          : inheritedPosture;
+
+  const mapComplete = profiles.length > 0 && profiles.every((profile) => Boolean(profile.decisionType && profile.tailClass && profile.quadrant && profile.methodPosture));
+  const stoneComplete = profiles.length > 0 && profiles.every((profile) =>
+    Boolean(
+      profile.stakesText?.trim() &&
+      profile.risksText?.trim() &&
+      profile.lineageThreatText?.trim() &&
+      profile.fragilityPosture?.trim() &&
+      profile.vulnerabilitiesText?.trim()
+    )
+  );
+  const endsComplete = profiles.length > 0
+    ? profiles.every((profile) => Boolean(profile.hedgeText?.trim() && profile.edgeText?.trim()))
+    : false;
+  const meansComplete = profiles.length > 0
+    ? profiles.every((profile) => Boolean(profile.primaryCraftId?.trim() && profile.heuristicsText?.trim() && profile.avoidText?.trim()))
+    : false;
+
+  const craftNames = Array.from(new Set(
+    profiles
+      .map((profile) => profile.primaryCraftId?.trim())
+      .filter((value): value is string => Boolean(value))
+      .map((craftId) => args.state.crafts.find((item) => item.id === craftId)?.name ?? craftId)
+  ));
+  const heuristicHints = Array.from(new Set(profiles.map((profile) => firstSentence(profile.heuristicsText)).filter((value): value is string => Boolean(value))));
+  const avoidHints = Array.from(new Set(profiles.map((profile) => firstSentence(profile.avoidText)).filter((value): value is string => Boolean(value))));
+  const admissibleMeans = [
+    ...craftNames.slice(0, 2),
+    ...heuristicHints.slice(0, 1),
+    ...(args.lineagePressure?.requiredPosture === "NO_RUIN" ? ["tail clipping / limited intervention"] : []),
+    ...(args.lineagePressure?.requiredPosture === "HEDGE" ? ["bounded inference / capped exposure"] : []),
+    ...avoidHints.slice(0, 1).map((hint) => `avoid: ${hint}`)
+  ];
+  const requiredEnds =
+    args.lineagePressure?.requiredPosture === "NO_RUIN" ? ["hedge", "edge only if capped"] :
+    args.lineagePressure?.requiredPosture === "HEDGE" ? ["hedge", "small edge"] :
+    args.lineagePressure?.requiredPosture === "CAP_DOWNSIDE" ? ["downside cap"] :
+    ["observe"];
+  const mapAligned = profiles.length === 0 || profiles.every((profile) => postureCompatible(profile.methodPosture, args.lineagePressure?.requiredPosture));
+
+  return {
+    dominantQuadrant,
+    recommendedPosture,
+    lineageAtThreat: args.lineagePressure?.maxLevel ?? profiles.find((profile) => profile.lineageThreatText?.trim())?.lineageThreatText,
+    requiredEnds,
+    admissibleMeans,
+    stages: [
+      {
+        id: "map",
+        complete: mapComplete && mapAligned,
+        message: mapComplete
+          ? mapAligned
+            ? `Quadrant ${dominantQuadrant ?? "unknown"} is mapped and method posture is admissible.`
+            : `Mapped posture is too weak for ${args.lineagePressure?.requiredPosture?.toLowerCase().replace("_", "-") ?? "current"} lineage conditions.`
+          : "Decision type, tail class, quadrant, and method posture must be explicit."
+      },
+      {
+        id: "stone",
+        complete: stoneComplete,
+        message: stoneComplete
+          ? `Stakes, risks, fragility, and lineage threat are explicit${args.lineagePressure?.maxLevel ? ` at ${args.lineagePressure.maxLevel}` : ""}.`
+          : "Stone is incomplete: define stakes, risks, lineage threat, fragility, and vulnerabilities."
+      },
+      {
+        id: "ends",
+        complete: endsComplete,
+        message: endsComplete
+          ? `Ends reflect ${requiredEnds.join(" + ")}.`
+          : `Ends are incomplete: ${requiredEnds.join(" + ")} must be explicit.`
+      },
+      {
+        id: "means",
+        complete: meansComplete,
+        message: meansComplete
+          ? `Means are grounded in ${admissibleMeans.slice(0, 2).join(" | ") || "documented craft/heuristics"}.`
+          : "Means are incomplete: assign craft, heuristics, and disallowed methods."
+      }
+    ]
+  };
 }
 
 function missingDoctrineForSourceMode(profiles: SourceMapProfileDto[], responseLogic: WarGameDoctrineChain[]): string[] {
@@ -191,6 +543,8 @@ function evaluateGuards(args: {
   state: KhalState;
   noRuinGate: boolean;
   overrides: string[];
+  lineagePressure: LineagePressureSummaryDto | null;
+  stateOfArt: StateOfArtAssessmentDto | null;
 }): DecisionBlockReasonDto[] {
   const reasons: DecisionBlockReasonDto[] = [];
   const hasOverride = (guardId: string) => args.overrides.includes(guardId);
@@ -205,6 +559,18 @@ function evaluateGuards(args: {
         message: "Complex domain requires bimodal barbell ends (hedge + edge).",
         missingItems: [!hedge ? "hedge" : null, !edge ? "edge" : null].filter(Boolean) as string[],
         overridable: true
+      });
+    }
+  }
+
+  if ((args.mode === "source" || args.mode === "domain") && args.stateOfArt) {
+    const mapStage = args.stateOfArt.stages.find((stage) => stage.id === "map");
+    if (mapStage && !mapStage.complete) {
+      reasons.push({
+        code: "STATE_OF_ART_POSTURE_MISMATCH",
+        message: mapStage.message,
+        missingItems: ["method posture", "lineage-aware map"],
+        overridable: false
       });
     }
   }
@@ -225,6 +591,22 @@ function evaluateGuards(args: {
     }
   }
 
+  if ((args.mode === "affair" || args.mode === "domain") && args.lineagePressure?.hedgeRequired) {
+    const domainId =
+      args.mode === "domain"
+        ? args.targetId
+        : args.state.affairs.find((item) => item.id === args.targetId)?.domainId ?? "";
+    const { hedge } = hasDomainBarbellPosture(args.state, domainId);
+    if (!hedge) {
+      reasons.push({
+        code: "LINEAGE_HEDGE_REQUIRED",
+        message: `Lineage exposure is ${args.lineagePressure.policyBand.toLowerCase()} at ${args.lineagePressure.maxLevel}; ${args.lineagePressure.requiredPosture.toLowerCase().replace("_", "-")} posture is required before action.`,
+        missingItems: ["hedge posture", `${args.lineagePressure.requiredPosture.toLowerCase()} policy`, args.lineagePressure.highestRiskTitle ?? "lineage risk coverage"].filter(Boolean) as string[],
+        overridable: false
+      });
+    }
+  }
+
   if (args.mode === "interest") {
     const interest = args.state.interests.find((item) => item.id === args.targetId);
     const missing = [
@@ -240,6 +622,18 @@ function evaluateGuards(args: {
         missingItems: missing,
         overridable: true
       });
+    }
+    if (args.lineagePressure?.hedgeRequired) {
+      const insufficientHedge = !Number.isFinite(interest?.hedgePct) || Number(interest?.hedgePct ?? 0) <= 0;
+      const missingMaxLoss = !Number.isFinite(interest?.maxLossPct);
+      if (insufficientHedge || missingMaxLoss) {
+        reasons.push({
+          code: "LINEAGE_OPTIONALITY_UNHEDGED",
+          message: `Interest touches ${args.lineagePressure.maxLevel}-level lineage exposure with ${args.lineagePressure.requiredPosture.toLowerCase().replace("_", "-")} posture required.`,
+          missingItems: [insufficientHedge ? "hedgePct" : null, missingMaxLoss ? "maxLossPct" : null].filter(Boolean) as string[],
+          overridable: false
+        });
+      }
     }
   }
 
@@ -287,12 +681,22 @@ export function evaluateDecision(args: {
   const missingRequiredFields = missingForMode(args.mode, args.state, args.targetId, args.sourceMapProfiles, args.responseLogic);
   const completed = completedModes(args.state);
   const missingPredecessors = modeSpec.predecessors.filter((mode) => !completed[mode]);
+  const lineagePressure = computeLineagePressure(args.mode, args.targetId, args.state);
+  const stateOfArt = computeStateOfArtAssessment({
+    mode: args.mode,
+    targetId: args.targetId,
+    state: args.state,
+    sourceMapProfiles: args.sourceMapProfiles,
+    lineagePressure
+  });
   const guardReasons = evaluateGuards({
     mode: args.mode,
     targetId: args.targetId,
     state: args.state,
     noRuinGate: args.noRuinGate ?? true,
-    overrides: args.overrides ?? []
+    overrides: args.overrides ?? [],
+    lineagePressure,
+    stateOfArt
   });
   const role = args.role ?? "MISSIONARY";
   const dependencyBlocked = role === "MISSIONARY" && missingPredecessors.length > 0;
@@ -316,7 +720,22 @@ export function evaluateDecision(args: {
     ...guardReasons
   ];
   const blocked = dependencyBlocked || missingRequiredFields.length > 0 || guardReasons.length > 0;
-  const readinessScore = Math.max(0, Math.min(100, 100 - missingRequiredFields.length * 10 - missingPredecessors.length * 8 - guardReasons.length * 12));
+  const lineagePenalty = lineagePressure
+    ? Math.min(
+        24,
+        Math.round(
+          lineagePressure.stakeSignal +
+          lineagePressure.riskSignal +
+          lineagePressure.dependencyWeight / 4 +
+          lineagePressure.irreversibilityWeight / 6 +
+          LINEAGE_POLICY_BAND_SCORE[lineagePressure.policyBand] * 2
+        )
+      )
+    : 0;
+  const readinessScore = Math.max(
+    0,
+    Math.min(100, 100 - missingRequiredFields.length * 10 - missingPredecessors.length * 8 - guardReasons.length * 12 - lineagePenalty)
+  );
 
   const stages = PIPELINE_STAGES.map((stage, index) => {
     const passed =
@@ -348,7 +767,9 @@ export function evaluateDecision(args: {
     missingRequiredFields,
     blockReasons: reasons,
     stages,
-    nextStage: firstBlockedStage
+    nextStage: firstBlockedStage,
+    lineagePressure: lineagePressure ?? undefined,
+    stateOfArt: stateOfArt ?? undefined
   });
 }
 
@@ -403,6 +824,23 @@ function triageActionsForReason(args: {
     return [action("TRIPWIRE_RECOVERY_PATH", "Open no-ruin recovery path", { guidance: "Resolve tripwire recovery action before execution." }, ["G4_NO_RUIN"])];
   }
 
+  if (args.reason.code === "LINEAGE_HEDGE_REQUIRED") {
+    return [
+      action(
+        "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE",
+        "Set lineage-safe hedge posture template",
+        { hedgeText: "Protect upper-layer lineage exposure before action.", edgeText: "Only keep upside that does not breach no-ruin constraints." }
+      )
+    ];
+  }
+
+  if (args.reason.code === "LINEAGE_OPTIONALITY_UNHEDGED") {
+    return [
+      action("SET_INTEREST_MAX_LOSS_DEFAULT", "Set max-loss default (10%)", { maxLossPct: 10 }),
+      action("SET_INTEREST_BARBELL_90_10", "Set barbell split 90/10", { hedgePct: 90, edgePct: 10 })
+    ];
+  }
+
   if (args.mode === "source" && args.reason.code === "GRAMMAR_INCOMPLETE") {
     const has = (key: string) => args.reason.missingItems.includes(key);
     const route = (playbook: "chain" | "scenario" | "threat" | "response") =>
@@ -429,8 +867,11 @@ function triageActionsForReason(args: {
 function reasonPriority(reason: DecisionBlockReasonDto): number {
   if (reason.code === "NO_RUIN_GATE_FAILED") return 100;
   if (reason.code === "COMPLEX_MONOMODAL_BLOCK") return 90;
+  if (reason.code === "STATE_OF_ART_POSTURE_MISMATCH") return 89;
   if (reason.code === "AFFAIR_NO_HEDGE") return 85;
   if (reason.code === "INTEREST_CONVEXITY_INCOMPLETE") return 80;
+  if (reason.code === "LINEAGE_HEDGE_REQUIRED") return 88;
+  if (reason.code === "LINEAGE_OPTIONALITY_UNHEDGED") return 82;
   if (reason.code === "GRAMMAR_INCOMPLETE") return 75;
   if (reason.code === "PREDECESSOR_MISSING") return 60;
   return 50;
@@ -511,7 +952,9 @@ export function evaluateDecisionWithTriage(args: {
     readinessScore: evaluation.readinessScore,
     nextAction,
     suggestions,
-    generatedAtIso: new Date().toISOString()
+    generatedAtIso: new Date().toISOString(),
+    lineagePressure: evaluation.lineagePressure,
+    stateOfArt: evaluation.stateOfArt
   });
 }
 

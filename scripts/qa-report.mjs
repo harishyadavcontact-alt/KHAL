@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const startedAt = new Date();
 const files = [
+  "artifacts/quality/docs-validate.json",
   "artifacts/quality/smoke-routes.json",
   "artifacts/quality/perf-smoke.json"
 ];

@@ -1,0 +1,627 @@
+{
+  "nodes": [
+    {
+      "id": "layer-orientation",
+      "type": "text",
+      "text": "Orientation\nTop-level environmental framing and War Room source material.",
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 100
+    },
+    {
+      "id": "layer-decision_modes",
+      "type": "text",
+      "text": "Decision Modes\nWar Game protocol stages and predecessor ordering.",
+      "x": 620,
+      "y": 0,
+      "width": 360,
+      "height": 100
+    },
+    {
+      "id": "layer-decision_objects",
+      "type": "text",
+      "text": "Decision Objects\nCore runtime entities that hold obligations, options, and means.",
+      "x": 1300,
+      "y": 0,
+      "width": 360,
+      "height": 100
+    },
+    {
+      "id": "layer-craft_ladder",
+      "type": "text",
+      "text": "Craft Ladder\nKnowledge-to-edge conversion from heaps to heuristics plus doctrine chains.",
+      "x": 1980,
+      "y": 0,
+      "width": 360,
+      "height": 100
+    },
+    {
+      "id": "layer-governance",
+      "type": "text",
+      "text": "Governance\nDoctrine gates, readiness scoring, and rulebook overlays.",
+      "x": 2660,
+      "y": 0,
+      "width": 360,
+      "height": 100
+    },
+    {
+      "id": "layer-planning_execution",
+      "type": "text",
+      "text": "Planning And Execution\nPlans, tasks, mission hierarchy, and execution dependencies.",
+      "x": 3340,
+      "y": 0,
+      "width": 360,
+      "height": 100
+    },
+    {
+      "id": "layer-scaling",
+      "type": "text",
+      "text": "Scaling\nLineage exposure, blast radius, and mission-level aggregation.",
+      "x": 4020,
+      "y": 0,
+      "width": 360,
+      "height": 100
+    },
+    {
+      "id": "war_room_matrix",
+      "type": "text",
+      "text": "War Room Matrix\nknowledge_source",
+      "x": 0,
+      "y": 180,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "volatility_source",
+      "type": "text",
+      "text": "Volatility Source\nrisk_source",
+      "x": 0,
+      "y": 340,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "law",
+      "type": "text",
+      "text": "Law\ngoverning_principle",
+      "x": 0,
+      "y": 500,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "domain",
+      "type": "text",
+      "text": "Domain\ndecision_scope",
+      "x": 1300,
+      "y": 300,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "source_mode",
+      "type": "text",
+      "text": "Source Mode\ndecision_mode",
+      "x": 620,
+      "y": 120,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "domain_mode",
+      "type": "text",
+      "text": "Domain Mode\ndecision_mode",
+      "x": 620,
+      "y": 300,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "affair_mode",
+      "type": "text",
+      "text": "Affair Mode\ndecision_mode",
+      "x": 620,
+      "y": 480,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "interest_mode",
+      "type": "text",
+      "text": "Interest Mode\ndecision_mode",
+      "x": 620,
+      "y": 660,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "craft_mode",
+      "type": "text",
+      "text": "Craft Mode\ndecision_mode",
+      "x": 620,
+      "y": 840,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "lineage_mode",
+      "type": "text",
+      "text": "Lineage Mode\ndecision_mode",
+      "x": 620,
+      "y": 1020,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "mission_mode",
+      "type": "text",
+      "text": "Mission Mode\ndecision_mode",
+      "x": 620,
+      "y": 1200,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "affair",
+      "type": "text",
+      "text": "Affair\nobligation",
+      "x": 1300,
+      "y": 540,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "interest",
+      "type": "text",
+      "text": "Interest\noption",
+      "x": 1300,
+      "y": 780,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "craft",
+      "type": "text",
+      "text": "Craft\nmeans_system",
+      "x": 1300,
+      "y": 1020,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "heap",
+      "type": "text",
+      "text": "Heap\ncraft_component",
+      "x": 1980,
+      "y": 160,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "model",
+      "type": "text",
+      "text": "Model\ncraft_component",
+      "x": 1980,
+      "y": 340,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "framework",
+      "type": "text",
+      "text": "Framework\ncraft_component",
+      "x": 1980,
+      "y": 520,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "barbell",
+      "type": "text",
+      "text": "Barbell Strategy\ncraft_component",
+      "x": 1980,
+      "y": 700,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "heuristic",
+      "type": "text",
+      "text": "Heuristic\ncraft_component",
+      "x": 1980,
+      "y": 880,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "wargame",
+      "type": "text",
+      "text": "Doctrine Wargame\ncraft_component",
+      "x": 1980,
+      "y": 1140,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "scenario",
+      "type": "text",
+      "text": "Scenario\ncraft_component",
+      "x": 1980,
+      "y": 1320,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "threat",
+      "type": "text",
+      "text": "Threat\ncraft_component",
+      "x": 1980,
+      "y": 1500,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "response",
+      "type": "text",
+      "text": "Response\ncraft_component",
+      "x": 1980,
+      "y": 1680,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "doctrine_rulebook",
+      "type": "text",
+      "text": "Doctrine Rulebook\ngovernance_object",
+      "x": 2660,
+      "y": 360,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "doctrine_rule",
+      "type": "text",
+      "text": "Doctrine Rule\ngovernance_object",
+      "x": 2660,
+      "y": 580,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "plan",
+      "type": "text",
+      "text": "Plan Blueprint\nplanning_object",
+      "x": 3340,
+      "y": 720,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "task",
+      "type": "text",
+      "text": "Execution Task\nexecution_object",
+      "x": 3340,
+      "y": 980,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "mission_graph",
+      "type": "text",
+      "text": "Mission Graph\nexecution_object",
+      "x": 3340,
+      "y": 1240,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "lineage_node",
+      "type": "text",
+      "text": "Lineage Node\nscaling_object",
+      "x": 4020,
+      "y": 760,
+      "width": 340,
+      "height": 96
+    },
+    {
+      "id": "lineage_risk",
+      "type": "text",
+      "text": "Lineage Risk\nscaling_object",
+      "x": 4020,
+      "y": 1040,
+      "width": 340,
+      "height": 96
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "fromNode": "war_room_matrix",
+      "toNode": "domain",
+      "label": "projects_into"
+    },
+    {
+      "id": "edge-2",
+      "fromNode": "law",
+      "toNode": "domain",
+      "label": "governs"
+    },
+    {
+      "id": "edge-3",
+      "fromNode": "volatility_source",
+      "toNode": "domain",
+      "label": "propagates_into"
+    },
+    {
+      "id": "edge-4",
+      "fromNode": "volatility_source",
+      "toNode": "source_mode",
+      "label": "war_games_through"
+    },
+    {
+      "id": "edge-5",
+      "fromNode": "source_mode",
+      "toNode": "domain_mode",
+      "label": "predecessor_of"
+    },
+    {
+      "id": "edge-6",
+      "fromNode": "domain_mode",
+      "toNode": "affair_mode",
+      "label": "predecessor_of"
+    },
+    {
+      "id": "edge-7",
+      "fromNode": "domain_mode",
+      "toNode": "interest_mode",
+      "label": "predecessor_of"
+    },
+    {
+      "id": "edge-8",
+      "fromNode": "interest_mode",
+      "toNode": "craft_mode",
+      "label": "predecessor_of"
+    },
+    {
+      "id": "edge-9",
+      "fromNode": "source_mode",
+      "toNode": "lineage_mode",
+      "label": "predecessor_of"
+    },
+    {
+      "id": "edge-10",
+      "fromNode": "domain_mode",
+      "toNode": "lineage_mode",
+      "label": "predecessor_of"
+    },
+    {
+      "id": "edge-11",
+      "fromNode": "affair_mode",
+      "toNode": "mission_mode",
+      "label": "predecessor_of"
+    },
+    {
+      "id": "edge-12",
+      "fromNode": "interest_mode",
+      "toNode": "mission_mode",
+      "label": "predecessor_of"
+    },
+    {
+      "id": "edge-13",
+      "fromNode": "lineage_mode",
+      "toNode": "mission_mode",
+      "label": "predecessor_of"
+    },
+    {
+      "id": "edge-14",
+      "fromNode": "domain",
+      "toNode": "affair",
+      "label": "contains_obligation"
+    },
+    {
+      "id": "edge-15",
+      "fromNode": "domain",
+      "toNode": "interest",
+      "label": "contains_option"
+    },
+    {
+      "id": "edge-16",
+      "fromNode": "affair_mode",
+      "toNode": "affair",
+      "label": "evaluates"
+    },
+    {
+      "id": "edge-17",
+      "fromNode": "interest_mode",
+      "toNode": "interest",
+      "label": "evaluates"
+    },
+    {
+      "id": "edge-18",
+      "fromNode": "craft_mode",
+      "toNode": "craft",
+      "label": "evaluates"
+    },
+    {
+      "id": "edge-19",
+      "fromNode": "craft",
+      "toNode": "heap",
+      "label": "contains"
+    },
+    {
+      "id": "edge-20",
+      "fromNode": "heap",
+      "toNode": "model",
+      "label": "extracts_into"
+    },
+    {
+      "id": "edge-21",
+      "fromNode": "model",
+      "toNode": "framework",
+      "label": "assembles_into"
+    },
+    {
+      "id": "edge-22",
+      "fromNode": "framework",
+      "toNode": "barbell",
+      "label": "supports"
+    },
+    {
+      "id": "edge-23",
+      "fromNode": "barbell",
+      "toNode": "heuristic",
+      "label": "condenses_into"
+    },
+    {
+      "id": "edge-24",
+      "fromNode": "craft",
+      "toNode": "wargame",
+      "label": "contains"
+    },
+    {
+      "id": "edge-25",
+      "fromNode": "wargame",
+      "toNode": "scenario",
+      "label": "branches_into"
+    },
+    {
+      "id": "edge-26",
+      "fromNode": "scenario",
+      "toNode": "threat",
+      "label": "contains"
+    },
+    {
+      "id": "edge-27",
+      "fromNode": "threat",
+      "toNode": "response",
+      "label": "responds_via"
+    },
+    {
+      "id": "edge-28",
+      "fromNode": "craft",
+      "toNode": "affair",
+      "label": "means_for"
+    },
+    {
+      "id": "edge-29",
+      "fromNode": "heuristic",
+      "toNode": "affair",
+      "label": "guides"
+    },
+    {
+      "id": "edge-30",
+      "fromNode": "doctrine_rulebook",
+      "toNode": "doctrine_rule",
+      "label": "contains"
+    },
+    {
+      "id": "edge-31",
+      "fromNode": "doctrine_rule",
+      "toNode": "source_mode",
+      "label": "gates"
+    },
+    {
+      "id": "edge-32",
+      "fromNode": "doctrine_rule",
+      "toNode": "domain_mode",
+      "label": "gates"
+    },
+    {
+      "id": "edge-33",
+      "fromNode": "doctrine_rule",
+      "toNode": "affair_mode",
+      "label": "gates"
+    },
+    {
+      "id": "edge-34",
+      "fromNode": "doctrine_rule",
+      "toNode": "interest_mode",
+      "label": "gates"
+    },
+    {
+      "id": "edge-35",
+      "fromNode": "doctrine_rule",
+      "toNode": "mission_mode",
+      "label": "gates"
+    },
+    {
+      "id": "edge-36",
+      "fromNode": "affair_mode",
+      "toNode": "plan",
+      "label": "emits_plan"
+    },
+    {
+      "id": "edge-37",
+      "fromNode": "interest_mode",
+      "toNode": "plan",
+      "label": "emits_plan"
+    },
+    {
+      "id": "edge-38",
+      "fromNode": "craft_mode",
+      "toNode": "plan",
+      "label": "emits_plan"
+    },
+    {
+      "id": "edge-39",
+      "fromNode": "lineage_mode",
+      "toNode": "plan",
+      "label": "emits_plan"
+    },
+    {
+      "id": "edge-40",
+      "fromNode": "mission_mode",
+      "toNode": "plan",
+      "label": "emits_plan"
+    },
+    {
+      "id": "edge-41",
+      "fromNode": "plan",
+      "toNode": "task",
+      "label": "decomposes_into"
+    },
+    {
+      "id": "edge-42",
+      "fromNode": "affair",
+      "toNode": "task",
+      "label": "executes_via"
+    },
+    {
+      "id": "edge-43",
+      "fromNode": "interest",
+      "toNode": "task",
+      "label": "explores_via"
+    },
+    {
+      "id": "edge-44",
+      "fromNode": "mission_mode",
+      "toNode": "mission_graph",
+      "label": "synthesizes"
+    },
+    {
+      "id": "edge-45",
+      "fromNode": "mission_graph",
+      "toNode": "task",
+      "label": "orchestrates"
+    },
+    {
+      "id": "edge-46",
+      "fromNode": "lineage_node",
+      "toNode": "lineage_risk",
+      "label": "scales_exposure"
+    },
+    {
+      "id": "edge-47",
+      "fromNode": "lineage_mode",
+      "toNode": "lineage_risk",
+      "label": "evaluates"
+    },
+    {
+      "id": "edge-48",
+      "fromNode": "lineage_risk",
+      "toNode": "mission_mode",
+      "label": "constrains"
+    }
+  ]
+}

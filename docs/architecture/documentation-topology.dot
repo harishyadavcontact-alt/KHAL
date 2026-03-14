@@ -4,7 +4,6 @@ digraph documentation_topology {
 
   DocsRoot [label="docs/"]
   Architecture [label="docs/architecture\n(system design)"]
-  Data [label="docs/data\n(schema)" ]
   States [label="docs/states\n(state logic)"]
   Sequences [label="docs/sequences\n(request flows)"]
   UI [label="docs/ui\n(screen structure)"]
@@ -18,7 +17,6 @@ digraph documentation_topology {
   DocsIndex [label="docs/knowledge/docs-index.canvas"]
 
   DocsRoot -> Architecture [label="contains"]
-  DocsRoot -> Data [label="contains"]
   DocsRoot -> States [label="contains"]
   DocsRoot -> Sequences [label="contains"]
   DocsRoot -> UI [label="contains"]
@@ -32,7 +30,6 @@ digraph documentation_topology {
   Knowledge -> DocsIndex [label="canvas graph"]
   Manifest -> Product [label="migrate_to_low_entropy"]
   Manifest -> Reports [label="migrate_to_low_entropy"]
-  Architecture -> Data [label="owns schema refs"]
   States -> Sequences [label="drives flow"]
   States -> UI [label="renders"]
   Infra -> Release [label="validated by CI"]

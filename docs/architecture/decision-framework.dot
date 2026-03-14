@@ -1,0 +1,127 @@
+digraph decision_framework {
+  rankdir=LR
+  graph [fontname="monospace"]
+  node [shape=box fontname="monospace" fontsize=10 style="rounded"]
+  edge [fontname="monospace" fontsize=9]
+
+  subgraph cluster_orientation {
+    label="Orientation"
+    color="#334155"
+    style="rounded"
+    war_room_matrix [label="War Room Matrix\n(knowledge_source)"]
+    volatility_source [label="Volatility Source\n(risk_source)"]
+    law [label="Law\n(governing_principle)"]
+  }
+
+  subgraph cluster_decision_modes {
+    label="Decision Modes"
+    color="#334155"
+    style="rounded"
+    source_mode [label="Source Mode\n(decision_mode)"]
+    domain_mode [label="Domain Mode\n(decision_mode)"]
+    affair_mode [label="Affair Mode\n(decision_mode)"]
+    interest_mode [label="Interest Mode\n(decision_mode)"]
+    craft_mode [label="Craft Mode\n(decision_mode)"]
+    lineage_mode [label="Lineage Mode\n(decision_mode)"]
+    mission_mode [label="Mission Mode\n(decision_mode)"]
+  }
+
+  subgraph cluster_decision_objects {
+    label="Decision Objects"
+    color="#334155"
+    style="rounded"
+    domain [label="Domain\n(decision_scope)"]
+    affair [label="Affair\n(obligation)"]
+    interest [label="Interest\n(option)"]
+    craft [label="Craft\n(means_system)"]
+  }
+
+  subgraph cluster_craft_ladder {
+    label="Craft Ladder"
+    color="#334155"
+    style="rounded"
+    heap [label="Heap\n(craft_component)"]
+    model [label="Model\n(craft_component)"]
+    framework [label="Framework\n(craft_component)"]
+    barbell [label="Barbell Strategy\n(craft_component)"]
+    heuristic [label="Heuristic\n(craft_component)"]
+    wargame [label="Doctrine Wargame\n(craft_component)"]
+    scenario [label="Scenario\n(craft_component)"]
+    threat [label="Threat\n(craft_component)"]
+    response [label="Response\n(craft_component)"]
+  }
+
+  subgraph cluster_governance {
+    label="Governance"
+    color="#334155"
+    style="rounded"
+    doctrine_rulebook [label="Doctrine Rulebook\n(governance_object)"]
+    doctrine_rule [label="Doctrine Rule\n(governance_object)"]
+  }
+
+  subgraph cluster_planning_execution {
+    label="Planning And Execution"
+    color="#334155"
+    style="rounded"
+    plan [label="Plan Blueprint\n(planning_object)"]
+    task [label="Execution Task\n(execution_object)"]
+    mission_graph [label="Mission Graph\n(execution_object)"]
+  }
+
+  subgraph cluster_scaling {
+    label="Scaling"
+    color="#334155"
+    style="rounded"
+    lineage_node [label="Lineage Node\n(scaling_object)"]
+    lineage_risk [label="Lineage Risk\n(scaling_object)"]
+  }
+
+  war_room_matrix -> domain [label="projects_into"]
+  law -> domain [label="governs"]
+  volatility_source -> domain [label="propagates_into"]
+  volatility_source -> source_mode [label="war_games_through"]
+  source_mode -> domain_mode [label="predecessor_of"]
+  domain_mode -> affair_mode [label="predecessor_of"]
+  domain_mode -> interest_mode [label="predecessor_of"]
+  interest_mode -> craft_mode [label="predecessor_of"]
+  source_mode -> lineage_mode [label="predecessor_of"]
+  domain_mode -> lineage_mode [label="predecessor_of"]
+  affair_mode -> mission_mode [label="predecessor_of"]
+  interest_mode -> mission_mode [label="predecessor_of"]
+  lineage_mode -> mission_mode [label="predecessor_of"]
+  domain -> affair [label="contains_obligation"]
+  domain -> interest [label="contains_option"]
+  affair_mode -> affair [label="evaluates"]
+  interest_mode -> interest [label="evaluates"]
+  craft_mode -> craft [label="evaluates"]
+  craft -> heap [label="contains"]
+  heap -> model [label="extracts_into"]
+  model -> framework [label="assembles_into"]
+  framework -> barbell [label="supports"]
+  barbell -> heuristic [label="condenses_into"]
+  craft -> wargame [label="contains"]
+  wargame -> scenario [label="branches_into"]
+  scenario -> threat [label="contains"]
+  threat -> response [label="responds_via"]
+  craft -> affair [label="means_for"]
+  heuristic -> affair [label="guides"]
+  doctrine_rulebook -> doctrine_rule [label="contains"]
+  doctrine_rule -> source_mode [label="gates"]
+  doctrine_rule -> domain_mode [label="gates"]
+  doctrine_rule -> affair_mode [label="gates"]
+  doctrine_rule -> interest_mode [label="gates"]
+  doctrine_rule -> mission_mode [label="gates"]
+  affair_mode -> plan [label="emits_plan"]
+  interest_mode -> plan [label="emits_plan"]
+  craft_mode -> plan [label="emits_plan"]
+  lineage_mode -> plan [label="emits_plan"]
+  mission_mode -> plan [label="emits_plan"]
+  plan -> task [label="decomposes_into"]
+  affair -> task [label="executes_via"]
+  interest -> task [label="explores_via"]
+  mission_mode -> mission_graph [label="synthesizes"]
+  mission_graph -> task [label="orchestrates"]
+  lineage_node -> lineage_risk [label="scales_exposure"]
+  lineage_mode -> lineage_risk [label="evaluates"]
+  lineage_risk -> mission_mode [label="constrains"]
+}

@@ -1,4 +1,15 @@
 {
+  "_meta": {
+    "status": "inferred",
+    "confidence": "medium",
+    "source_files": [
+      "apps/web/app/war-gaming/[mode]/page.tsx",
+      "apps/web/components/ops-pages/WarGamingModeClient.tsx",
+      "apps/web/components/war-room-v2/WarGaming.tsx",
+      "apps/web/lib/war-room/useWarGamingBootstrap.ts"
+    ],
+    "notes": "Component structure is inferred from source. Replace with a captured runtime artifact when available."
+  },
   "screen": "WarGamingSourceMode",
   "feature": "war-gaming.source.onboarding",
   "component_tree": {
@@ -29,11 +40,10 @@
     ]
   },
   "state_link": "docs/states/war-gaming-onboarding-state.mmd",
-  "schema_link": "docs/data/schema.dbml",
   "sequence_links": [
     "docs/sequences/war-gaming-bootstrap-primary.mmd",
     "docs/sequences/war-gaming-onboarding-save-sources.mmd"
   ],
-  "screenshot_required": true,
+  "screenshot_status": "required_but_missing",
   "screenshot_note": "capture from running app to replace inferred wireframe"
 }

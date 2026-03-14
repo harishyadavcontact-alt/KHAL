@@ -33,6 +33,12 @@
       "action": "migrate"
     },
     {
+      "file": "docs/architecture/decision-framework.dot",
+      "format": ".dot",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
       "file": "docs/architecture/system.dot",
       "format": ".dot",
       "entropy": "low",
@@ -63,8 +69,32 @@
       "action": "migrate"
     },
     {
+      "file": "docs/decision-tree/genesis.md",
+      "format": ".md",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/decision-tree/genesis.mmd",
+      "format": ".mmd",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
       "file": "docs/infrastructure/deployment.mmd",
       "format": ".mmd",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/knowledge/decision-framework.canvas",
+      "format": ".canvas",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/knowledge/decision-framework.json",
+      "format": ".json",
       "entropy": "low",
       "action": "keep"
     },

@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { decisionTypeLabel, methodPostureForQuadrant, quadrantNarrative, tailClassLabel } from "../../lib/war-room/source-map";
-import { Domain, LineageNodeDto, LineageRiskDto, SourceMapDecisionType, SourceMapProfileDto, SourceMapTailClass, VolatilitySourceDto } from "./types";
+import { Domain, LineageNodeDto, LineageRiskDto, SourceMapDecisionType, SourceMapProfileDto, SourceMapTailClass, StateOfArtStepId, VolatilitySourceDto } from "./types";
 import type { WarGameDoctrineChain } from "../../lib/war-room/bootstrap";
+import { buildSourceWarGameProtocol } from "../../lib/war-room/state-of-art";
 
 interface WarGameVolatilityProps {
   sourceId?: string;
@@ -33,15 +34,6 @@ type SourceMapUpdate = Partial<Pick<
   | "avoidText"
 >>;
 
-type StateOfArtStep = "map" | "stone" | "ends" | "means";
-
-const STEP_ORDER: Array<{ id: StateOfArtStep; label: string; prompt: string }> = [
-  { id: "map", label: "Map", prompt: "Classify decision structure, tail behavior, and quadrant." },
-  { id: "stone", label: "Stone", prompt: "Diagnose stakes, risks, fragility, and lineage exposure." },
-  { id: "ends", label: "Ends", prompt: "Set the barbell: hedge for robustness, edge for optionality." },
-  { id: "means", label: "Means", prompt: "Choose craft, heuristics, and what to avoid." }
-];
-
 export function WarGameVolatility({
   sourceId,
   sources,
@@ -57,7 +49,7 @@ export function WarGameVolatility({
   const [savingDomainId, setSavingDomainId] = useState<string | null>(null);
   const [creatingKind, setCreatingKind] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeStep, setActiveStep] = useState<StateOfArtStep>("map");
+  const [activeStep, setActiveStep] = useState<StateOfArtStepId>("map");
   const linkedDomainIds = useMemo(() => {
     const fromLinks = (source?.domains ?? []).map((link) => link.domainId);
     if (fromLinks.length > 0) return new Set(fromLinks);
@@ -65,38 +57,20 @@ export function WarGameVolatility({
   }, [domains, source?.domains, sourceId]);
   const linkedDomains = domains.filter((domain) => linkedDomainIds.has(domain.id));
   const sourceRisks = lineageRisks.filter((risk) => risk.sourceId === sourceId);
-  const affectedLineages = lineages.filter((lineage) => sourceRisks.some((risk) => risk.lineageNodeId === lineage.id));
   const mapProfilesByDomainId = new Map((source?.mapProfiles ?? []).map((profile) => [profile.domainId, profile]));
-  const availableDoctrineChains = useMemo(() => {
-    if (!responseLogic.length) return [];
-    const selectedCraftIds = new Set(
-      Array.from(mapProfilesByDomainId.values())
-        .map((profile) => profile.primaryCraftId)
-        .filter((value): value is string => Boolean(value?.trim()))
-    );
-    if (!selectedCraftIds.size) return responseLogic.slice(0, 4);
-    const matched = responseLogic.filter((chain) => selectedCraftIds.has(chain.craftId));
-    return (matched.length ? matched : responseLogic).slice(0, 4);
-  }, [mapProfilesByDomainId, responseLogic]);
-  const completedMapCount = linkedDomains.filter((domain) => mapProfilesByDomainId.has(domain.id)).length;
-  const stepCoverage = {
-    map: linkedDomains.filter((domain) => {
-      const profile = mapProfilesByDomainId.get(domain.id);
-      return Boolean(profile?.decisionType && profile?.tailClass && profile?.quadrant && profile?.methodPosture);
-    }).length,
-    stone: linkedDomains.filter((domain) => {
-      const profile = mapProfilesByDomainId.get(domain.id);
-      return Boolean(profile?.stakesText?.trim() && profile?.risksText?.trim() && profile?.fragilityPosture?.trim() && profile?.vulnerabilitiesText?.trim());
-    }).length,
-    ends: linkedDomains.filter((domain) => {
-      const profile = mapProfilesByDomainId.get(domain.id);
-      return Boolean(profile?.hedgeText?.trim() && profile?.edgeText?.trim());
-    }).length,
-    means: linkedDomains.filter((domain) => {
-      const profile = mapProfilesByDomainId.get(domain.id);
-      return Boolean(profile?.primaryCraftId?.trim() && profile?.heuristicsText?.trim() && profile?.avoidText?.trim());
-    }).length
-  } satisfies Record<StateOfArtStep, number>;
+  const protocol = useMemo(
+    () =>
+      buildSourceWarGameProtocol({
+        sourceId,
+        sources,
+        domains,
+        lineages,
+        lineageRisks,
+        crafts,
+        responseLogic
+      }),
+    [crafts, domains, lineages, lineageRisks, responseLogic, sourceId, sources]
+  );
 
   const saveProfile = async (domainId: string, updates: SourceMapUpdate) => {
     if (!sourceId) return;
@@ -182,12 +156,7 @@ export function WarGameVolatility({
     }
   };
 
-  const doctrinePromptByStep: Record<StateOfArtStep, string> = {
-    map: "Use scenarios to understand what kind of world this source-domain pair can throw at you before you decide on methods.",
-    stone: "Use threats to pressure-test risks, fragility, and lineage exposure instead of treating them as abstract prose.",
-    ends: "Use available responses to sharpen what belongs in hedge versus edge.",
-    means: "Choose craft to narrow doctrine chains, then prefer heuristics and responses that fit the quadrant."
-  };
+  const activeProtocolStep = protocol.steps.find((step) => step.id === activeStep);
 
   return (
     <section className="glass p-5 rounded-xl border border-white/10 mb-6">
@@ -199,16 +168,16 @@ export function WarGameVolatility({
       <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
         <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
           <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Map Coverage</div>
-          <div className="text-zinc-200">{completedMapCount}/{linkedDomains.length || 0} linked domains classified</div>
+          <div className="text-zinc-200">{protocol.completedMapCount}/{protocol.linkedDomainCount || 0} linked domains classified</div>
         </div>
         <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
           <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Current Step</div>
-          <div className="text-zinc-200">{STEP_ORDER.find((step) => step.id === activeStep)?.label}</div>
-          <div className="mt-1 text-zinc-400">{STEP_ORDER.find((step) => step.id === activeStep)?.prompt}</div>
+          <div className="text-zinc-200">{activeProtocolStep?.label}</div>
+          <div className="mt-1 text-zinc-400">{activeProtocolStep?.prompt}</div>
         </div>
         <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
           <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Means Rule</div>
-          <div className="text-zinc-200">Quadrant determines admissible means; crafts and heuristics refine the posture.</div>
+          <div className="text-zinc-200">{protocol.meansRule}</div>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
@@ -218,20 +187,19 @@ export function WarGameVolatility({
         </div>
         <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
           <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Affected Lineages</div>
-          <div className="text-zinc-200">{affectedLineages.map((item) => item.level).join(", ") || "None mapped"}</div>
+          <div className="text-zinc-200">{protocol.affectedLineages.join(", ") || "None mapped"}</div>
         </div>
         <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
           <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Risk Rows</div>
-          <div className="text-zinc-200">{sourceRisks.length}</div>
+          <div className="text-zinc-200">{protocol.riskCount}</div>
         </div>
       </div>
       {error ? <div className="mt-4 text-sm text-red-300">{error}</div> : null}
       <div className="mt-4 rounded-xl border border-white/10 bg-zinc-950/35 p-3">
         <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">State of the Art Flow</div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-          {STEP_ORDER.map((step) => {
+          {protocol.steps.map((step) => {
             const active = step.id === activeStep;
-            const completed = stepCoverage[step.id];
             return (
               <button
                 key={step.id}
@@ -240,14 +208,14 @@ export function WarGameVolatility({
                 className={`rounded-lg border px-3 py-2 text-left transition ${
                   active
                     ? "border-blue-400/50 bg-blue-500/10"
-                    : completed === linkedDomains.length && linkedDomains.length > 0
+                    : step.complete
                       ? "border-emerald-400/30 bg-emerald-500/8"
                       : "border-white/10 bg-zinc-900/30 hover:bg-white/5"
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[11px] font-semibold uppercase tracking-widest text-zinc-200">{step.label}</div>
-                  <div className="text-[10px] text-zinc-500">{completed}/{linkedDomains.length || 0}</div>
+                  <div className="text-[10px] text-zinc-500">{step.coverageCount}/{step.totalCount || 0}</div>
                 </div>
                 <div className="mt-1 text-[11px] text-zinc-400">{step.prompt}</div>
               </button>
@@ -258,11 +226,9 @@ export function WarGameVolatility({
       <div className="mt-5 space-y-4">
         {linkedDomains.map((domain) => {
           const profile = mapProfilesByDomainId.get(domain.id);
+          const domainProtocol = protocol.domains.find((item) => item.domainId === domain.id);
           const methodPosture = profile?.methodPosture ?? methodPostureForQuadrant(profile?.quadrant ?? "Q4");
-          const doctrineChains =
-            profile?.primaryCraftId && responseLogic.length
-              ? responseLogic.filter((chain) => chain.craftId === profile.primaryCraftId)
-              : availableDoctrineChains;
+          const doctrineChains = domainProtocol?.doctrineChains ?? [];
           return (
             <div key={domain.id} className="khal-editor-block p-4">
               <div className="flex items-start justify-between gap-4">
@@ -468,7 +434,7 @@ export function WarGameVolatility({
                           <button
                             type="button"
                             onClick={() => void deriveStateOfAffairs(domain.id, "affair")}
-                            disabled={creatingKind === `${domain.id}:affair` || !profile?.hedgeText?.trim()}
+                            disabled={creatingKind === `${domain.id}:affair` || !domainProtocol?.canCreateAffair}
                             className="khal-button-accent px-3 py-2 text-xs font-semibold disabled:opacity-50"
                           >
                             {profile?.affairId ? "Refresh Affair" : "Create Affair"}
@@ -476,7 +442,7 @@ export function WarGameVolatility({
                           <button
                             type="button"
                             onClick={() => void deriveStateOfAffairs(domain.id, "interest")}
-                            disabled={creatingKind === `${domain.id}:interest` || !profile?.edgeText?.trim()}
+                            disabled={creatingKind === `${domain.id}:interest` || !domainProtocol?.canCreateInterest}
                             className="rounded-lg border border-white/10 bg-zinc-900/40 px-3 py-2 text-xs font-semibold text-zinc-200 transition hover:bg-white/5 disabled:opacity-50"
                           >
                             {profile?.interestId ? "Refresh Interest" : "Create Interest"}
@@ -512,7 +478,7 @@ export function WarGameVolatility({
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="text-[10px] uppercase tracking-widest text-[var(--color-text-faint)]">Scenario / Threat / Response Guidance</div>
-                    <div className="mt-1 text-xs text-[var(--color-text-muted)]">{doctrinePromptByStep[activeStep]}</div>
+                    <div className="mt-1 text-xs text-[var(--color-text-muted)]">{activeProtocolStep?.doctrinePrompt}</div>
                   </div>
                   <div className="rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase tracking-widest text-zinc-400">
                     {doctrineChains.length} chain{doctrineChains.length === 1 ? "" : "s"}
@@ -527,36 +493,22 @@ export function WarGameVolatility({
                             <div className="text-[10px] uppercase tracking-widest text-zinc-500">{chain.craftName}</div>
                             <div className="mt-1 text-sm font-semibold text-zinc-200">{chain.name}</div>
                           </div>
-                          <div className="text-[10px] text-zinc-500 uppercase">{chain.scenarios.length} scenarios</div>
+                          <div className="text-[10px] text-zinc-500 uppercase">{chain.scenarioCount} scenarios</div>
                         </div>
                         {chain.objective ? <div className="mt-2 text-xs text-zinc-400">{chain.objective}</div> : null}
-                        <div className="mt-3 space-y-3">
-                          {chain.scenarios.slice(0, 2).map((scenario) => (
-                            <div key={scenario.id} className="rounded-lg border border-white/5 bg-black/10 p-3">
-                              <div className="text-[11px] font-semibold uppercase tracking-widest text-zinc-300">{scenario.name}</div>
-                              {scenario.description ? <div className="mt-1 text-xs text-zinc-500">{scenario.description}</div> : null}
-                              <div className="mt-2 space-y-2">
-                                {scenario.threats.slice(0, 2).map((threat) => (
-                                  <div key={threat.id} className="rounded border border-red-500/15 bg-red-500/5 px-2 py-2 text-xs">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <div className="font-semibold text-zinc-200">{threat.name}</div>
-                                      <div className="text-[10px] uppercase tracking-widest text-red-300">S{threat.severity ?? 5}</div>
-                                    </div>
-                                    {threat.description ? <div className="mt-1 text-zinc-500">{threat.description}</div> : null}
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                      {threat.responses.slice(0, 3).map((response) => (
-                                        <span key={response.id} className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-emerald-200">
-                                          {response.name}
-                                        </span>
-                                      ))}
-                                      {!threat.responses.length ? <span className="text-[10px] uppercase tracking-widest text-zinc-600">No response mapped</span> : null}
-                                    </div>
-                                  </div>
-                                ))}
-                                {!scenario.threats.length ? <div className="text-[11px] text-zinc-600">No threats modeled yet.</div> : null}
-                              </div>
-                            </div>
-                          ))}
+                        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                          <div className="rounded-lg border border-white/10 bg-black/10 px-3 py-2">
+                            <div className="text-[10px] uppercase tracking-widest text-zinc-500">Scenarios</div>
+                            <div className="mt-1 font-semibold text-zinc-200">{chain.scenarioCount}</div>
+                          </div>
+                          <div className="rounded-lg border border-white/10 bg-black/10 px-3 py-2">
+                            <div className="text-[10px] uppercase tracking-widest text-zinc-500">Threats</div>
+                            <div className="mt-1 font-semibold text-zinc-200">{chain.threatCount}</div>
+                          </div>
+                          <div className="rounded-lg border border-white/10 bg-black/10 px-3 py-2">
+                            <div className="text-[10px] uppercase tracking-widest text-zinc-500">Responses</div>
+                            <div className="mt-1 font-semibold text-zinc-200">{chain.responseCount}</div>
+                          </div>
                         </div>
                       </div>
                     ))}
