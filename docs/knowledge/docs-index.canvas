@@ -1,0 +1,756 @@
+{
+  "nodes": [
+    {
+      "id": "d1",
+      "type": "text",
+      "text": "docs",
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d2",
+      "type": "text",
+      "text": "docs/agent-log",
+      "x": 380,
+      "y": 0,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d3",
+      "type": "text",
+      "text": "docs/architecture",
+      "x": 760,
+      "y": 0,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d5",
+      "type": "text",
+      "text": "docs/decision-tree",
+      "x": 1520,
+      "y": 0,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d6",
+      "type": "text",
+      "text": "docs/infrastructure",
+      "x": 0,
+      "y": 220,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d7",
+      "type": "text",
+      "text": "docs/knowledge",
+      "x": 380,
+      "y": 220,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d8",
+      "type": "text",
+      "text": "docs/performance",
+      "x": 760,
+      "y": 220,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d9",
+      "type": "text",
+      "text": "docs/product",
+      "x": 1140,
+      "y": 220,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d10",
+      "type": "text",
+      "text": "docs/release",
+      "x": 1520,
+      "y": 220,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d11",
+      "type": "text",
+      "text": "docs/reports",
+      "x": 0,
+      "y": 440,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d12",
+      "type": "text",
+      "text": "docs/security",
+      "x": 380,
+      "y": 440,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d13",
+      "type": "text",
+      "text": "docs/sequences",
+      "x": 760,
+      "y": 440,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d14",
+      "type": "text",
+      "text": "docs/states",
+      "x": 1140,
+      "y": 440,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d15",
+      "type": "text",
+      "text": "docs/uat",
+      "x": 1520,
+      "y": 440,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "d16",
+      "type": "text",
+      "text": "docs/ui",
+      "x": 0,
+      "y": 660,
+      "width": 320,
+      "height": 60
+    },
+    {
+      "id": "f17",
+      "type": "file",
+      "file": "docs/refactor-audit-2026-03-10.md",
+      "x": 0,
+      "y": 80,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f18",
+      "type": "file",
+      "file": "docs/repository-workstreams.md",
+      "x": 0,
+      "y": 150,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f19",
+      "type": "file",
+      "file": "docs/agent-log/2026-03.md",
+      "x": 380,
+      "y": 80,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f20",
+      "type": "file",
+      "file": "docs/agent-log/README.md",
+      "x": 380,
+      "y": 150,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f21",
+      "type": "file",
+      "file": "docs/architecture/api-contract.md",
+      "x": 760,
+      "y": 80,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f22",
+      "type": "file",
+      "file": "docs/architecture/runtime-authority.md",
+      "x": 760,
+      "y": 150,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f23",
+      "type": "file",
+      "file": "docs/architecture/sqlite-architecture.md",
+      "x": 760,
+      "y": 220,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f24",
+      "type": "file",
+      "file": "docs/architecture/system.dot",
+      "x": 760,
+      "y": 290,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f25",
+      "type": "file",
+      "file": "docs/architecture/v0.1-system-design.md",
+      "x": 760,
+      "y": 360,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f26",
+      "type": "file",
+      "file": "docs/architecture/war-gaming-rewrite-slice-2026-03-11.md",
+      "x": 760,
+      "y": 430,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f27",
+      "type": "file",
+      "file": "docs/architecture/war-gaming.dot",
+      "x": 760,
+      "y": 500,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f29",
+      "type": "file",
+      "file": "docs/decision-tree/war-room-fractal-decision-tree.md",
+      "x": 1520,
+      "y": 80,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f30",
+      "type": "file",
+      "file": "docs/infrastructure/deployment.mmd",
+      "x": 0,
+      "y": 300,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f31",
+      "type": "file",
+      "file": "docs/knowledge/system.canvas",
+      "x": 380,
+      "y": 300,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f32",
+      "type": "file",
+      "file": "docs/performance/budgets.md",
+      "x": 760,
+      "y": 300,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f33",
+      "type": "file",
+      "file": "docs/product/decisions-log.md",
+      "x": 1140,
+      "y": 300,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f34",
+      "type": "file",
+      "file": "docs/product/drafts-structural-thinking-editor.md",
+      "x": 1140,
+      "y": 370,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f35",
+      "type": "file",
+      "file": "docs/product/portfolio-war-room.md",
+      "x": 1140,
+      "y": 440,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f36",
+      "type": "file",
+      "file": "docs/product/taleb-feature-heuristics.md",
+      "x": 1140,
+      "y": 510,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f37",
+      "type": "file",
+      "file": "docs/product/visual-encoding-spec.md",
+      "x": 1140,
+      "y": 580,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f38",
+      "type": "file",
+      "file": "docs/release/ci-gate-contract.md",
+      "x": 1520,
+      "y": 300,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f39",
+      "type": "file",
+      "file": "docs/release/v0.4.3-release-runbook.md",
+      "x": 1520,
+      "y": 370,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f40",
+      "type": "file",
+      "file": "docs/release/v0.4.4-reliability-dominance.md",
+      "x": 1520,
+      "y": 440,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f41",
+      "type": "file",
+      "file": "docs/reports/khal-decision-compatibility-test-cases.md",
+      "x": 0,
+      "y": 520,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f42",
+      "type": "file",
+      "file": "docs/reports/personal-operator-journey-2026-03-10.md",
+      "x": 0,
+      "y": 590,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f43",
+      "type": "file",
+      "file": "docs/reports/state-of-the-art-alignment-2026-03-10.md",
+      "x": 0,
+      "y": 660,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f44",
+      "type": "file",
+      "file": "docs/reports/ui-usability-benchmark-2026-03-10.md",
+      "x": 0,
+      "y": 730,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f45",
+      "type": "file",
+      "file": "docs/reports/v0.4.4-architecture-benchmark.md",
+      "x": 0,
+      "y": 800,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f46",
+      "type": "file",
+      "file": "docs/reports/war-room-parity-exceptions.md",
+      "x": 0,
+      "y": 870,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f47",
+      "type": "file",
+      "file": "docs/reports/war-room-parity-report.json",
+      "x": 0,
+      "y": 940,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f48",
+      "type": "file",
+      "file": "docs/reports/war-room-parity-report.md",
+      "x": 0,
+      "y": 1010,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f49",
+      "type": "file",
+      "file": "docs/security/release-security-baseline.md",
+      "x": 380,
+      "y": 520,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f50",
+      "type": "file",
+      "file": "docs/sequences/war-gaming-bootstrap-primary.mmd",
+      "x": 760,
+      "y": 520,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f51",
+      "type": "file",
+      "file": "docs/sequences/war-gaming-error-bootstrap-db.mmd",
+      "x": 760,
+      "y": 590,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f52",
+      "type": "file",
+      "file": "docs/sequences/war-gaming-onboarding-save-sources.mmd",
+      "x": 760,
+      "y": 660,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f53",
+      "type": "file",
+      "file": "docs/states/war-gaming-onboarding-state.mmd",
+      "x": 1140,
+      "y": 520,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f54",
+      "type": "file",
+      "file": "docs/states/war-gaming-onboarding-state.scxml",
+      "x": 1140,
+      "y": 590,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f55",
+      "type": "file",
+      "file": "docs/uat/v0.4.3-uat-checklist.md",
+      "x": 1520,
+      "y": 520,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f56",
+      "type": "file",
+      "file": "docs/uat/v0.4.3-uat-evidence-template.md",
+      "x": 1520,
+      "y": 590,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f57",
+      "type": "file",
+      "file": "docs/ui/war-gaming-source.json",
+      "x": 0,
+      "y": 740,
+      "width": 340,
+      "height": 60
+    },
+    {
+      "id": "f58",
+      "type": "file",
+      "file": "docs/ui/war-gaming-source.svg",
+      "x": 0,
+      "y": 810,
+      "width": 340,
+      "height": 60
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "fromNode": "d1",
+      "toNode": "f17",
+      "label": "contains"
+    },
+    {
+      "id": "e2",
+      "fromNode": "d1",
+      "toNode": "f18",
+      "label": "contains"
+    },
+    {
+      "id": "e3",
+      "fromNode": "d2",
+      "toNode": "f19",
+      "label": "contains"
+    },
+    {
+      "id": "e4",
+      "fromNode": "d2",
+      "toNode": "f20",
+      "label": "contains"
+    },
+    {
+      "id": "e5",
+      "fromNode": "d3",
+      "toNode": "f21",
+      "label": "contains"
+    },
+    {
+      "id": "e6",
+      "fromNode": "d3",
+      "toNode": "f22",
+      "label": "contains"
+    },
+    {
+      "id": "e7",
+      "fromNode": "d3",
+      "toNode": "f23",
+      "label": "contains"
+    },
+    {
+      "id": "e8",
+      "fromNode": "d3",
+      "toNode": "f24",
+      "label": "contains"
+    },
+    {
+      "id": "e9",
+      "fromNode": "d3",
+      "toNode": "f25",
+      "label": "contains"
+    },
+    {
+      "id": "e10",
+      "fromNode": "d3",
+      "toNode": "f26",
+      "label": "contains"
+    },
+    {
+      "id": "e11",
+      "fromNode": "d3",
+      "toNode": "f27",
+      "label": "contains"
+    },
+    {
+      "id": "e13",
+      "fromNode": "d5",
+      "toNode": "f29",
+      "label": "contains"
+    },
+    {
+      "id": "e14",
+      "fromNode": "d6",
+      "toNode": "f30",
+      "label": "contains"
+    },
+    {
+      "id": "e15",
+      "fromNode": "d7",
+      "toNode": "f31",
+      "label": "contains"
+    },
+    {
+      "id": "e16",
+      "fromNode": "d8",
+      "toNode": "f32",
+      "label": "contains"
+    },
+    {
+      "id": "e17",
+      "fromNode": "d9",
+      "toNode": "f33",
+      "label": "contains"
+    },
+    {
+      "id": "e18",
+      "fromNode": "d9",
+      "toNode": "f34",
+      "label": "contains"
+    },
+    {
+      "id": "e19",
+      "fromNode": "d9",
+      "toNode": "f35",
+      "label": "contains"
+    },
+    {
+      "id": "e20",
+      "fromNode": "d9",
+      "toNode": "f36",
+      "label": "contains"
+    },
+    {
+      "id": "e21",
+      "fromNode": "d9",
+      "toNode": "f37",
+      "label": "contains"
+    },
+    {
+      "id": "e22",
+      "fromNode": "d10",
+      "toNode": "f38",
+      "label": "contains"
+    },
+    {
+      "id": "e23",
+      "fromNode": "d10",
+      "toNode": "f39",
+      "label": "contains"
+    },
+    {
+      "id": "e24",
+      "fromNode": "d10",
+      "toNode": "f40",
+      "label": "contains"
+    },
+    {
+      "id": "e25",
+      "fromNode": "d11",
+      "toNode": "f41",
+      "label": "contains"
+    },
+    {
+      "id": "e26",
+      "fromNode": "d11",
+      "toNode": "f42",
+      "label": "contains"
+    },
+    {
+      "id": "e27",
+      "fromNode": "d11",
+      "toNode": "f43",
+      "label": "contains"
+    },
+    {
+      "id": "e28",
+      "fromNode": "d11",
+      "toNode": "f44",
+      "label": "contains"
+    },
+    {
+      "id": "e29",
+      "fromNode": "d11",
+      "toNode": "f45",
+      "label": "contains"
+    },
+    {
+      "id": "e30",
+      "fromNode": "d11",
+      "toNode": "f46",
+      "label": "contains"
+    },
+    {
+      "id": "e31",
+      "fromNode": "d11",
+      "toNode": "f47",
+      "label": "contains"
+    },
+    {
+      "id": "e32",
+      "fromNode": "d11",
+      "toNode": "f48",
+      "label": "contains"
+    },
+    {
+      "id": "e33",
+      "fromNode": "d12",
+      "toNode": "f49",
+      "label": "contains"
+    },
+    {
+      "id": "e34",
+      "fromNode": "d13",
+      "toNode": "f50",
+      "label": "contains"
+    },
+    {
+      "id": "e35",
+      "fromNode": "d13",
+      "toNode": "f51",
+      "label": "contains"
+    },
+    {
+      "id": "e36",
+      "fromNode": "d13",
+      "toNode": "f52",
+      "label": "contains"
+    },
+    {
+      "id": "e37",
+      "fromNode": "d14",
+      "toNode": "f53",
+      "label": "contains"
+    },
+    {
+      "id": "e38",
+      "fromNode": "d14",
+      "toNode": "f54",
+      "label": "contains"
+    },
+    {
+      "id": "e39",
+      "fromNode": "d15",
+      "toNode": "f55",
+      "label": "contains"
+    },
+    {
+      "id": "e40",
+      "fromNode": "d15",
+      "toNode": "f56",
+      "label": "contains"
+    },
+    {
+      "id": "e41",
+      "fromNode": "d16",
+      "toNode": "f57",
+      "label": "contains"
+    },
+    {
+      "id": "e42",
+      "fromNode": "d16",
+      "toNode": "f58",
+      "label": "contains"
+    }
+  ]
+}

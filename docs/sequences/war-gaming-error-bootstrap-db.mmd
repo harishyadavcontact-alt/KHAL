@@ -1,0 +1,27 @@
+sequenceDiagram
+  autonumber
+  actor User
+  participant Browser as WarGamingModeClient
+  participant Hook as useWarGamingBootstrap
+  participant API as GET /api/war-gaming/bootstrap
+  participant Shared as withDb/readSettings
+  participant DB as SQLite
+
+  User->>Browser: Open war-gaming route
+  Browser->>Hook: initial refresh()
+  Hook->>API: GET bootstrap
+  API->>Shared: withDb(fn)
+  Shared->>DB: open/init database
+
+  alt DB open or query fails
+    DB-->>Shared: exception
+    Shared-->>API: throw error
+    API-->>Hook: 500 {error,traceId,debug}
+    Hook-->>Browser: error state set
+    Browser-->>User: "Loading War Gaming..." replaced with error text
+  else DB healthy
+    DB-->>Shared: projection rows
+    Shared-->>API: payload
+    API-->>Hook: 200 payload
+    Hook-->>Browser: data state set
+  end

@@ -1,0 +1,29 @@
+digraph system {
+  rankdir=LR
+  node [shape=box fontname="monospace" fontsize=10]
+
+  UserClient [label="Browser Client\n(Next.js App Router UI)"]
+  NextApp [label="@khal/web\n(Next.js runtime)"]
+  ApiRoutes [label="/app/api/* routes\n(Route handlers)"]
+  ApiLib [label="apps/web/lib/api*.ts\n(API orchestration)"]
+  RuntimeProjection [label="runtime/authority\n(loadRuntimeProjection)"]
+  SyncEngine [label="@khal/sync-engine\n(normalize/write)"]
+  SqliteCore [label="@khal/sqlite-core\n(migrations/init)"]
+  SqliteDB [label="SQLite\n(data/KHAL.sqlite)" shape=cylinder]
+  OperatorDB [label="SQLite operator DBs\n(data/operators/*.sqlite)" shape=cylinder]
+  DomainPkg [label="@khal/domain\n(logic/types)"]
+  GitHubActions [label="GitHub Actions\n(CI/Release/Security)"]
+
+  UserClient -> NextApp [label="HTTPS"]
+  NextApp -> ApiRoutes [label="Next route dispatch"]
+  ApiRoutes -> ApiLib [label="in-process TS call"]
+  ApiLib -> RuntimeProjection [label="function call"]
+  ApiLib -> SyncEngine [label="function call"]
+  ApiLib -> SqliteCore [label="initDatabase/resolveDbPath"]
+  RuntimeProjection -> SqliteDB [label="SQL (better-sqlite3)"]
+  SyncEngine -> SqliteDB [label="SQL writes"]
+  SqliteCore -> SqliteDB [label="SQL migrations"]
+  ApiLib -> OperatorDB [label="SQL via withDb/readSettings"]
+  NextApp -> DomainPkg [label="package import"]
+  GitHubActions -> NextApp [label="npm ci/build/test/smoke"]
+}

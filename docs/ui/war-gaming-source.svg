@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1024">
+  <!-- Inferred from WarGamingModeClient + KhalOpsShell + WarGaming composition -->
+  <rect x="0" y="0" width="1440" height="1024" fill="#ffffff" stroke="#111" stroke-width="2"/>
+  <rect x="20" y="20" width="1400" height="92" fill="none" stroke="#333"/>
+  <text x="36" y="56" font-family="monospace" font-size="16">KhalOpsShell.Header</text>
+  <text x="36" y="82" font-family="monospace" font-size="12">title=War Gaming subtitle=War Gaming: source</text>
+
+  <rect x="20" y="128" width="1400" height="410" fill="none" stroke="#333"/>
+  <text x="36" y="160" font-family="monospace" font-size="15">OnboardingGuidePanel (shown when onboarding=1 &amp;&amp; mode=source)</text>
+
+  <rect x="40" y="178" width="840" height="330" fill="none" stroke="#666"/>
+  <text x="54" y="206" font-family="monospace" font-size="13">SourceRegisterBlock</text>
+  <rect x="60" y="300" width="800" height="150" fill="none" stroke="#999"/>
+  <text x="72" y="324" font-family="monospace" font-size="12">textarea sourceDraft (one source per line)</text>
+  <rect x="60" y="466" width="220" height="28" fill="none" stroke="#999"/>
+  <text x="70" y="485" font-family="monospace" font-size="12">Save Volatility Sources</text>
+
+  <rect x="900" y="178" width="500" height="330" fill="none" stroke="#666"/>
+  <text x="914" y="206" font-family="monospace" font-size="13">DecisionSequenceBlock (5 steps)</text>
+
+  <rect x="20" y="560" width="1400" height="444" fill="none" stroke="#333"/>
+  <text x="36" y="592" font-family="monospace" font-size="15">WarGaming Component Region</text>
+  <text x="36" y="620" font-family="monospace" font-size="12">Rendered when !showOnboardingGuide OR hasSources</text>
+</svg>

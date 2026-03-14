@@ -1,0 +1,39 @@
+{
+  "screen": "WarGamingSourceMode",
+  "feature": "war-gaming.source.onboarding",
+  "component_tree": {
+    "id": "WarGamingModePage",
+    "children": [
+      {
+        "id": "WarGamingModeClient",
+        "children": [
+          {
+            "id": "KhalOpsShell",
+            "children": [
+              {
+                "id": "OnboardingGuidePanel",
+                "condition": "onboarding && mode === 'source'",
+                "children": [
+                  { "id": "SourceRegisterBlock" },
+                  { "id": "DecisionSequenceBlock" }
+                ]
+              },
+              {
+                "id": "WarGaming",
+                "condition": "!showOnboardingGuide || hasSources"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "state_link": "docs/states/war-gaming-onboarding-state.mmd",
+  "schema_link": "docs/data/schema.dbml",
+  "sequence_links": [
+    "docs/sequences/war-gaming-bootstrap-primary.mmd",
+    "docs/sequences/war-gaming-onboarding-save-sources.mmd"
+  ],
+  "screenshot_required": true,
+  "screenshot_note": "capture from running app to replace inferred wireframe"
+}

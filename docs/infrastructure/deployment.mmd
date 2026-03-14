@@ -1,0 +1,41 @@
+flowchart TD
+  Client[Browser]
+
+  subgraph AppRuntime[Local Runtime]
+    Next[Next.js app<br/>apps/web]
+    Routes[Next API routes<br/>app/api/*]
+    Lib[lib/api + runtime/authority]
+    Sync[@khal/sync-engine]
+    SqliteCore[@khal/sqlite-core migrations]
+  end
+
+  subgraph DataLayer[Data Layer]
+    MainDB[(data/KHAL.sqlite)]
+    OperatorDB[(data/operators/*.sqlite)]
+    Genesis[(Genesis.xlsx archival)]
+  end
+
+  subgraph CI[GitHub Actions]
+    Repo[GitHub repo]
+    Verify[CI verify job]
+    Build[CI build job]
+    Smoke[CI smoke job]
+    Security[Security workflows]
+    Release[Release workflow]
+  end
+
+  Client -->|HTTPS| Next
+  Next --> Routes
+  Routes --> Lib
+  Lib -->|SQL read/write| MainDB
+  Lib -->|SQL read/write| OperatorDB
+  Lib --> Sync
+  Lib --> SqliteCore
+  SqliteCore -->|apply migrations| MainDB
+  SqliteCore -->|apply migrations| OperatorDB
+  MainDB -.reference only.- Genesis
+
+  Repo --> Verify --> Build --> Smoke
+  Verify --> Security
+  Build --> Release
+  Smoke --> Release

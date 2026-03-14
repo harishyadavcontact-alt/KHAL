@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml xmlns="http://www.w3.org/2005/07/scxml" initial="RequestReceived">
+  <state id="RequestReceived">
+    <transition event="route.war-room-data" target="LoadWarRoom"/>
+    <transition event="route.war-gaming-bootstrap" target="LoadWarGaming"/>
+    <transition event="route.mission-command-bootstrap" target="LoadMissionCommand"/>
+  </state>
+
+  <state id="LoadWarRoom">
+    <transition event="db.ok" target="ReturnWarRoom"/>
+    <transition event="db.fail" target="ReturnError"/>
+  </state>
+
+  <state id="LoadWarGaming">
+    <transition event="db.ok" target="ReturnWarGaming"/>
+    <transition event="db.fail" target="ReturnError"/>
+  </state>
+
+  <state id="LoadMissionCommand">
+    <transition event="db.ok" target="ReturnMissionCommand"/>
+    <transition event="db.fail" target="ReturnError"/>
+  </state>
+
+  <final id="ReturnWarRoom"/>
+  <final id="ReturnWarGaming"/>
+  <final id="ReturnMissionCommand"/>
+  <final id="ReturnError"/>
+</scxml>

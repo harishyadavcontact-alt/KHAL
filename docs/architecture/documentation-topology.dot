@@ -1,0 +1,39 @@
+digraph documentation_topology {
+  rankdir=LR
+  node [shape=box fontname="monospace" fontsize=10]
+
+  DocsRoot [label="docs/"]
+  Architecture [label="docs/architecture\n(system design)"]
+  Data [label="docs/data\n(schema)" ]
+  States [label="docs/states\n(state logic)"]
+  Sequences [label="docs/sequences\n(request flows)"]
+  UI [label="docs/ui\n(screen structure)"]
+  Knowledge [label="docs/knowledge\nnavigation graph)"]
+  Infra [label="docs/infrastructure\n(deployment topology)"]
+  Product [label="docs/product\n(high-entropy narrative)"]
+  Reports [label="docs/reports\n(high-entropy narrative)"]
+  Release [label="docs/release\n(process + checks)"]
+
+  Manifest [label="docs/knowledge/documentation-manifest.json"]
+  DocsIndex [label="docs/knowledge/docs-index.canvas"]
+
+  DocsRoot -> Architecture [label="contains"]
+  DocsRoot -> Data [label="contains"]
+  DocsRoot -> States [label="contains"]
+  DocsRoot -> Sequences [label="contains"]
+  DocsRoot -> UI [label="contains"]
+  DocsRoot -> Knowledge [label="contains"]
+  DocsRoot -> Infra [label="contains"]
+  DocsRoot -> Product [label="contains"]
+  DocsRoot -> Reports [label="contains"]
+  DocsRoot -> Release [label="contains"]
+
+  Knowledge -> Manifest [label="JSON index"]
+  Knowledge -> DocsIndex [label="canvas graph"]
+  Manifest -> Product [label="migrate_to_low_entropy"]
+  Manifest -> Reports [label="migrate_to_low_entropy"]
+  Architecture -> Data [label="owns schema refs"]
+  States -> Sequences [label="drives flow"]
+  States -> UI [label="renders"]
+  Infra -> Release [label="validated by CI"]
+}

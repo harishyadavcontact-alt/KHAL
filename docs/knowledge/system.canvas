@@ -1,0 +1,219 @@
+{
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "file",
+      "file": "docs/architecture/system.dot",
+      "x": 0,
+      "y": 0,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n2",
+      "type": "file",
+      "file": "docs/architecture/war-gaming.dot",
+      "x": 460,
+      "y": 0,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n4",
+      "type": "file",
+      "file": "docs/states/war-gaming-onboarding-state.scxml",
+      "x": 0,
+      "y": 340,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n5",
+      "type": "file",
+      "file": "docs/states/war-gaming-onboarding-state.mmd",
+      "x": 460,
+      "y": 340,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n6",
+      "type": "file",
+      "file": "docs/sequences/war-gaming-bootstrap-primary.mmd",
+      "x": 920,
+      "y": 340,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n7",
+      "type": "file",
+      "file": "docs/sequences/war-gaming-onboarding-save-sources.mmd",
+      "x": 1380,
+      "y": 340,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n8",
+      "type": "file",
+      "file": "docs/sequences/war-gaming-error-bootstrap-db.mmd",
+      "x": 1840,
+      "y": 340,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n9",
+      "type": "file",
+      "file": "docs/ui/war-gaming-source.svg",
+      "x": 0,
+      "y": 680,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n10",
+      "type": "file",
+      "file": "docs/ui/war-gaming-source.json",
+      "x": 460,
+      "y": 680,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n11",
+      "type": "file",
+      "file": "docs/infrastructure/deployment.mmd",
+      "x": 920,
+      "y": 680,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n12",
+      "type": "file",
+      "file": "docs/architecture/documentation-topology.dot",
+      "x": 1380,
+      "y": 680,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n13",
+      "type": "file",
+      "file": "docs/infrastructure/documentation-migration.mmd",
+      "x": 1840,
+      "y": 680,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n14",
+      "type": "file",
+      "file": "docs/knowledge/documentation-manifest.json",
+      "x": 2300,
+      "y": 680,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n15",
+      "type": "file",
+      "file": "docs/knowledge/docs-index.canvas",
+      "x": 2760,
+      "y": 680,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n16",
+      "type": "file",
+      "file": "docs/states/bootstrap-runtime-state.scxml",
+      "x": 3220,
+      "y": 680,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n17",
+      "type": "file",
+      "file": "docs/states/bootstrap-runtime-state.mmd",
+      "x": 3680,
+      "y": 680,
+      "width": 420,
+      "height": 280
+    },
+    {
+      "id": "n18",
+      "type": "file",
+      "file": "docs/sequences/bootstrap-mission-command-primary.mmd",
+      "x": 4140,
+      "y": 680,
+      "width": 420,
+      "height": 280
+    }
+  ],
+  "edges": [
+    {
+      "id": "e2",
+      "fromNode": "n2",
+      "toNode": "n5",
+      "label": "feature behavior"
+    },
+    {
+      "id": "e3",
+      "fromNode": "n5",
+      "toNode": "n6",
+      "label": "state drives request flow"
+    },
+    {
+      "id": "e4",
+      "fromNode": "n5",
+      "toNode": "n7",
+      "label": "state drives onboarding flow"
+    },
+    {
+      "id": "e7",
+      "fromNode": "n10",
+      "toNode": "n5",
+      "label": "UI bound to state machine"
+    },
+    {
+      "id": "e8",
+      "fromNode": "n10",
+      "toNode": "n6",
+      "label": "UI invokes bootstrap flow"
+    },
+    {
+      "id": "e9",
+      "fromNode": "n1",
+      "toNode": "n11",
+      "label": "deployed/executed via"
+    },
+    {
+      "id": "e11",
+      "fromNode": "n1",
+      "toNode": "n12",
+      "label": "documents docs graph"
+    },
+    {
+      "id": "e12",
+      "fromNode": "n11",
+      "toNode": "n13",
+      "label": "governs docs migration"
+    },
+    {
+      "id": "e13",
+      "fromNode": "n5",
+      "toNode": "n17",
+      "label": "extends state coverage"
+    },
+    {
+      "id": "e14",
+      "fromNode": "n6",
+      "toNode": "n18",
+      "label": "parallel bootstrap flow"
+    }
+  ]
+}

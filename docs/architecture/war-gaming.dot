@@ -1,0 +1,27 @@
+digraph wargaming_feature {
+  rankdir=LR
+  node [shape=box fontname="monospace" fontsize=10]
+
+  WarGamingPage [label="/war-gaming/[mode]\npage.tsx"]
+  WarGamingClient [label="WarGamingModeClient.tsx"]
+  BootstrapHook [label="useWarGamingBootstrap.ts"]
+  BootstrapRoute [label="GET /api/war-gaming/bootstrap"]
+  BootstrapHandler [label="handleWarGamingBootstrapGet()"]
+  SourcesRoute [label="POST /api/volatility-sources"]
+  SourcesHandler [label="handleVolatilitySourcesPost()"]
+  WargamingView [label="WarGaming.tsx"]
+  SourceMapSave [label="onSourceMapSaved -> refresh()"]
+  Sqlite [label="SQLite runtime DB" shape=cylinder]
+
+  WarGamingPage -> WarGamingClient [label="React render"]
+  WarGamingClient -> BootstrapHook [label="hook call"]
+  BootstrapHook -> BootstrapRoute [label="HTTP GET"]
+  BootstrapRoute -> BootstrapHandler [label="internal function"]
+  BootstrapHandler -> Sqlite [label="SQL read"]
+  WarGamingClient -> WargamingView [label="props (data, mode, target)"]
+  WarGamingClient -> SourcesRoute [label="HTTP POST JSON"]
+  SourcesRoute -> SourcesHandler [label="internal function"]
+  SourcesHandler -> Sqlite [label="SQL insert/select"]
+  WargamingView -> SourceMapSave [label="callback"]
+  SourceMapSave -> BootstrapHook [label="refresh bootstrap"]
+}

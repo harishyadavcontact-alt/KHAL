@@ -1,0 +1,25 @@
+flowchart TD
+  Start[Scan docs tree] --> Classify{File format low entropy?}
+
+  Classify -->|yes| Keep[Keep as machine-native artifact]
+  Classify -->|no| Convert[Convert narrative into target format]
+
+  Convert --> Dim{Dimension}
+  Dim --> Topology[.dot]
+  Dim --> DataModel[.dbml]
+  Dim --> StateLogic[.scxml + .mmd]
+  Dim --> RuntimeFlow[sequenceDiagram .mmd]
+  Dim --> UILayout[.svg + .json]
+  Dim --> KnowledgeMap[.canvas]
+  Dim --> Infra[flowchart .mmd]
+
+  Topology --> Validate[Validate links + paths]
+  DataModel --> Validate
+  StateLogic --> Validate
+  RuntimeFlow --> Validate
+  UILayout --> Validate
+  KnowledgeMap --> Validate
+  Infra --> Validate
+
+  Keep --> Validate
+  Validate --> Publish[Commit docs artifacts]

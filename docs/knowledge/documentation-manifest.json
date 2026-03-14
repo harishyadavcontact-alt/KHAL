@@ -1,0 +1,252 @@
+{
+  "principle": "show-to-ai-not-tell",
+  "generated_from": "docs tree",
+  "items": [
+    {
+      "file": "docs/agent-log/2026-03.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/agent-log/README.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/architecture/api-contract.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/architecture/runtime-authority.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/architecture/sqlite-architecture.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/architecture/system.dot",
+      "format": ".dot",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/architecture/v0.1-system-design.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/architecture/war-gaming-rewrite-slice-2026-03-11.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/architecture/war-gaming.dot",
+      "format": ".dot",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/decision-tree/war-room-fractal-decision-tree.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/infrastructure/deployment.mmd",
+      "format": ".mmd",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/knowledge/system.canvas",
+      "format": ".canvas",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/performance/budgets.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/product/decisions-log.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/product/drafts-structural-thinking-editor.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/product/portfolio-war-room.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/product/taleb-feature-heuristics.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/product/visual-encoding-spec.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/refactor-audit-2026-03-10.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/release/ci-gate-contract.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/release/v0.4.3-release-runbook.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/release/v0.4.4-reliability-dominance.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/reports/khal-decision-compatibility-test-cases.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/reports/personal-operator-journey-2026-03-10.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/reports/state-of-the-art-alignment-2026-03-10.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/reports/ui-usability-benchmark-2026-03-10.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/reports/v0.4.4-architecture-benchmark.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/reports/war-room-parity-exceptions.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/reports/war-room-parity-report.json",
+      "format": ".json",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/reports/war-room-parity-report.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/repository-workstreams.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/security/release-security-baseline.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/sequences/war-gaming-bootstrap-primary.mmd",
+      "format": ".mmd",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/sequences/war-gaming-error-bootstrap-db.mmd",
+      "format": ".mmd",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/sequences/war-gaming-onboarding-save-sources.mmd",
+      "format": ".mmd",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/states/war-gaming-onboarding-state.mmd",
+      "format": ".mmd",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/states/war-gaming-onboarding-state.scxml",
+      "format": ".scxml",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/uat/v0.4.3-uat-checklist.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/uat/v0.4.3-uat-evidence-template.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "migrate"
+    },
+    {
+      "file": "docs/ui/war-gaming-source.json",
+      "format": ".json",
+      "entropy": "low",
+      "action": "keep"
+    },
+    {
+      "file": "docs/ui/war-gaming-source.svg",
+      "format": ".svg",
+      "entropy": "low",
+      "action": "keep"
+    }
+  ]
+}
