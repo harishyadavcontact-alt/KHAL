@@ -63,6 +63,7 @@ import {
   computeBlackSwanReadiness,
   computeExecutionDistribution,
   computeViaNegativaQueue,
+  computeCampaignSnapshots,
   isInterestProtocolReady
 } from '../../lib/war-room/operational-metrics';
 import { AlertQueuePanel } from './hud/AlertQueuePanel';
@@ -91,6 +92,7 @@ export const SurgicalExecution = ({
   user?: AppData["user"];
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
   onCreateTask: (task: {
+    id?: string;
     title: string;
     sourceType: string;
     sourceId: string;
@@ -107,6 +109,12 @@ export const SurgicalExecution = ({
   const [subtaskDueAt, setSubtaskDueAt] = useState('');
   const [subtaskHorizon, setSubtaskHorizon] = useState<'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR'>('WEEK');
   const [creatingSubtask, setCreatingSubtask] = useState(false);
+
+  const [campaignTitle, setCampaignTitle] = useState('');
+  const [campaignInterestId, setCampaignInterestId] = useState('');
+  const [campaignAffairId, setCampaignAffairId] = useState('');
+  const [campaignAttemptCount, setCampaignAttemptCount] = useState(3);
+  const [creatingCampaign, setCreatingCampaign] = useState(false);
   const selectedTask = tasks.find(t => t.id === selectedTaskId);
   const tripwireBlocked = Boolean(tripwire?.riskyActionBlocked);
   const selectedInterest = useMemo(() => {
@@ -123,6 +131,12 @@ export const SurgicalExecution = ({
   const activeTasks = tasks.filter((t) => t.status === 'in_progress').length;
   const velocityPerWeek = (doneTasks + activeTasks).toFixed(1);
   const efficiencyPct = tasks.length ? Math.round((doneTasks / tasks.length) * 100) : 0;
+
+  const campaignAffairOptions = useMemo(
+    () => affairs.filter((affair) => !campaignInterestId || affair.interestId === campaignInterestId),
+    [affairs, campaignInterestId]
+  );
+
   const readinessRows = useMemo(
     () =>
       affairs.slice(0, 6).map((affair) => {
@@ -181,6 +195,47 @@ export const SurgicalExecution = ({
   const viaNegativaQueue = useMemo(() => computeViaNegativaQueue(alertData, 5), [alertData]);
   const blackSwanReadiness = useMemo(() => computeBlackSwanReadiness(alertData), [alertData]);
   const executionDistribution = useMemo(() => computeExecutionDistribution(alertData), [alertData]);
+  const campaignSnapshots = useMemo(() => computeCampaignSnapshots(alertData, 3), [alertData]);
+
+
+  const createCampaignPlan = async () => {
+    const title = campaignTitle.trim();
+    if (!title || !campaignInterestId) return;
+
+    setCreatingCampaign(true);
+    try {
+      const rootId = crypto.randomUUID();
+      const affairTag = campaignAffairId ? `;affairId=${campaignAffairId}` : '';
+      await onCreateTask({
+        id: rootId,
+        title: `Campaign: ${title}`,
+        sourceType: 'INTEREST',
+        sourceId: campaignInterestId,
+        horizon: 'MONTH',
+        notes: `campaign=true${affairTag};createdAt=${new Date().toISOString()}`
+      });
+
+      const attempts = Math.max(1, Math.min(12, campaignAttemptCount));
+      for (let index = 0; index < attempts; index += 1) {
+        await onCreateTask({
+          id: crypto.randomUUID(),
+          title: `Attempt ${index + 1}: ${title}`,
+          sourceType: 'INTEREST',
+          sourceId: campaignInterestId,
+          parentTaskId: rootId,
+          horizon: 'WEEK',
+          notes: 'campaign.attempt=true'
+        });
+      }
+
+      setCampaignTitle('');
+      setCampaignAffairId('');
+      setCampaignAttemptCount(3);
+    } finally {
+      setCreatingCampaign(false);
+    }
+  };
+
 
   useEffect(() => {
     setSubtaskTitle('');
@@ -354,6 +409,96 @@ export const SurgicalExecution = ({
         <ExecutionDistributionPanel snapshot={executionDistribution} />
         <ViaNegativaPanel items={viaNegativaQueue} />
         <BlackSwanReadinessPanel snapshot={blackSwanReadiness} />
+      </div>
+
+      <div className="glass p-4 rounded-xl border border-white/10 mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-[10px] uppercase text-zinc-500 tracking-widest">Campaigns · Sustained Execution</div>
+          <div className="text-[10px] text-zinc-500 uppercase">Pipeline + Funnel coherence</div>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-2 mb-3">
+          <input
+            value={campaignTitle}
+            onChange={(event) => setCampaignTitle(event.target.value)}
+            className="bg-zinc-900 border border-white/10 rounded px-3 py-2 text-sm"
+            placeholder="Campaign title"
+          />
+          <select
+            value={campaignInterestId}
+            onChange={(event) => {
+              setCampaignInterestId(event.target.value);
+              setCampaignAffairId('');
+            }}
+            className="bg-zinc-900 border border-white/10 rounded px-3 py-2 text-sm"
+          >
+            <option value="">Select interest</option>
+            {interests.map((interest) => (
+              <option key={interest.id} value={interest.id}>{interest.title}</option>
+            ))}
+          </select>
+          <select
+            value={campaignAffairId}
+            onChange={(event) => setCampaignAffairId(event.target.value)}
+            className="bg-zinc-900 border border-white/10 rounded px-3 py-2 text-sm"
+          >
+            <option value="">Optional affair anchor</option>
+            {campaignAffairOptions.map((affair) => (
+              <option key={affair.id} value={affair.id}>{affair.title}</option>
+            ))}
+          </select>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min={1}
+              max={12}
+              value={campaignAttemptCount}
+              onChange={(event) => setCampaignAttemptCount(Number(event.target.value) || 1)}
+              className="w-24 bg-zinc-900 border border-white/10 rounded px-3 py-2 text-sm"
+              aria-label="Initial attempts"
+            />
+            <button
+              onClick={createCampaignPlan}
+              disabled={!campaignTitle.trim() || !campaignInterestId || creatingCampaign}
+              className="px-3 py-2 rounded bg-blue-600 text-white text-xs font-semibold disabled:opacity-50"
+            >
+              {creatingCampaign ? 'Planning...' : 'Plan Campaign'}
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+          {campaignSnapshots.map((campaign) => (
+            <article key={campaign.id} className="p-3 rounded-lg border border-white/10 bg-zinc-900/50 space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold">{campaign.title}</h3>
+                <span
+                  className={cn(
+                    "text-[10px] uppercase px-2 py-0.5 rounded-full border",
+                    campaign.fragilityBand === "robust"
+                      ? "text-emerald-300 border-emerald-500/40 bg-emerald-500/10"
+                      : "text-amber-300 border-amber-500/40 bg-amber-500/10"
+                  )}
+                >
+                  {campaign.fragilityBand}
+                </span>
+              </div>
+              <div className="text-[11px] text-zinc-400">Interest: {campaign.interestTitle}</div>
+              {campaign.affairTitle && <div className="text-[11px] text-zinc-500">Affair anchor: {campaign.affairTitle}</div>}
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {campaign.stages.map((stage) => (
+                  <div key={stage.stage} className="rounded-md border border-white/10 bg-black/20 p-2">
+                    <div className="text-[10px] uppercase text-zinc-500">{stage.stage}</div>
+                    <div className="text-sm font-bold text-zinc-100">{stage.count}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-[11px] text-zinc-300">Funnel conversion: {campaign.conversionPct}%</div>
+              <p className="text-xs text-zinc-400">{campaign.narrative}</p>
+            </article>
+          ))}
+          {!campaignSnapshots.length && (
+            <div className="text-sm text-zinc-500 xl:col-span-3">No campaigns yet. Link sustained task attempts to an Interest to establish execution coherence.</div>
+          )}
+        </div>
       </div>
 
       <div className="glass p-4 rounded-xl border border-white/10 mb-6">

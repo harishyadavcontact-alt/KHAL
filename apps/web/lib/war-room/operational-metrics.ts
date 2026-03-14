@@ -23,7 +23,8 @@ import type {
   OperationalNowItem,
   StakeTriadMetrics,
   SystemAnatomySnapshot,
-  ViaNegativaItem
+  ViaNegativaItem,
+  CampaignSnapshot
 } from "../../components/war-room-v2/types";
 import { routeForView } from "./routes";
 
@@ -206,6 +207,91 @@ export function buildDoNowItems(input: OperationalInput, limit = 5): Operational
     why: explainWhy(item.why),
     route: doNowRoute(item.refType, item.refId)
   }));
+}
+
+
+export function computeCampaignSnapshots(input: OperationalInput, limit = 4): CampaignSnapshot[] {
+  const interestById = new Map(input.interests.map((interest) => [interest.id, interest]));
+  const affairById = new Map(input.affairs.map((affair) => [affair.id, affair]));
+  const childByParent = new Map<string, AppData["tasks"]>();
+
+  for (const task of input.tasks) {
+    if (!task.parentTaskId) continue;
+    const rows = childByParent.get(task.parentTaskId) ?? [];
+    rows.push(task);
+    childByParent.set(task.parentTaskId, rows);
+  }
+
+  const campaignRoots = input.tasks.filter((task) => {
+    const sourceType = String(task.sourceType ?? "").toUpperCase();
+    if (sourceType !== "INTEREST") return false;
+    return String(task.title ?? "").trim().toLowerCase().startsWith("campaign:");
+  });
+
+  const collectDescendants = (rootId: string) => {
+    const queue = [...(childByParent.get(rootId) ?? [])];
+    const collected: AppData["tasks"] = [];
+    while (queue.length) {
+      const task = queue.shift();
+      if (!task) continue;
+      collected.push(task);
+      const nested = childByParent.get(task.id) ?? [];
+      queue.push(...nested);
+    }
+    return collected;
+  };
+
+  const snapshots = campaignRoots
+    .map((root) => {
+      const interest = root.sourceId ? interestById.get(root.sourceId) : undefined;
+      if (!interest) return null;
+
+      const executionTasks = collectDescendants(root.id);
+      const normalized = executionTasks.map((task) => String(task.status ?? "not_started").toLowerCase());
+      const attemptCount = executionTasks.length;
+      const activeCount = normalized.filter((status) => status === "in_progress").length;
+      const convergedCount = normalized.filter((status) => status === "done").length;
+      const conversionPct = round1(attemptCount ? (convergedCount / attemptCount) * 100 : 0);
+      const fragilityBand: CampaignSnapshot["fragilityBand"] = attemptCount >= 3 ? "robust" : "fragile";
+
+      const rootNotes = String(root.notes ?? "");
+      const affairIdMatch = rootNotes.match(/affairId=([^;\s]+)/i);
+      const affairId = affairIdMatch?.[1];
+      const affair = affairId ? affairById.get(affairId) : undefined;
+
+      return {
+        id: `campaign-${root.id}`,
+        title: root.title.replace(/^Campaign:\s*/i, "").trim() || root.title,
+        interestId: interest.id,
+        interestTitle: interest.title,
+        affairId: affair?.id,
+        affairTitle: affair?.title,
+        status: convergedCount > 0 ? "converging" : activeCount > 0 ? "running" : "forming",
+        attemptCount,
+        activeCount,
+        convergedCount,
+        conversionPct,
+        fragilityBand,
+        narrative:
+          attemptCount === 0
+            ? "Campaign plan is created. Seed first attempts to generate signals."
+            : fragilityBand === "fragile"
+              ? "Single-threaded exposure detected. Add parallel attempts so failure yields information, not collapse."
+              : "Parallel attempts are active. Keep pruning weak paths and doubling down on converging signals.",
+        stages: [
+          { stage: "attempting", count: attemptCount },
+          { stage: "active", count: activeCount },
+          { stage: "converged", count: convergedCount }
+        ]
+      } as CampaignSnapshot;
+    })
+    .filter((snapshot): snapshot is CampaignSnapshot => Boolean(snapshot))
+    .sort((a, b) => {
+      if (b.attemptCount !== a.attemptCount) return b.attemptCount - a.attemptCount;
+      return b.conversionPct - a.conversionPct;
+    });
+
+  return snapshots.slice(0, limit);
 }
 
 export function computeStakeTriad(input: OperationalInput): StakeTriadMetrics {

@@ -7,6 +7,7 @@ import type { WarGamingBootstrapData } from "./bootstrap";
 import { modeToPlanSourceType } from "../decision-tree/registry";
 
 type CreateTaskPayload = {
+  id?: string;
   title: string;
   sourceType: string;
   sourceId: string;
@@ -166,6 +167,7 @@ export async function createExecutionTask(payload: CreateTaskPayload) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      id: payload.id,
       sourceType: ensureTaskSourceType(payload.sourceType),
       sourceId: payload.sourceId,
       parentTaskId: payload.parentTaskId,

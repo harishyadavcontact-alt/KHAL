@@ -290,6 +290,28 @@ export interface Task {
   convexity?: number;
 }
 
+export interface CampaignStageStat {
+  stage: "attempting" | "active" | "converged";
+  count: number;
+}
+
+export interface CampaignSnapshot {
+  id: string;
+  title: string;
+  interestId: string;
+  interestTitle: string;
+  affairId?: string;
+  affairTitle?: string;
+  status: "forming" | "running" | "converging";
+  attemptCount: number;
+  activeCount: number;
+  convergedCount: number;
+  conversionPct: number;
+  fragilityBand: "fragile" | "robust";
+  narrative: string;
+  stages: CampaignStageStat[];
+}
+
 export interface OperationalNowItem {
   refType: "AFFAIR" | "INTEREST" | "TASK";
   refId: string;

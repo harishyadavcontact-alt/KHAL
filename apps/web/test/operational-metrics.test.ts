@@ -15,6 +15,7 @@ import {
   computeAlertQueue,
   computeBlackSwanReadiness,
   computeExecutionDistribution,
+  computeCampaignSnapshots,
   computeSystemAnatomySnapshot,
   computeStakeTriad,
   computeViaNegativaQueue,
@@ -220,6 +221,51 @@ describe("operational metrics", () => {
     const items = computeFragilistaWatchlist(data, 5);
     expect(items[0]?.title).toBe("Low SITG");
     expect(items[0]?.sitgBand).toBe("LOW");
+  });
+
+  it("builds campaign snapshots from explicit campaign plans", () => {
+    const data = makeBaseData();
+    data.interests = [makeInterest("interest-1", "domain-1", 8, 8, "in_progress")];
+    data.affairs = [{ ...makeAffair("affair-1", "domain-1", 8, 7, "in_progress"), interestId: "interest-1" }];
+    data.tasks = [
+      {
+        ...makeTask("campaign-root", "domain-1", "MONTH"),
+        title: "Campaign: Partnership Expansion",
+        sourceType: "INTEREST",
+        sourceId: "interest-1",
+        notes: "campaign=true;affairId=affair-1"
+      },
+      {
+        ...makeTask("campaign-attempt-1", "domain-1", "WEEK"),
+        sourceType: "INTEREST",
+        sourceId: "interest-1",
+        parentTaskId: "campaign-root",
+        status: "not_started"
+      },
+      {
+        ...makeTask("campaign-attempt-2", "domain-1", "WEEK"),
+        sourceType: "INTEREST",
+        sourceId: "interest-1",
+        parentTaskId: "campaign-root",
+        status: "in_progress"
+      },
+      {
+        ...makeTask("campaign-attempt-3", "domain-1", "WEEK"),
+        sourceType: "INTEREST",
+        sourceId: "interest-1",
+        parentTaskId: "campaign-root",
+        status: "done"
+      }
+    ];
+
+    const campaigns = computeCampaignSnapshots(data, 5);
+    expect(campaigns).toHaveLength(1);
+    expect(campaigns[0]?.title).toBe("Partnership Expansion");
+    expect(campaigns[0]?.interestId).toBe("interest-1");
+    expect(campaigns[0]?.affairId).toBe("affair-1");
+    expect(campaigns[0]?.attemptCount).toBe(3);
+    expect(campaigns[0]?.conversionPct).toBeCloseTo(33.3, 1);
+    expect(campaigns[0]?.fragilityBand).toBe("robust");
   });
 
   it("flags execution split imbalance when one lane dominates", () => {
