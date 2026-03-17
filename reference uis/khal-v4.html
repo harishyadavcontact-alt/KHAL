@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KHAL — Decision Operating System</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --void:#040406;
+  --dp1:#080810;--dp2:#0d0d18;--dp3:#12121f;--dp4:#181826;--dp5:#1e1e2e;--dp6:#252538;--dp7:#2c2c44;
+  --g1:rgba(255,255,255,0.04);--g2:rgba(255,255,255,0.08);--g3:rgba(255,255,255,0.14);--g4:rgba(255,255,255,0.22);
+  --t0:#f2efe8;--t1:#c8c4b8;--t2:#8a8678;--t3:#524e46;--t4:#2e2b26;
+  --amber:#f0a832;--amb1:#d48820;--amb2:#b86c10;
+  --amb-glow:rgba(240,168,50,0.18);--amb-dim:rgba(240,168,50,0.08);
+  --teal:#30e0b0;--tel1:#1cb88c;--tel2:#0e8a68;
+  --tel-glow:rgba(48,224,176,0.16);--tel-dim:rgba(48,224,176,0.07);
+  --coral:#f06040;--cor1:#c84828;--cor-glow:rgba(240,96,64,0.16);--cor-dim:rgba(240,96,64,0.07);
+  --blue:#5898e8;--blu-glow:rgba(88,152,232,0.15);
+  --green:#58d48a;--purple:#a878f8;
+  --display:'Cormorant Garamond',Georgia,serif;
+  --mono:'DM Mono',monospace;
+  --ui:'Outfit',sans-serif;
+}
+
+html,body{height:100%;background:var(--void);color:var(--t0);overflow:hidden;cursor:default}
+body{display:flex;flex-direction:column;font-family:var(--ui);font-size:13px}
+
+/* ── GRAIN OVERLAY ── */
+body::before{content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:1000;opacity:.55}
+
+/* ── TOPBAR ── */
+.top{height:46px;flex-shrink:0;background:rgba(8,8,16,0.95);
+  border-bottom:1px solid var(--g2);
+  display:flex;align-items:center;padding:0 20px;gap:18px;
+  z-index:200;position:relative;backdrop-filter:blur(20px);
+  box-shadow:0 1px 0 var(--g1),0 4px 24px rgba(0,0,0,.4)}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer;flex-shrink:0;
+  font-family:var(--display);font-size:20px;font-weight:500;
+  color:var(--t0);letter-spacing:.02em}
+.logo-gem{width:26px;height:26px;position:relative;flex-shrink:0}
+.logo-gem svg{width:26px;height:26px}
+.top-wordmark{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--t0)}
+.top-tagline{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--t3);padding-left:16px;border-left:1px solid var(--g2)}
+.top-nav{display:flex;gap:0}
+.tn{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--t3);padding:0 14px;height:46px;display:flex;align-items:center;
+  position:relative;cursor:pointer;transition:color .2s;background:none;border:none}
+.tn::after{content:'';position:absolute;bottom:0;left:14px;right:14px;height:1px;
+  background:var(--amber);opacity:0;transition:opacity .2s}
+.tn:hover{color:var(--t1)}
+.tn.on{color:var(--t0)}
+.tn.on::after{opacity:1}
+.top-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.top-search{display:flex;align-items:center;gap:7px;
+  background:var(--dp3);border:1px solid var(--g2);border-radius:6px;
+  padding:0 11px;height:28px;width:155px;transition:border-color .2s}
+.top-search:focus-within{border-color:var(--g3)}
+.top-search input{background:none;border:none;outline:none;
+  color:var(--t1);font-size:11px;font-family:var(--mono);width:100%}
+.top-search input::placeholder{color:var(--t3)}
+.ico{width:28px;height:28px;border-radius:6px;background:var(--dp3);
+  border:1px solid var(--g2);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--t2);transition:all .2s}
+.ico:hover{border-color:var(--g3);color:var(--t1);background:var(--dp4)}
+.av{width:28px;height:28px;border-radius:50%;
+  background:conic-gradient(var(--amber) 0 180deg,var(--teal) 180deg 320deg,var(--coral) 320deg 360deg);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:9px;font-weight:500;color:var(--void);cursor:pointer;
+  box-shadow:0 0 12px var(--amb-glow)}
+
+/* ── SHELL ── */
+.shell{display:flex;flex:1;overflow:hidden;position:relative}
+
+/* ── SIDEBAR ── */
+.sb{width:160px;flex-shrink:0;background:rgba(8,8,16,0.9);
+  border-right:1px solid var(--g2);
+  display:flex;flex-direction:column;overflow-y:auto;
+  padding:12px 0;position:relative;z-index:10;
+  backdrop-filter:blur(20px)}
+.sbh{font-family:var(--mono);font-size:8px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--t4);padding:10px 16px 5px}
+.si{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;
+  transition:all .18s;color:var(--t3);font-family:var(--mono);font-size:10px;
+  letter-spacing:.06em;border:none;background:none;width:100%;text-align:left;
+  border-left:2px solid transparent;position:relative}
+.si:hover{background:var(--g1);color:var(--t1)}
+.si.on{background:rgba(240,168,50,0.06);color:var(--t0);border-left-color:var(--amber)}
+.si.on .si-icon{filter:drop-shadow(0 0 4px var(--amber))}
+.si-icon{width:14px;height:14px;flex-shrink:0;opacity:.6}
+.si.on .si-icon{opacity:1}
+.si-sub{padding-left:30px;font-size:9px;color:var(--t4);letter-spacing:.08em}
+.si-sub:hover{color:var(--t2);background:var(--g1)}
+.si-sub.on{color:var(--amber)}
+.sibadge{margin-left:auto;font-family:var(--mono);font-size:8px;
+  background:var(--dp5);border:1px solid var(--g2);color:var(--t2);
+  padding:1px 5px;border-radius:3px;min-width:18px;text-align:center}
+.si.on .sibadge{background:var(--amb-dim);border-color:rgba(240,168,50,.3);color:var(--amber)}
+.sdiv{height:1px;background:var(--g1);margin:8px 16px}
+
+/* ── PAGES ── */
+.page{display:none;flex:1;overflow:hidden;flex-direction:column;
+  animation:pagein .35s cubic-bezier(.4,0,.2,1) both}
+.page.on{display:flex}
+@keyframes pagein{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+
+/* ══════════════════════════
+   WAR ROOM
+══════════════════════════ */
+.wr-head{height:38px;flex-shrink:0;
+  background:rgba(8,8,16,0.8);border-bottom:1px solid var(--g2);
+  display:flex;align-items:center;padding:0 20px;gap:10px;backdrop-filter:blur(20px)}
+.wr-title{font-family:var(--display);font-size:17px;font-weight:400;
+  font-style:italic;color:var(--t0);letter-spacing:.02em;flex-shrink:0}
+.wr-tabs{display:flex;gap:2px;margin-left:10px}
+.wtab{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 11px;border-radius:4px;border:1px solid transparent;
+  color:var(--t3);cursor:pointer;transition:all .18s;background:none}
+.wtab:hover{color:var(--t1);background:var(--g1);border-color:var(--g2)}
+.wtab.on{color:var(--t0);background:var(--g2);border-color:var(--g3)}
+.wr-r{margin-left:auto;display:flex;gap:7px;align-items:center}
+.wpill{font-family:var(--mono);font-size:9px;padding:3px 9px;border-radius:4px;
+  background:var(--dp4);border:1px solid var(--g2);color:var(--t2)}
+.wpill.live{color:var(--teal);border-color:rgba(48,224,176,.3);
+  background:var(--tel-dim);box-shadow:0 0 8px rgba(48,224,176,.1)}
+.wpill.live::before{content:'● ';animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.wr-body{flex:1;display:flex;overflow:hidden;position:relative}
+
+/* graph */
+.gw{flex:1;position:relative;overflow:hidden;background:var(--void)}
+#gc{position:absolute;top:0;left:0;width:100%;height:100%}
+
+/* node popover — cinematic */
+.npop{position:absolute;
+  background:linear-gradient(145deg,rgba(18,18,31,0.98),rgba(14,14,24,0.98));
+  border:1px solid var(--g3);border-radius:10px;padding:18px 20px;width:228px;
+  box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 0 1px var(--g1),inset 0 1px 0 var(--g2);
+  display:none;z-index:80;backdrop-filter:blur(24px)}
+.np-type{font-family:var(--mono);font-size:8px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.np-type::before{content:'';width:16px;height:1px;background:var(--amber);opacity:.5}
+.np-title{font-family:var(--display);font-size:20px;font-weight:400;
+  color:var(--t0);margin-bottom:7px;line-height:1.15}
+.np-desc{font-size:11px;color:var(--t2);line-height:1.6;margin-bottom:12px;font-family:var(--ui)}
+.np-row{display:flex;gap:8px;margin-bottom:4px;align-items:baseline}
+.np-k{font-family:var(--mono);font-size:8px;color:var(--t3);letter-spacing:.1em;
+  text-transform:uppercase;width:56px;flex-shrink:0}
+.np-v{font-size:11px;color:var(--t1);font-family:var(--mono)}
+.np-v.r{color:var(--coral)}.np-v.g{color:var(--teal)}.np-v.a{color:var(--amber)}
+.np-divider{height:1px;background:var(--g2);margin:12px 0}
+.np-btns{display:flex;gap:7px}
+.np-btn{flex:1;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  padding:7px 0;border-radius:5px;border:1px solid;cursor:pointer;text-align:center;
+  transition:all .2s;font-weight:500}
+.np-btn:hover{transform:translateY(-1px)}
+.np-btn.g{background:var(--tel-dim);border-color:rgba(48,224,176,.35);color:var(--teal)}
+.np-btn.g:hover{background:rgba(48,224,176,.14);box-shadow:0 4px 16px rgba(48,224,176,.15)}
+.np-btn.o{background:var(--amb-dim);border-color:rgba(240,168,50,.35);color:var(--amber)}
+.np-btn.o:hover{background:rgba(240,168,50,.14);box-shadow:0 4px 16px rgba(240,168,50,.15)}
+
+/* right panel */
+.wrp{width:238px;flex-shrink:0;border-left:1px solid var(--g2);
+  display:flex;flex-direction:column;
+  background:rgba(8,8,16,0.85);backdrop-filter:blur(20px);overflow:hidden}
+.rblk{border-bottom:1px solid var(--g1);padding:14px 15px;flex-shrink:0}
+.rbh{font-family:var(--mono);font-size:8px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:11px;display:flex;align-items:center;justify-content:space-between}
+.rbm{color:var(--t3);cursor:pointer;font-size:16px;line-height:1;transition:color .15s}
+.rbm:hover{color:var(--t1)}
+
+/* posture ring */
+.pring-wrap{display:flex;gap:13px;align-items:center}
+.rc{position:relative;width:62px;height:62px;flex-shrink:0}
+.rc svg{transform:rotate(-90deg)}
+.rv{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:18px;font-weight:400;color:var(--t0)}
+.pstats{display:flex;flex-direction:column;gap:6px}
+.ps{display:flex;align-items:baseline;gap:6px}
+.psl{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--t3);
+  text-transform:uppercase;width:44px}
+.psv{font-family:var(--display);font-size:16px;font-weight:400}
+
+/* priority */
+.pri{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid var(--g1)}
+.pri:last-child{border-bottom:none}
+.pri-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.pri-b{flex:1}
+.pri-n{font-size:11px;color:var(--t1);margin-bottom:2px;font-family:var(--ui)}
+.pri-a{font-family:var(--mono);font-size:9px}
+.pri-bar{margin-top:5px;height:1px;background:var(--g2);border-radius:1px;overflow:hidden}
+.pri-f{height:100%;border-radius:1px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+/* lineage */
+.li{display:flex;align-items:center;gap:8px;padding:4px 0}
+.lin{font-family:var(--mono);font-size:9px;color:var(--t2);width:52px;letter-spacing:.04em}
+.lit{flex:1;height:1px;background:var(--g2);border-radius:1px;overflow:hidden}
+.lif{height:100%;border-radius:1px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.lip{font-family:var(--mono);font-size:9px;width:26px;text-align:right}
+
+.rep-scroll{flex:1;overflow-y:auto;padding:12px 15px}
+.rep{padding:10px 12px;border-radius:7px;
+  background:rgba(255,255,255,0.025);border:1px solid var(--g1);
+  margin-bottom:8px;cursor:pointer;transition:all .2s}
+.rep:hover{background:rgba(255,255,255,0.04);border-color:var(--g2);
+  transform:translateX(2px)}
+.rep:last-child{margin-bottom:0}
+.rep-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.rep-name{font-size:12px;color:var(--t0);flex:1;font-family:var(--ui)}
+.rep-tag{font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;letter-spacing:.06em}
+.rep-tag.r{background:var(--cor-dim);color:var(--coral);border:1px solid rgba(240,96,64,.25)}
+.rep-tag.g{background:var(--tel-dim);color:var(--teal);border:1px solid rgba(48,224,176,.25)}
+.rep-tag.a{background:var(--amb-dim);color:var(--amber);border:1px solid rgba(240,168,50,.25)}
+.rep-desc{font-size:10px;color:var(--t2);line-height:1.55}
+.rep-meta{display:flex;gap:10px;margin-top:5px}
+.rep-m{font-family:var(--mono);font-size:8px;color:var(--t3);letter-spacing:.06em}
+
+/* summary bar */
+.sumbar{height:54px;flex-shrink:0;border-top:1px solid var(--g2);
+  background:rgba(8,8,16,0.92);display:flex;backdrop-filter:blur(20px)}
+.sbc{flex:1;display:flex;align-items:center;gap:12px;padding:0 18px;
+  border-right:1px solid var(--g1);cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.sbc::before{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:currentColor;opacity:0;transition:opacity .2s}
+.sbc:hover{background:rgba(255,255,255,0.025)}
+.sbc:hover::before{opacity:.15}
+.sbc:last-child{border-right:none}
+.sbc-icon{font-size:17px;flex-shrink:0}
+.sbc-b{flex:1}
+.sbc-n{font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:2px}
+.sbc-v{font-family:var(--display);font-size:17px;font-weight:400;color:var(--t0);line-height:1}
+.sbc-s{font-family:var(--mono);font-size:9px;color:var(--t2)}
+.sbc-arr{font-family:var(--mono);font-size:10px;color:var(--t3);margin-left:auto;transition:transform .2s}
+.sbc:hover .sbc-arr{transform:translateX(3px);color:var(--t1)}
+
+/* timeline */
+.tbar{height:36px;flex-shrink:0;border-top:1px solid var(--g1);
+  background:rgba(4,4,6,0.95);display:flex;align-items:center;padding:0 20px;gap:12px}
+.tbnow{font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--amber);padding:3px 9px;border:1px solid rgba(240,168,50,.4);
+  border-radius:3px;background:var(--amb-dim);box-shadow:0 0 8px var(--amb-glow)}
+.tbtn{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--t3);cursor:pointer;padding:3px 7px;border-radius:3px;
+  transition:all .15s;background:none;border:none}
+.tbtn:hover{color:var(--t1);background:var(--g1)}
+.tbsep{width:1px;height:14px;background:var(--g2)}
+.tbi{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--t2)}
+.tbid{width:4px;height:4px;border-radius:50%}
+.tbr{margin-left:auto;display:flex;gap:8px;align-items:center}
+.tbstat{font-family:var(--mono);font-size:9px;color:var(--t3)}
+.tbstat span{color:var(--t1)}
+.tbact{font-family:var(--mono);font-size:9px;padding:4px 12px;border-radius:4px;
+  background:var(--amb-dim);border:1px solid rgba(240,168,50,.4);color:var(--amber);
+  cursor:pointer;transition:all .2s;letter-spacing:.06em}
+.tbact:hover{background:rgba(240,168,50,.16);box-shadow:0 0 12px var(--amb-glow)}
+
+/* ══════════════════════════
+   PAGE SUBHEADER
+══════════════════════════ */
+.psh{height:38px;flex-shrink:0;background:rgba(8,8,16,0.9);
+  border-bottom:1px solid var(--g2);
+  display:flex;align-items:center;padding:0 20px;gap:10px;
+  backdrop-filter:blur(20px)}
+.psh-title{font-family:var(--display);font-size:17px;font-weight:400;
+  font-style:italic;color:var(--t0);letter-spacing:.02em;flex-shrink:0}
+.psh-r{margin-left:auto;display:flex;gap:7px;align-items:center}
+.btn{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  padding:5px 13px;border-radius:5px;border:1px solid var(--g2);
+  background:var(--dp4);color:var(--t1);cursor:pointer;transition:all .2s}
+.btn:hover{border-color:var(--g3);color:var(--t0);background:var(--dp5)}
+.btn.prim{background:var(--amb-dim);border-color:rgba(240,168,50,.45);color:var(--amber)}
+.btn.prim:hover{background:rgba(240,168,50,.16);box-shadow:0 0 14px var(--amb-glow)}
+.btn.back{color:var(--t3)}
+
+/* ══════════════════════════
+   WAR GAMING / SOURCE
+══════════════════════════ */
+.src-shell{flex:1;display:flex;overflow:hidden}
+.src-rail{width:190px;flex-shrink:0;border-right:1px solid var(--g2);
+  overflow-y:auto;padding:14px 0;
+  background:rgba(8,8,16,0.85);backdrop-filter:blur(20px)}
+.srlh{font-family:var(--mono);font-size:8px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--t4);padding:8px 16px 6px}
+.srli{display:flex;align-items:flex-start;gap:9px;padding:10px 16px;cursor:pointer;
+  transition:all .18s;border-left:2px solid transparent;position:relative}
+.srli:hover{background:var(--g1)}
+.srli.on{background:rgba(240,168,50,0.05);border-left-color:var(--amber)}
+.srli-dot{width:6px;height:6px;border-radius:50%;background:var(--t4);flex-shrink:0;margin-top:4px;transition:all .2s}
+.srli.on .srli-dot{background:var(--amber);box-shadow:0 0 6px var(--amb-glow)}
+.srli-name{font-size:12px;color:var(--t2);line-height:1.35;font-family:var(--ui)}
+.srli.on .srli-name{color:var(--t0)}
+.srli-tag{display:inline-block;margin-top:4px;font-family:var(--mono);font-size:8px;
+  letter-spacing:.08em;padding:2px 7px;border-radius:2px;text-transform:uppercase}
+.srli-tag.fat{background:var(--cor-dim);color:var(--coral);border:1px solid rgba(240,96,64,.25)}
+.srli-tag.slow{background:var(--amb-dim);color:var(--amber);border:1px solid rgba(240,168,50,.25)}
+.srli-tag.str{background:var(--g1);border:1px solid var(--g2);color:var(--t2)}
+
+.src-scroll{flex:1;overflow-y:auto;background:var(--dp1)}
+.src-flow{max-width:800px;padding:32px 40px 80px}
+
+/* section blocks */
+.sblk{margin-bottom:44px;animation:fadeup .4s cubic-bezier(.4,0,.2,1) both}
+.sblk:nth-child(2){animation-delay:.05s}
+.sblk:nth-child(3){animation-delay:.1s}
+.sblk:nth-child(4){animation-delay:.15s}
+.sblk:nth-child(5){animation-delay:.2s}
+@keyframes fadeup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.smark{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.snum{font-family:var(--mono);font-size:9px;width:20px;height:20px;border-radius:50%;
+  border:1px solid var(--g2);display:flex;align-items:center;justify-content:center;
+  color:var(--t3);flex-shrink:0}
+.slbl{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--t3)}
+.srule{flex:1;height:1px;background:var(--g1)}
+
+.src-big-title{font-family:var(--display);font-size:34px;font-weight:300;
+  color:var(--t0);line-height:1.1;margin-bottom:7px;letter-spacing:.01em}
+.src-kind{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:.1em;margin-bottom:13px}
+.src-desc{font-size:14px;color:var(--t1);line-height:1.78;max-width:570px;
+  margin-bottom:16px;font-family:var(--ui);font-weight:300}
+.ftags{display:flex;gap:7px;flex-wrap:wrap}
+.ftag{font-family:var(--mono);font-size:8px;letter-spacing:.08em;padding:4px 10px;
+  border-radius:3px;border:1px solid var(--g2);color:var(--t2);text-transform:uppercase}
+.ftag.r{background:var(--cor-dim);border-color:rgba(240,96,64,.3);color:var(--coral)}
+.ftag.a{background:var(--amb-dim);border-color:rgba(240,168,50,.3);color:var(--amber)}
+
+.dombtns{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap}
+.dombt{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  padding:6px 14px;border-radius:4px;border:1px solid var(--g2);
+  background:transparent;color:var(--t3);cursor:pointer;transition:all .2s}
+.dombt:hover{background:var(--g1);color:var(--t1);border-color:var(--g3)}
+.dombt.on{background:var(--t0);border-color:var(--t0);color:var(--void);
+  font-weight:500}
+.domhint{font-family:var(--mono);font-size:8px;color:var(--t4);letter-spacing:.08em;text-transform:uppercase}
+
+/* doctrine */
+.doc{border:1px solid var(--g2);border-radius:8px;overflow:hidden;
+  background:rgba(18,18,31,0.8);backdrop-filter:blur(16px);
+  box-shadow:0 4px 32px rgba(0,0,0,.3),inset 0 1px 0 var(--g1);
+  animation:fadeup .3s cubic-bezier(.4,0,.2,1) both}
+.doc-topbar{background:rgba(255,255,255,0.04);padding:9px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--g2)}
+.doc-pair{font-family:var(--display);font-size:14px;font-weight:400;
+  font-style:italic;color:var(--t1)}
+.doc-badge{font-family:var(--mono);font-size:8px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--t3)}
+
+.maprow{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--g1)}
+.mc{padding:14px 18px;border-right:1px solid var(--g1)}
+.mc:last-child{border-right:none}
+.mk{font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:6px}
+.mv{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--t0);line-height:1.4}
+.mv.r{color:var(--coral)}.mv.g{color:var(--teal)}.mv.a{color:var(--amber)}
+
+.stonecols{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--g1)}
+.scol{padding:16px 18px}
+.scol+.scol{border-left:1px solid var(--g1)}
+.sch{font-family:var(--mono);font-size:8px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:12px}
+.sln{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  padding:6px 0;border-bottom:1px solid rgba(255,255,255,.025)}
+.sln:last-child{border-bottom:none}
+.sk{font-family:var(--mono);font-size:8px;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;flex-shrink:0}
+.sv{font-size:11px;color:var(--t1);text-align:right;line-height:1.35;font-family:var(--ui)}
+.sv.r{color:var(--coral)}.sv.a{color:var(--amber)}
+.fbar{display:flex;align-items:center;gap:8px}
+.fbt{flex:1;height:2px;background:var(--g2);border-radius:1px;overflow:hidden}
+.fbf{height:100%;border-radius:1px;background:var(--coral);
+  box-shadow:0 0 6px rgba(240,96,64,.4);transition:width .8s cubic-bezier(.4,0,.2,1)}
+.fbp{font-family:var(--mono);font-size:9px;color:var(--coral)}
+
+.endsrow{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--g1)}
+.ec{padding:16px 18px}
+.ec.hedge{border-right:1px solid var(--g1)}
+.elbl{font-family:var(--mono);font-size:8px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px}
+.hedge .elbl{color:var(--coral)}.edge .elbl{color:var(--teal)}
+.etxt{font-size:12px;color:var(--t1);line-height:1.65;font-family:var(--ui);font-weight:300}
+
+.meansrow{display:grid;grid-template-columns:1fr 1fr 1fr}
+.mcel{padding:14px 16px}
+.mcel+.mcel{border-left:1px solid var(--g1)}
+.mhead{font-family:var(--mono);font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--t3);margin-bottom:9px}
+.mitem{display:flex;gap:7px;font-size:11px;color:var(--t1);padding:4px 0;
+  border-bottom:1px solid rgba(255,255,255,.025);line-height:1.4;font-family:var(--ui);font-weight:300}
+.mitem:last-child{border-bottom:none}
+.mbul{color:var(--t3);flex-shrink:0;font-size:9px;margin-top:3px;font-family:var(--mono)}
+.mbul.x{color:var(--coral)}
+
+/* scenarios */
+.scards{display:flex;flex-direction:column;gap:10px}
+.scard{border:1px solid var(--g2);border-radius:7px;overflow:hidden;
+  background:rgba(18,18,31,0.6);transition:border-color .2s}
+.scard:hover{border-color:var(--g3)}
+.scard.open{border-color:var(--g3);box-shadow:0 4px 24px rgba(0,0,0,.3)}
+.scardh{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer}
+.stype{font-family:var(--mono);font-size:8px;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;padding:3px 8px;border-radius:3px;flex-shrink:0}
+.stype.T{background:var(--cor-dim);color:var(--coral);border:1px solid rgba(240,96,64,.3)}
+.stype.S{background:var(--amb-dim);color:var(--amber);border:1px solid rgba(240,168,50,.3)}
+.stype.R{background:var(--tel-dim);color:var(--teal);border:1px solid rgba(48,224,176,.3)}
+.stitle{font-size:12px;color:var(--t0);flex:1;font-family:var(--ui)}
+.schev{font-family:var(--mono);font-size:10px;color:var(--t4);transition:transform .25s}
+.scard.open .schev{transform:rotate(180deg)}
+.scardb{display:none;padding:14px 16px 16px;border-top:1px solid var(--g1);
+  background:rgba(4,4,6,0.4)}
+.scard.open .scardb{display:block}
+.ssit{font-size:12px;color:var(--t1);line-height:1.68;margin-bottom:12px;font-family:var(--ui);font-weight:300}
+.sresp{display:flex;gap:10px;padding-top:11px;border-top:1px solid var(--g1)}
+.sarr{font-family:var(--mono);font-size:11px;color:var(--teal);flex-shrink:0;margin-top:1px}
+.sact{font-size:12px;color:var(--t1);line-height:1.65;font-family:var(--ui);font-weight:300}
+
+/* exit */
+.exitpair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.exitc{border-radius:8px;padding:18px 20px;position:relative;overflow:hidden}
+.exitc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px}
+.exitc.affair{background:rgba(240,96,64,0.06);border:1px solid rgba(240,96,64,.2)}
+.exitc.affair::before{background:linear-gradient(90deg,transparent,rgba(240,96,64,.4),transparent)}
+.exitc.interest{background:rgba(48,224,176,0.05);border:1px solid rgba(48,224,176,.2)}
+.exitc.interest::before{background:linear-gradient(90deg,transparent,rgba(48,224,176,.35),transparent)}
+.exhead{font-family:var(--mono);font-size:8px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:6px}
+.affair .exhead{color:var(--coral)}.interest .exhead{color:var(--teal)}
+.exorg{font-family:var(--mono);font-size:8px;color:var(--t3);margin-bottom:11px;letter-spacing:.06em}
+.extxt{font-size:12px;color:var(--t1);line-height:1.65;margin-bottom:16px;
+  font-family:var(--ui);font-weight:300}
+.exbtn{width:100%;padding:9px 14px;border-radius:5px;font-family:var(--mono);
+  font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;border:1px solid;transition:all .2s}
+.exbtn:hover{transform:translateY(-1px)}
+.affair .exbtn{background:var(--coral);border-color:var(--coral);color:#fff;
+  box-shadow:0 4px 16px rgba(240,96,64,.25)}
+.affair .exbtn:hover{box-shadow:0 6px 24px rgba(240,96,64,.4)}
+.interest .exbtn{background:var(--teal);border-color:var(--teal);color:var(--void);
+  box-shadow:0 4px 16px rgba(48,224,176,.2)}
+.interest .exbtn:hover{box-shadow:0 6px 24px rgba(48,224,176,.35)}
+
+/* ══════════════════════════
+   MISSION COMMAND
+══════════════════════════ */
+.mc-shell{flex:1;display:flex;overflow:hidden}
+.mc-main{flex:1;overflow-y:auto;padding:24px 28px 60px}
+.mc-aside{width:224px;flex-shrink:0;border-left:1px solid var(--g2);overflow-y:auto;
+  background:rgba(8,8,16,0.85);backdrop-filter:blur(20px)}
+
+.pghead{margin-bottom:24px;animation:fadeup .3s ease both}
+.pgtitle{font-family:var(--display);font-size:26px;font-weight:300;color:var(--t0);
+  letter-spacing:.01em;margin-bottom:5px}
+.pgdesc{font-size:11px;color:var(--t2);font-family:var(--mono);letter-spacing:.04em}
+
+/* affair card */
+.acard{background:rgba(18,18,31,0.8);border:1px solid var(--g2);border-radius:8px;
+  margin-bottom:10px;overflow:hidden;transition:all .2s;cursor:pointer;
+  box-shadow:0 2px 16px rgba(0,0,0,.2)}
+.acard:hover{border-color:var(--g3);box-shadow:0 4px 24px rgba(0,0,0,.35)}
+.acard.open{border-color:var(--g3)}
+.acard-head{display:flex;align-items:center;gap:12px;padding:14px 18px}
+.acard-orb{width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;flex-shrink:0}
+.acard-orb.r{background:var(--cor-dim);border:1px solid rgba(240,96,64,.3);
+  box-shadow:0 0 10px rgba(240,96,64,.15)}
+.acard-orb.a{background:var(--amb-dim);border:1px solid rgba(240,168,50,.3);
+  box-shadow:0 0 10px rgba(240,168,50,.12)}
+.acard-orb.g{background:var(--tel-dim);border:1px solid rgba(48,224,176,.3);
+  box-shadow:0 0 10px rgba(48,224,176,.1)}
+.acard-info{flex:1}
+.acard-name{font-size:13px;color:var(--t0);margin-bottom:4px;font-family:var(--ui);font-weight:400}
+.acard-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.atag{font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;letter-spacing:.06em;text-transform:uppercase}
+.atag.r{background:var(--cor-dim);color:var(--coral);border:1px solid rgba(240,96,64,.25)}
+.atag.a{background:var(--amb-dim);color:var(--amber);border:1px solid rgba(240,168,50,.25)}
+.atag.g{background:var(--tel-dim);color:var(--teal);border:1px solid rgba(48,224,176,.25)}
+.atag.n{background:var(--g1);color:var(--t2);border:1px solid var(--g2)}
+.acard-hor{font-family:var(--mono);font-size:9px;color:var(--t3)}
+.acard-chev{font-family:var(--mono);font-size:11px;color:var(--t4);transition:transform .25s}
+.acard.open .acard-chev{transform:rotate(180deg);color:var(--t2)}
+.acard-body{display:none;padding:16px 18px 18px;border-top:1px solid var(--g1);
+  background:rgba(4,4,6,0.3);animation:fadeup .2s ease both}
+.acard.open .acard-body{display:block}
+.acard-desc{font-size:12px;color:var(--t1);line-height:1.68;margin-bottom:14px;
+  font-family:var(--ui);font-weight:300}
+.acard-tasks{display:flex;flex-direction:column;gap:7px}
+.atask{display:flex;align-items:center;gap:10px;padding:8px 12px;
+  border-radius:5px;background:rgba(255,255,255,0.025);border:1px solid var(--g1);
+  transition:border-color .15s}
+.atask:hover{border-color:var(--g2)}
+.tcb{width:14px;height:14px;border-radius:3px;border:1px solid var(--g3);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  cursor:pointer;transition:all .2s;background:none;font-size:9px}
+.tcb.done{background:var(--teal);border-color:var(--teal);color:var(--void);
+  box-shadow:0 0 8px rgba(48,224,176,.3)}
+.tl{font-size:12px;color:var(--t1);flex:1;font-family:var(--ui)}
+.tl.done{color:var(--t3);text-decoration:line-through}
+.th{font-family:var(--mono);font-size:9px;color:var(--t3)}
+
+/* dep panel */
+.dep{display:flex;align-items:center;gap:9px;padding:9px 16px;
+  border-bottom:1px solid var(--g1);cursor:pointer;transition:background .15s}
+.dep:hover{background:var(--g1)}
+.dep-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.dep-name{font-size:11px;color:var(--t1);flex:1;font-family:var(--ui)}
+.dep-st{font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:.06em}
+.dep-st.act{background:var(--tel-dim);color:var(--teal)}
+.dep-st.blk{background:var(--cor-dim);color:var(--coral)}
+.dep-st.que{background:var(--amb-dim);color:var(--amber)}
+
+.aside-blk{padding:14px 16px;border-bottom:1px solid var(--g1)}
+.aside-h{font-family:var(--mono);font-size:8px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:10px}
+
+/* ══════════════════════════
+   VISION COMMAND
+══════════════════════════ */
+.vc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.icard{background:rgba(18,18,31,0.8);border:1px solid var(--g2);border-radius:8px;
+  padding:18px;cursor:pointer;transition:all .25s;
+  box-shadow:0 2px 16px rgba(0,0,0,.2);position:relative;overflow:hidden}
+.icard::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--teal),transparent);
+  opacity:0;transition:opacity .3s}
+.icard:hover{border-color:rgba(48,224,176,.3);transform:translateY(-2px);
+  box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.icard:hover::after{opacity:.6}
+.icard-head{display:flex;align-items:flex-start;gap:11px;margin-bottom:12px}
+.icard-orb{width:30px;height:30px;border-radius:50%;background:var(--tel-dim);
+  border:1px solid rgba(48,224,176,.3);display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0;box-shadow:0 0 12px rgba(48,224,176,.1)}
+.icard-info{flex:1}
+.icard-name{font-size:13px;color:var(--t0);margin-bottom:3px;font-family:var(--ui)}
+.icard-src{font-family:var(--mono);font-size:8px;color:var(--t3);letter-spacing:.06em}
+.conv-row{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.conv-lbl{font-family:var(--mono);font-size:8px;color:var(--t3);letter-spacing:.1em;
+  text-transform:uppercase;width:62px;flex-shrink:0}
+.conv-track{flex:1;height:2px;background:var(--g2);border-radius:1px;overflow:hidden}
+.conv-fill{height:100%;border-radius:1px;background:var(--teal);
+  box-shadow:0 0 6px rgba(48,224,176,.4);transition:width .8s cubic-bezier(.4,0,.2,1)}
+.conv-pct{font-family:var(--mono);font-size:10px;color:var(--teal);min-width:28px;text-align:right}
+.icard-desc{font-size:11px;color:var(--t2);line-height:1.6;margin-bottom:10px;
+  font-family:var(--ui);font-weight:300}
+.ikv{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;
+  border-bottom:1px solid rgba(255,255,255,.03)}
+.ikv:last-child{border-bottom:none}
+.ik{font-family:var(--mono);font-size:8px;color:var(--t3);letter-spacing:.08em;text-transform:uppercase}
+.iv{font-size:11px;color:var(--t1);font-family:var(--mono)}
+.iv.kill{color:var(--coral);font-size:9px}
+
+/* ══════════════════════════
+   SURGICAL EXECUTION
+══════════════════════════ */
+.ex-shell{flex:1;display:flex;overflow:hidden}
+.ex-main{flex:1;overflow-y:auto;padding:24px 28px 60px}
+.ex-aside{width:224px;flex-shrink:0;border-left:1px solid var(--g2);overflow-y:auto;
+  background:rgba(8,8,16,0.85);backdrop-filter:blur(20px)}
+
+.tg{margin-bottom:24px}
+.tg-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.tg-title{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--t3)}
+.tg-badge{font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;
+  background:var(--dp5);border:1px solid var(--g2);color:var(--t2)}
+.tgrule{flex:1;height:1px;background:var(--g1)}
+
+.task{display:flex;align-items:flex-start;gap:11px;padding:11px 16px;
+  background:rgba(18,18,31,0.7);border:1px solid var(--g2);border-radius:7px;
+  margin-bottom:8px;cursor:pointer;transition:all .2s}
+.task:hover{border-color:var(--g3);background:rgba(18,18,31,0.9);transform:translateX(2px)}
+.tcb2{width:15px;height:15px;border-radius:4px;border:1px solid var(--g3);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  cursor:pointer;transition:all .2s;background:none;font-size:9px;margin-top:1px}
+.tcb2.done{background:var(--teal);border-color:var(--teal);color:var(--void);
+  box-shadow:0 0 10px rgba(48,224,176,.3)}
+.tbody{flex:1}
+.tname{font-size:12px;color:var(--t0);margin-bottom:5px;font-family:var(--ui)}
+.tname.done{color:var(--t3);text-decoration:line-through}
+.tmeta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tsrc{font-family:var(--mono);font-size:9px;color:var(--t3)}
+.tstat{font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:3px;
+  text-transform:uppercase;letter-spacing:.06em}
+.tstat.active{background:var(--tel-dim);color:var(--teal)}
+.tstat.queued{background:var(--amb-dim);color:var(--amber)}
+.tstat.blocked{background:var(--cor-dim);color:var(--coral)}
+.tstat.done{background:var(--g1);color:var(--t3)}
+.thor{font-family:var(--mono);font-size:9px;color:var(--t3);margin-left:auto}
+
+/* TOAST */
+.toast{position:fixed;bottom:62px;right:20px;
+  background:rgba(18,18,31,0.96);border:1px solid var(--g3);
+  color:var(--t1);font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  padding:10px 16px;border-radius:6px;pointer-events:none;
+  opacity:0;transform:translateY(6px);transition:all .25s;z-index:999;
+  backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:none}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--dp7);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="top">
+  <div class="logo" onclick="nav('warroom')">
+    <div class="logo-gem">
+      <svg viewBox="0 0 26 26" fill="none">
+        <path d="M13 2L23 7.5v11L13 24 3 18.5V7.5L13 2z" stroke="url(#gs)" stroke-width="1.2"/>
+        <path d="M13 6L20 10v8L13 22 6 18V10l7-4z" fill="url(#gf)" opacity=".7"/>
+        <path d="M13 10L17 12.5v5L13 20 9 17.5v-5L13 10z" fill="url(#gi)" opacity=".9"/>
+        <defs>
+          <linearGradient id="gs" x1="3" y1="2" x2="23" y2="24" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#f0a832"/><stop offset="100%" stop-color="#30e0b0"/>
+          </linearGradient>
+          <linearGradient id="gf" x1="6" y1="6" x2="20" y2="22" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#f0a832" stop-opacity=".3"/><stop offset="100%" stop-color="#30e0b0" stop-opacity=".15"/>
+          </linearGradient>
+          <linearGradient id="gi" x1="9" y1="10" x2="17" y2="20" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#f0a832"/><stop offset="100%" stop-color="#30e0b0"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <span class="top-wordmark">KHAL</span>
+  </div>
+  <div class="top-tagline">Decision Operating System</div>
+  <nav class="top-nav">
+    <button class="tn on" id="tn-warroom" onclick="nav('warroom')">War Room</button>
+    <button class="tn" id="tn-source" onclick="nav('source')">Sources</button>
+    <button class="tn" id="tn-mission" onclick="nav('mission')">Mission</button>
+    <button class="tn" id="tn-vision" onclick="nav('vision')">Vision</button>
+    <button class="tn" id="tn-execution" onclick="nav('execution')">Execution</button>
+  </nav>
+  <div class="top-r">
+    <div class="top-search">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="4.5" cy="4.5" r="3.2" stroke="#524e46" stroke-width="1.1"/><path d="M7 7L9.5 9.5" stroke="#524e46" stroke-width="1.1" stroke-linecap="round"/></svg>
+      <input type="text" placeholder="Search">
+    </div>
+    <div class="ico">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5a3.5 3.5 0 013.5 3.5v2.5H10V9H2V7.5h.5V5A3.5 3.5 0 016 1.5z" stroke="#8a8678" stroke-width="1" fill="none"/></svg>
+    </div>
+    <div class="av">KH</div>
+  </div>
+</div>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sb">
+  <button class="si on" id="si-warroom" onclick="nav('warroom')">
+    <svg class="si-icon" viewBox="0 0 14 14" fill="none"><polygon points="7,1.5 12.5,4.5 12.5,9.5 7,12.5 1.5,9.5 1.5,4.5" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="7" r="2" fill="currentColor" opacity=".6"/></svg>
+    War Room
+  </button>
+  <div class="sdiv"></div>
+  <div class="sbh">War Gaming</div>
+  <button class="si si-sub" id="si-source" onclick="nav('source')">⟳&nbsp; Source</button>
+  <button class="si si-sub" id="si-domain" onclick="ts('Domain chamber')">◈&nbsp; Domain</button>
+  <button class="si si-sub" id="si-craft" onclick="ts('Craft chamber')">✦&nbsp; Craft</button>
+  <button class="si si-sub" id="si-affair-sub" onclick="nav('mission')">◆&nbsp; Affair</button>
+  <button class="si si-sub" id="si-interest" onclick="nav('vision')">◇&nbsp; Interest</button>
+  <div class="sdiv"></div>
+  <button class="si" id="si-mission" onclick="nav('mission')">
+    <svg class="si-icon" viewBox="0 0 14 14" fill="none"><path d="M2 10V5.5L7 2l5 3.5V10H2z" stroke="currentColor" stroke-width="1.2"/><path d="M5 10V7.5h4V10" stroke="currentColor" stroke-width="1.1"/></svg>
+    Mission Command
+    <div class="sibadge" id="badge-a">3</div>
+  </button>
+  <button class="si" id="si-vision" onclick="nav('vision')">
+    <svg class="si-icon" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4.5v2.5l2 2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+    Vision Command
+    <div class="sibadge" id="badge-i">5</div>
+  </button>
+  <button class="si" id="si-execution" onclick="nav('execution')">
+    <svg class="si-icon" viewBox="0 0 14 14" fill="none"><path d="M2 10L4 5l2.5 3L9 2l3 8H2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/></svg>
+    Execution
+    <div class="sibadge" id="badge-t">9</div>
+  </button>
+  <div class="sdiv"></div>
+  <button class="si" onclick="ts('Lab')">
+    <svg class="si-icon" viewBox="0 0 14 14" fill="none"><path d="M5.5 2v4.5L3 11h8L8.5 6.5V2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M4.5 2h5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    Lab
+  </button>
+</aside>
+
+<!-- ═══════════ WAR ROOM ═══════════ -->
+<div class="page on" id="page-warroom">
+  <div class="wr-head">
+    <div class="wr-title">War Room</div>
+    <div class="wr-tabs">
+      <button class="wtab on">Dashboard</button>
+      <button class="wtab">Weak Nodes</button>
+      <button class="wtab">Modality</button>
+    </div>
+    <div class="wr-r">
+      <div class="wpill live" id="wp-live">6 sources live</div>
+      <div class="wpill" id="wp-nodes">15 nodes</div>
+      <button class="ico" onclick="resetGraph()" style="width:26px;height:26px" title="Reset view">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5A3.5 3.5 0 108.5 5" stroke="#8a8678" stroke-width="1.2" stroke-linecap="round"/><path d="M7 3l1.5 2L7 7" stroke="#8a8678" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="wr-body">
+    <div class="gw" id="gwrap"><canvas id="gc"></canvas>
+      <div class="npop" id="npop">
+        <div class="np-type" id="np-type">Source</div>
+        <div class="np-title" id="np-title">—</div>
+        <div class="np-desc" id="np-desc">—</div>
+        <div class="np-row"><div class="np-k">Tail</div><div class="np-v r" id="np-tail">—</div></div>
+        <div class="np-row"><div class="np-k">Domains</div><div class="np-v" id="np-doms">—</div></div>
+        <div class="np-row"><div class="np-k">Posture</div><div class="np-v g" id="np-pos">—</div></div>
+        <div class="np-divider"></div>
+        <div class="np-btns">
+          <button class="np-btn g" id="np-game">Game Source →</button>
+          <button class="np-btn o" id="np-affair">+ Affair</button>
+        </div>
+      </div>
+    </div>
+    <div class="wrp">
+      <div class="rblk">
+        <div class="rbh">Decision Posture <span class="rbm">⋯</span></div>
+        <div class="pring-wrap">
+          <div class="rc">
+            <svg width="62" height="62" viewBox="0 0 62 62">
+              <circle cx="31" cy="31" r="25" fill="none" stroke="#1e1e2e" stroke-width="5.5"/>
+              <circle cx="31" cy="31" r="25" fill="none" stroke="#30e0b0" stroke-width="5.5"
+                stroke-dasharray="97 60" stroke-linecap="round" style="filter:drop-shadow(0 0 4px rgba(48,224,176,.4))"/>
+              <circle cx="31" cy="31" r="25" fill="none" stroke="#f06040" stroke-width="5.5"
+                stroke-dasharray="28 129" stroke-dashoffset="-97" stroke-linecap="round" style="filter:drop-shadow(0 0 4px rgba(240,96,64,.3))"/>
+            </svg>
+            <div class="rv">62%</div>
+          </div>
+          <div class="pstats">
+            <div class="ps"><div class="psl">Robust</div><div class="psv" style="color:var(--teal)">62%</div></div>
+            <div class="ps"><div class="psl">Fragile</div><div class="psv" style="color:var(--coral)">−18%</div></div>
+            <div class="ps"><div class="psl">Optional</div><div class="psv" style="color:var(--t1)">20%</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="rblk">
+        <div class="rbh">Next Priorities <span class="rbm">∧</span></div>
+        <div class="pri"><div class="pri-dot" style="background:var(--coral);box-shadow:0 0 5px var(--cor-glow)"></div><div class="pri-b"><div class="pri-n">Health</div><div class="pri-a" style="color:var(--coral)">Reduce Fragility</div><div class="pri-bar"><div class="pri-f" style="width:72%;background:var(--coral);box-shadow:0 0 6px rgba(240,96,64,.4)"></div></div></div></div>
+        <div class="pri"><div class="pri-dot" style="background:var(--amber);box-shadow:0 0 5px var(--amb-glow)"></div><div class="pri-b"><div class="pri-n">Infra</div><div class="pri-a" style="color:var(--amber)">Hedge + Expand</div><div class="pri-bar"><div class="pri-f" style="width:50%;background:var(--amber);box-shadow:0 0 6px rgba(240,168,50,.3)"></div></div></div></div>
+        <div class="pri"><div class="pri-dot" style="background:var(--teal);box-shadow:0 0 5px var(--tel-glow)"></div><div class="pri-b"><div class="pri-n">Family</div><div class="pri-a" style="color:var(--teal)">Preserve optionality</div><div class="pri-bar"><div class="pri-f" style="width:35%;background:var(--teal);box-shadow:0 0 6px rgba(48,224,176,.3)"></div></div></div></div>
+      </div>
+      <div class="rblk">
+        <div class="rbh">Lineage Exposure</div>
+        <div class="li"><div class="lin">Self</div><div class="lit"><div class="lif" style="width:12%;background:var(--amber)"></div></div><div class="lip" style="color:var(--amber)">12%</div></div>
+        <div class="li"><div class="lin">Family</div><div class="lit"><div class="lif" style="width:18%;background:var(--coral)"></div></div><div class="lip" style="color:var(--coral)">18%</div></div>
+        <div class="li"><div class="lin">State</div><div class="lit"><div class="lif" style="width:20%;background:var(--amber)"></div></div><div class="lip" style="color:var(--amber)">20%</div></div>
+        <div class="li"><div class="lin">Nation</div><div class="lit"><div class="lif" style="width:32%;background:var(--teal)"></div></div><div class="lip" style="color:var(--teal)">32%</div></div>
+        <div class="li"><div class="lin">Humanity</div><div class="lit"><div class="lif" style="width:41%;background:var(--teal)"></div></div><div class="lip" style="color:var(--teal)">41%</div></div>
+        <div class="li"><div class="lin">Nature</div><div class="lit"><div class="lif" style="width:27%;background:var(--green)"></div></div><div class="lip" style="color:var(--green)">27%</div></div>
+      </div>
+      <div class="rblk" style="border-bottom:none;padding-bottom:8px"><div class="rbh">Repercussions</div></div>
+      <div class="rep-scroll">
+        <div class="rep" onclick="nav('source')"><div class="rep-top"><span>♥</span><span class="rep-name">Health</span><div class="rep-tag r">Fragile</div></div><div class="rep-desc">Sleep debt compounding. Training unstructured.</div><div class="rep-meta"><span class="rep-m">Impact <span style="color:var(--coral)">High</span></span><span class="rep-m">30d</span></div></div>
+        <div class="rep" onclick="nav('mission')"><div class="rep-top"><span>⬡</span><span class="rep-name">Infrastructure</span><div class="rep-tag a">Exposed</div></div><div class="rep-desc">Key-person dependency on critical systems.</div><div class="rep-meta"><span class="rep-m">Impact <span style="color:var(--amber)">Mid</span></span><span class="rep-m">60d</span></div></div>
+        <div class="rep" onclick="nav('vision')"><div class="rep-top"><span>⌂</span><span class="rep-name">Family</span><div class="rep-tag g">Stable</div></div><div class="rep-desc">Optionality preserved. No acute fragility.</div><div class="rep-meta"><span class="rep-m">Impact <span style="color:var(--teal)">Low</span></span><span class="rep-m">90d</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="sumbar">
+    <div class="sbc" onclick="nav('mission')" style="color:var(--coral)"><div class="sbc-icon">◆</div><div class="sbc-b"><div class="sbc-n">Affairs</div><div class="sbc-v" id="sc-a">3 <span class="sbc-s">active</span></div></div><div class="sbc-arr">→</div></div>
+    <div class="sbc" onclick="nav('vision')" style="color:var(--teal)"><div class="sbc-icon">◇</div><div class="sbc-b"><div class="sbc-n">Interests</div><div class="sbc-v" id="sc-i">5 <span class="sbc-s">open</span></div></div><div class="sbc-arr">→</div></div>
+    <div class="sbc" onclick="ts('Crafts library')" style="color:var(--purple)"><div class="sbc-icon">✦</div><div class="sbc-b"><div class="sbc-n">Crafts</div><div class="sbc-v">8 <span class="sbc-s">available</span></div></div><div class="sbc-arr">→</div></div>
+    <div class="sbc" onclick="nav('execution')" style="color:var(--amber)"><div class="sbc-icon">⚠</div><div class="sbc-b"><div class="sbc-n">Weak Links</div><div class="sbc-v" id="sc-w" style="color:var(--amber)">4 <span class="sbc-s">flagged</span></div></div><div class="sbc-arr">→</div></div>
+  </div>
+  <div class="tbar">
+    <div class="tbnow">NOW</div>
+    <button class="tbtn">3M</button><button class="tbtn">6M</button>
+    <button class="tbtn">1Y</button><button class="tbtn">5Y</button>
+    <div class="tbsep"></div>
+    <div class="tbi"><div class="tbid" style="background:var(--teal)"></div>Sleep Protocol</div>
+    <div class="tbi"><div class="tbid" style="background:var(--amber)"></div>Dependencies</div>
+    <div class="tbi"><div class="tbid" style="background:var(--coral)"></div>Threat Tree</div>
+    <div class="tbr">
+      <div class="tbstat">Sources <span>6</span></div>
+      <div class="tbstat">Tasks <span id="tc">9</span></div>
+      <button class="tbact" onclick="nav('source')">Game Source →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SOURCE ═══════════ -->
+<div class="page" id="page-source">
+  <div class="psh">
+    <div class="psh-title">War Gaming / Source</div>
+    <button class="wtab on" style="margin-left:8px">State of the Art</button>
+    <button class="wtab">Scenarios</button>
+    <div class="psh-r">
+      <button class="btn back" onclick="nav('warroom')">← War Room</button>
+      <button class="btn" onclick="nav('mission')">Mission →</button>
+    </div>
+  </div>
+  <div class="src-shell">
+    <aside class="src-rail">
+      <div class="srlh">Volatility Sources</div>
+      <div class="srli on" onclick="selSrc(this,'rate')"><div class="srli-dot"></div><div><div class="srli-name">Interest rate cycle</div><div class="srli-tag fat">Fat tail</div></div></div>
+      <div class="srli" onclick="selSrc(this,'geo')"><div class="srli-dot"></div><div><div class="srli-name">Geopolitics</div><div class="srli-tag slow">Slow burn</div></div></div>
+      <div class="srli" onclick="selSrc(this,'keyperson')"><div class="srli-dot"></div><div><div class="srli-name">Key-person dependency</div><div class="srli-tag str">Structural</div></div></div>
+      <div class="srli" onclick="selSrc(this,'tech')"><div class="srli-dot"></div><div><div class="srli-name">Tech shift</div><div class="srli-tag slow">Slow burn</div></div></div>
+      <div class="srli" onclick="selSrc(this,'health')"><div class="srli-dot"></div><div><div class="srli-name">Health fragility</div><div class="srli-tag fat">Fat tail</div></div></div>
+    </aside>
+    <div class="src-scroll"><div class="src-flow" id="src-flow"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════ MISSION ═══════════ -->
+<div class="page" id="page-mission">
+  <div class="psh">
+    <div class="psh-title">Mission Command</div>
+    <button class="wtab on">Hierarchy</button>
+    <button class="wtab">Dependencies</button>
+    <div class="psh-r">
+      <button class="btn prim" onclick="addAffair()">+ New Affair</button>
+    </div>
+  </div>
+  <div class="mc-shell">
+    <div class="mc-main" id="mc-main"></div>
+    <aside class="mc-aside">
+      <div class="aside-blk"><div class="aside-h">Dependencies</div>
+        <div class="dep"><div class="dep-dot" style="background:var(--teal)"></div><div class="dep-name">Core Security</div><div class="dep-st act">Active</div></div>
+        <div class="dep"><div class="dep-dot" style="background:var(--amber)"></div><div class="dep-name">Negotiate Alliance</div><div class="dep-st que">Queued</div></div>
+        <div class="dep"><div class="dep-dot" style="background:var(--coral)"></div><div class="dep-name">Design Hedge</div><div class="dep-st blk">Blocked</div></div>
+        <div class="dep"><div class="dep-dot" style="background:var(--teal)"></div><div class="dep-name">Sleep Protocol v2</div><div class="dep-st act">Active</div></div>
+      </div>
+      <div class="aside-blk"><div class="aside-h">No-ruin sequence</div>
+        <p style="font-size:11px;color:var(--t2);line-height:1.65;font-family:var(--ui);font-weight:300">Affairs are sequenced: hedge before edge. No obligation runs until the one above it is complete or explicitly overridden.</p>
+      </div>
+      <div class="aside-blk" style="border:none"><div class="aside-h">Lineage threshold</div>
+        <div class="li"><div class="lin">Self</div><div class="lit"><div class="lif" style="width:12%;background:var(--amber)"></div></div><div class="lip" style="color:var(--amber)">12%</div></div>
+        <div class="li"><div class="lin">Family</div><div class="lit"><div class="lif" style="width:18%;background:var(--coral)"></div></div><div class="lip" style="color:var(--coral)">18%</div></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ═══════════ VISION ═══════════ -->
+<div class="page" id="page-vision">
+  <div class="psh">
+    <div class="psh-title">Vision Command</div>
+    <button class="wtab on">Option Paths</button>
+    <button class="wtab">Convexity Map</button>
+    <div class="psh-r">
+      <button class="btn prim" onclick="addInterest()">+ New Interest</button>
+    </div>
+  </div>
+  <div class="mc-shell">
+    <div class="mc-main" id="vc-main"></div>
+    <aside class="mc-aside">
+      <div class="aside-blk"><div class="aside-h">Convexity signal</div>
+        <p style="font-size:11px;color:var(--t2);line-height:1.65;font-family:var(--ui);font-weight:300">Interests sorted by convexity. Kill criteria enforced before resource allocation.</p>
+      </div>
+      <div class="aside-blk" style="border:none"><div class="aside-h">Kill criteria</div>
+        <div class="dep"><div class="dep-dot" style="background:var(--coral)"></div><div class="dep-name" style="font-size:11px">Rate cycle stalls 6+ months</div></div>
+        <div class="dep"><div class="dep-dot" style="background:var(--coral)"></div><div class="dep-name" style="font-size:11px">No signal after 90 days</div></div>
+        <div class="dep"><div class="dep-dot" style="background:var(--amber)"></div><div class="dep-name" style="font-size:11px">Downside exceeds cap</div></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ═══════════ EXECUTION ═══════════ -->
+<div class="page" id="page-execution">
+  <div class="psh">
+    <div class="psh-title">Surgical Execution</div>
+    <button class="wtab on">Task Chains</button>
+    <button class="wtab">Timeline</button>
+    <div class="psh-r">
+      <div class="tbstat" style="color:var(--t2);margin-right:4px">Done <span id="done-c" style="color:var(--teal)">0</span></div>
+      <button class="btn prim" onclick="addTask()">+ New Task</button>
+    </div>
+  </div>
+  <div class="ex-shell">
+    <div class="ex-main" id="ex-main"></div>
+    <aside class="ex-aside">
+      <div class="aside-blk"><div class="aside-h">Task status</div>
+        <div class="li"><div class="lin">Active</div><div class="lit"><div class="lif" id="tb-a" style="background:var(--teal)"></div></div><div class="lip" style="color:var(--teal)" id="tl-a">—</div></div>
+        <div class="li"><div class="lin">Queued</div><div class="lit"><div class="lif" id="tb-q" style="background:var(--amber)"></div></div><div class="lip" style="color:var(--amber)" id="tl-q">—</div></div>
+        <div class="li"><div class="lin">Blocked</div><div class="lit"><div class="lif" id="tb-b" style="background:var(--coral)"></div></div><div class="lip" style="color:var(--coral)" id="tl-b">—</div></div>
+        <div class="li"><div class="lin">Done</div><div class="lit"><div class="lif" id="tb-d" style="background:var(--green)"></div></div><div class="lip" style="color:var(--green)" id="tl-d">—</div></div>
+      </div>
+      <div class="aside-blk" style="border:none"><div class="aside-h">Doctrine context</div>
+        <p style="font-size:11px;color:var(--t2);line-height:1.65;font-family:var(--ui);font-weight:300">Every task traces to an Affair or Interest. Click any task to toggle completion. Upstream doctrine preserved.</p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+</div><!-- shell -->
+<div class="toast" id="tst"></div>
+
+<script>
+/* ════════════════ STATE ════════════════ */
+const S={
+  affairs:[
+    {id:'a1',name:'Eliminate rate exposure',domain:'Capital structure',src:'Interest rate cycle',
+     status:'active',horizon:'30d',frag:'high',
+     desc:'Fix variable-rate debt above 30% threshold. No covenant exposure within 2× stress scenario.',
+     tasks:[{id:'t1',label:'Audit variable-rate tranches',done:false,h:'7d'},
+            {id:'t2',label:'Engage rate-cap broker',done:false,h:'14d'},
+            {id:'t3',label:'Draft covenant stress model',done:true,h:'done'}]},
+    {id:'a2',name:'Build 6-month cash runway',domain:'Liquidity reserve',src:'Interest rate cycle',
+     status:'active',horizon:'21d',frag:'high',
+     desc:'Hard floor: 6 months operating costs in short-duration accessible instruments.',
+     tasks:[{id:'t4',label:'Model 6-month burn rate',done:true,h:'done'},
+            {id:'t5',label:'Open T-bill ladder account',done:false,h:'10d'},
+            {id:'t6',label:'Move reserve to short-duration',done:false,h:'21d'}]},
+    {id:'a3',name:'Reduce health fragility',domain:'Health',src:'Health fragility',
+     status:'active',horizon:'45d',frag:'critical',
+     desc:'Sleep protocol, training structure, cognitive load reduction before growth allocation.',
+     tasks:[{id:'t7',label:'Set 90-min sleep window protocol',done:false,h:'3d'},
+            {id:'t8',label:'Define training load ceiling',done:false,h:'7d'},
+            {id:'t9',label:'Remove 2 non-essential obligations',done:false,h:'14d'}]},
+  ],
+  interests:[
+    {id:'i1',name:'Rate normalisation optionality',domain:'Capital structure',src:'Interest rate cycle',
+     conv:82,expiry:'9 months',kill:'Rates stable above 5.5% for 6 months',
+     desc:'Pre-position for fixed-rate refinancing window. Monitor lender docs and distressed peers.'},
+    {id:'i2',name:'Distressed peer acquisition',domain:'Wealth',src:'Economy',
+     conv:61,expiry:'12 months',kill:'No peer distress signals after 6 months',
+     desc:'Over-leveraged competitors face covenant breach. Position to acquire at discount.'},
+    {id:'i3',name:'AI toolchain edge',domain:'Knowledge',src:'Tech shift',
+     conv:74,expiry:'6 months',kill:'No productivity gain after 60-day trial',
+     desc:'Compound information advantage through selective AI toolchain deployment.'},
+    {id:'i4',name:'Alliance network build',domain:'Power',src:'Geopolitics',
+     conv:55,expiry:'18 months',kill:'No traction after 90 days of outreach',
+     desc:'Expand strategic relationships in power domain before geopolitical window closes.'},
+    {id:'i5',name:'Knowledge stack expansion',domain:'Knowledge',src:'Tech shift',
+     conv:68,expiry:'Open',kill:'Returns below threshold for 3 months',
+     desc:'Compound skill capital systematically. Long-term position, not a project.'},
+  ],
+  selSrc:'rate',
+  selDom:null,
+};
+
+const SRC={
+  rate:{name:'Interest rate cycle',kind:'Macro / monetary force — slow onset, non-linear consequence',
+    desc:'A sustained shift in the rate environment changes the cost of capital and fragility of variable-rate or short-maturity debt. Ergodic in onset, fat-tailed in damage.',
+    tags:[{l:'Fat-tail damage',c:'r'},{l:'Non-linear above trigger',c:'a'},{l:'Externally driven',c:''},{l:'Irreversible at cliff',c:''}],
+    domains:['Capital structure','Operating model','Liquidity reserve'],
+    doc:{'Capital structure':{pair:'Interest rate cycle → Capital structure',dtype:'One-way door',tail:'Fat / irreversible',quad:'IV — Unknown unknowns',posture:'Barbell + no-ruin first',stakes:'Solvency of operating entity',risks:'Covenant breach, rollover cliff',lineage:'Self → Family',frag:'Lenders, fixed-rate counterparties',fp:78,fl:'High',vuln:'Variable-rate debt, short maturities',nonlin:'Convex loss above trigger rate',hedge:'Eliminate variable-rate exposure above 30% of total debt. Build 6-month cash runway. No covenant exposure within 2× stress.',edge:'Rate normalisation creates refinancing window. Lock fixed at peak. Option on distressed acquisition of over-leveraged peers.',craft:['Barbell strategy','Debt structure audit','Rate cap/swap protocol'],heuristics:['Optimise survival before return','A covenant breach is a cliff, not a negotiation','Fix the debt; keep optionality in cash'],avoid:['Averaging into variable exposure rising cycle','Treating forecast revenue as cash for covenants','Waiting for rate certainty before hedging'],aff:'Eliminate variable-rate exposure and establish 6-month cash reserve. Covenant protection before growth allocation.',int:'Monitor rate normalisation signal. Pre-position lender docs. Expiry: 9 months. Kill: rates stable above 5.5% for 6 months.',sc:[{t:'T',title:'Rates hold above 6% for 18+ months',sit:'Variable tranche ($2.4M) reprices at 6.8%. Monthly debt service rises ~$9,600. Runway compresses 11→7 months. Covenant fails at month 9.',resp:'Swap variable tranche to fixed via rate cap. Trigger 90-day liquidity review. Freeze discretionary capex.'},{t:'T',title:'Lender pulls $800K facility at rollover',sit:'Primary lender declines renewal. Replacement requires 3–4 month lead time. Gap forces reserve draw.',resp:'Start secondary lender relationship now. Keep facility below 70% utilisation. No surprise draws 90 days before rollover.'},{t:'S',title:'Rate cut cycle opens refinancing window',sit:'Central bank pivots. Fixed-rate window at 4.1%. Peers rush — spreads compress, lead times lengthen.',resp:'Pre-position: complete lender diligence packages in advance. Move at window open, not rate bottom.'}]},'Operating model':{pair:'Interest rate cycle → Operating model',dtype:'Two-way / reversible',tail:'Thin / ergodic',quad:'II — Known unknowns',posture:'Margin stress-test + flexibility',stakes:'Margin compression, pricing power',risks:'Cost inflation, customer churn on repricing',lineage:'Self',frag:'Fixed-cost suppliers, long contracts',fp:44,fl:'Moderate',vuln:'Fixed-cost base with variable revenue',nonlin:'Linear compression, not cliff',hedge:'Stress-test margin at +2% cost. Build variable cost flexibility. Renegotiate fixed contracts before peak.',edge:'Competitors with weaker margins face harder repricing. Window to gain price position on new contracts.',craft:['Margin analysis','Variable cost audit','Pricing strategy'],heuristics:['Stress-test margin before optimising revenue','Fixed costs in a variable-rate world are fragile','Repricing power is the hedge'],avoid:['Locking new fixed-cost commitments at cycle peak','Assuming revenue covers cost increase','Delaying price review past 6 months'],aff:'Stress-test operating margin under +2% cost scenario. Identify fixed costs convertible to variable within 60 days.',int:'Monitor competitor pricing behaviour. Expiry: 6 months. Kill: no opportunity within cycle.',sc:[{t:'T',title:'Cost base rises 2% across fixed suppliers',sit:'All fixed contracts reprice at cycle peak. Margin compresses 34%→28%. Break-even threshold rises 18%.',resp:'Audit all fixed contracts. Negotiate variable-indexed terms before next renewal.'},{t:'S',title:'Competitor breaks on contract pricing',sit:'Weaker-margin competitor reduces contract prices to retain customers.',resp:'Hold pricing discipline. Highlight quality differential. Prepare customer retention playbook.'}]},'Liquidity reserve':{pair:'Interest rate cycle → Liquidity reserve',dtype:'One-way door (if depleted)',tail:'Fat on depletion',quad:'III — Unknown knowns',posture:'Reserve floor + duration fix',stakes:'Operating continuity, covenant headroom',risks:'Cash draw at peak need',lineage:'Self → Family',frag:'Banks reducing credit lines',fp:62,fl:'Elevated',vuln:'Reserve in rate-sensitive instruments',nonlin:'Non-linear below floor — cascading',hedge:'Hard floor: 6 months operating costs in short-duration accessible instruments. No yield-chasing.',edge:'High-rate environment means reserve earns real yield for first time. Improve return without duration risk.',craft:['Cash management','T-bill ladder','Reserve floor protocol'],heuristics:['Liquidity is the immune system — protect it first','Never chase yield with reserve capital','Short duration on safety capital, always'],avoid:['Holding reserve in duration-sensitive instruments','Drawing below 6-month floor without board sign-off','Confusing yield with reserve management'],aff:'Move reserve to short-duration T-bill ladder. Establish floor covenant. No draw below 6-month coverage.',int:'T-bill ladder for reserve yield optimisation. Upside material. Downside capped by duration. Review quarterly.',sc:[{t:'T',title:'Unexpected 3-month cash gap',sit:'Major client delays payment. Reserve drawn to 2 months. Covenant breached.',resp:'Trigger emergency credit line. Accelerate collections. Do not touch investment reserve.'},{t:'S',title:'Rates provide 5.2% yield on T-bills',sit:'Short-duration reserve earns meaningful yield without duration risk.',resp:'Optimise reserve allocation within duration constraint. Document yield improvement.'}]}}},
+  geo:{name:'Geopolitics',kind:'Structural / macro force — slow onset, cascade potential',desc:'Global power shifts, alliance instability, and cross-border friction affecting resource flows, regulatory environment, and operational security.',tags:[{l:'Fat-tail cascade',c:'r'},{l:'Slow onset',c:'a'},{l:'State-level force',c:''}],domains:['Power','Wealth','State'],doc:{'Power':{pair:'Geopolitics → Power',dtype:'One-way door',tail:'Fat / cascade potential',quad:'IV',posture:'Intelligence + Barbell',stakes:'Control in key decisions',risks:'Alliance failure, regulatory capture',lineage:'Self → State',frag:'Regulatory bodies, counterparties',fp:55,fl:'Moderate-High',vuln:'Concentration in single jurisdiction',nonlin:'Non-linear above threshold',hedge:'Diversify jurisdictional exposure. Build second-order relationships before needed.',edge:'Instability creates asymmetric opportunity for well-positioned operators.',craft:['Intelligence gathering','Negotiation','Strategic positioning'],heuristics:['Geopolitical risk must be hedged, not diversified','Build relationships in good times','Never be the last to know'],avoid:['Single-jurisdiction concentration','Reactive relationship building','Assuming stability continues'],aff:'Map jurisdictional exposure. Identify top-3 relationship gaps. Begin outreach.',int:'Monitor for alliance opportunity. Expiry: 18 months.',sc:[{t:'T',title:'Key regulatory ally loses position',sit:'Primary contact loses role. Institutional knowledge gap opens.',resp:'Activate secondary contacts immediately. Document regulatory history.'}]}}},
+  keyperson:{name:'Key-person dependency',kind:'Structural / internal force — latent, non-linear at trigger',desc:'Single points of failure in critical systems, knowledge, or relationships. Damage is invisible until triggered.',tags:[{l:'Structural fragility',c:'r'},{l:'Internal force',c:''},{l:'Non-linear at trigger',c:'a'}],domains:['Infrastructure','Knowledge','Operations'],doc:{'Infrastructure':{pair:'Key-person → Infrastructure',dtype:'One-way door',tail:'Fat at departure',quad:'III',posture:'Dependency map + succession',stakes:'System continuity, operational capability',risks:'Knowledge loss, capability cliff',lineage:'Self',frag:'Individuals holding undocumented knowledge',fp:70,fl:'High',vuln:'Undocumented processes, single-person systems',nonlin:'Cliff at departure — not gradual',hedge:'Document all critical processes. Cross-train at least one backup. No critical system held by single operator.',edge:'Systematising removes fragility and creates scalability.',craft:['Process documentation','Cross-training','System audit'],heuristics:["If one person leaving breaks a system, the system is broken","Document before the person leaves, not after","Redundancy is anti-fragility"],avoid:["Assuming key people won't leave","Undocumented tribal knowledge","Single-operator critical systems"],aff:'Audit single-person critical processes. Document top-3 within 30 days. Assign cross-training pairs.',int:'Systematisation unlocks scale capacity. Treat as optionality, not just risk reduction.',sc:[{t:'T',title:'Critical operator departs suddenly',sit:'Sole operator of core system gives 2-week notice. No documentation exists.',resp:'Emergency knowledge transfer. Record all sessions. Rebuild process docs in parallel.'}]}}},
+  tech:{name:'Tech shift',kind:'Structural / market force — ergodic onset, compounding advantage',desc:'Technology disruption compressing competitive windows and creating asymmetric advantage for early movers.',tags:[{l:'Ergodic onset',c:'a'},{l:'Compounding advantage',c:''},{l:'Externally driven',c:''}],domains:['Knowledge','Infrastructure','Operations'],doc:{'Knowledge':{pair:'Tech shift → Knowledge',dtype:'Two-way / reversible',tail:'Thin / ergodic',quad:'II',posture:'Optionality + early positioning',stakes:'Information advantage, skill capital',risks:'Competitive compression if late mover',lineage:'Self',frag:'Single-tool dependencies',fp:35,fl:'Low-Moderate',vuln:'Over-reliance on single stack',nonlin:'Advantage compounds non-linearly early',hedge:'Broad awareness. Avoid deep lock-in. Keep learning cadence.',edge:'Early compounding advantage in new toolchains creates durable position.',craft:['Toolchain evaluation','Skill compounding','Technology scouting'],heuristics:['Adopt early enough to compound, late enough to avoid dead ends',"Never let a single tool own your workflow",'Edge is in application, not tool'],avoid:['Deep lock-in to legacy tools','Ignoring compounding signals','Adopting without clear use case'],aff:'Map current tool dependencies. Identify top-3 AI toolchain leverage points.',int:'Systematic AI toolchain experiment. Expiry: 6 months. Kill: no productivity gain after 60-day trial.',sc:[{t:'S',title:'AI toolchain reduces research time 60%',sit:'Early adopters report dramatic productivity gains. Competitive window opening.',resp:'Begin structured 60-day trial. Measure output. Adopt if signal confirmed.'}]}}},
+  health:{name:'Health fragility',kind:'Physical / biological force — slow accumulation, cliff at threshold',desc:'Sleep debt, training load mismanagement, and cognitive overload accumulate silently until performance cliff.',tags:[{l:'Fat tail at cliff',c:'r'},{l:'Slow accumulation',c:'a'},{l:'Irreversible at cliff',c:'r'}],domains:['Health','Cognition','Performance'],doc:{'Health':{pair:'Health fragility → Health',dtype:'One-way door at cliff',tail:'Fat / irreversible at threshold',quad:'IV',posture:'No-ruin first — structural protocol',stakes:'Cognitive performance, physical capacity',risks:'Burnout, injury, cognitive cliff',lineage:'Self → Family',frag:'Sleep debt, training overload',fp:78,fl:'High',vuln:'No structured recovery protocol',nonlin:'Linear accumulation, non-linear collapse',hedge:'90-minute sleep window. Training load ceiling. Two non-essential obligations removed.',edge:'Structural health protocol creates compounding cognitive advantage.',craft:['Sleep protocol','Training periodisation','Load management'],heuristics:['Sleep debt compounds — pay it before investing anywhere else','No performance without recovery','Recovery is the training'],avoid:["Optimising performance before recovery","Treating sleep as discretionary","Adding load without removing load"],aff:'Set 90-min sleep window. Define training load ceiling. Remove 2 non-essential obligations.',int:'Structural health protocol creates sustained cognitive edge. Long-term position.',sc:[{t:'T',title:'Sleep debt reaches critical threshold',sit:'8 consecutive nights below 6.5h. Cognitive performance declining measurably.',resp:'Cancel non-essential commitments. 10-day recovery protocol. No major decisions until restored.'}]}}}
+};
+
+/* ════════════════ NAV ════════════════ */
+const PAGES=['warroom','source','mission','vision','execution'];
+function nav(p){
+  PAGES.forEach(x=>{
+    document.getElementById('page-'+x).classList.toggle('on',x===p);
+    const tn=document.getElementById('tn-'+x);if(tn)tn.classList.toggle('on',x===p);
+    const si=document.getElementById('si-'+x);if(si)si.classList.toggle('on',x===p);
+  });
+  ['source','affair-sub','interest'].forEach(id=>{
+    const el=document.getElementById('si-'+id);if(!el)return;
+    el.classList.toggle('on',(id==='source'&&p==='source')||(id==='affair-sub'&&p==='mission')||(id==='interest'&&p==='vision'));
+  });
+  if(p==='source')renderSrc();
+  if(p==='mission')renderMission();
+  if(p==='vision')renderVision();
+  if(p==='execution')renderExec();
+  if(p==='warroom')setTimeout(resizeG,50);
+}
+
+/* ════════════════ SOURCE ════════════════ */
+let curDom=null;
+function selSrc(el,id){
+  document.querySelectorAll('.srli').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');S.selSrc=id;curDom=null;renderSrc();
+}
+function switchDom(d){curDom=d;renderSrc();}
+function toggleSc(id){document.getElementById(id).classList.toggle('open');}
+
+function renderSrc(){
+  const d=SRC[S.selSrc];if(!d)return;
+  const dom=curDom||d.domains[0];if(!curDom)curDom=dom;
+  const doc=d.doc[dom]||d.doc[Object.keys(d.doc)[0]];
+  const H=`
+<div class="sblk">
+  <div class="smark"><div class="snum">1</div><div class="slbl">Source</div><div class="srule"></div></div>
+  <div class="src-big-title">${d.name}</div>
+  <div class="src-kind">${d.kind}</div>
+  <div class="src-desc">${d.desc}</div>
+  <div class="ftags">${d.tags.map(t=>`<div class="ftag ${t.c}">${t.l}</div>`).join('')}</div>
+</div>
+<div class="sblk">
+  <div class="smark"><div class="snum">2</div><div class="slbl">Affected Domains</div><div class="srule"></div></div>
+  <div class="dombtns">${d.domains.map(dm=>`<button class="dombt ${dm===dom?'on':''}" onclick="switchDom('${dm}')">${dm}</button>`).join('')}</div>
+  <div class="domhint">Doctrine below applies to selected source–domain pair</div>
+</div>
+<div class="sblk">
+  <div class="smark"><div class="snum">3</div><div class="slbl">State of the Art</div><div class="srule"></div></div>
+  <div class="doc">
+    <div class="doc-topbar"><div class="doc-pair">${doc.pair}</div><div class="doc-badge">Source–domain pair</div></div>
+    <div class="maprow">
+      <div class="mc"><div class="mk">Decision type</div><div class="mv">${doc.dtype}</div></div>
+      <div class="mc"><div class="mk">Tail behavior</div><div class="mv r">${doc.tail}</div></div>
+      <div class="mc"><div class="mk">Quadrant</div><div class="mv">${doc.quad}</div></div>
+      <div class="mc"><div class="mk">Admissible posture</div><div class="mv g">${doc.posture}</div></div>
+    </div>
+    <div class="stonecols">
+      <div class="scol">
+        <div class="sch">Skin in the Game</div>
+        <div class="sln"><span class="sk">Stakes</span><span class="sv">${doc.stakes}</span></div>
+        <div class="sln"><span class="sk">Risks</span><span class="sv r">${doc.risks}</span></div>
+        <div class="sln"><span class="sk">Lineage</span><span class="sv a">${doc.lineage}</span></div>
+        <div class="sln"><span class="sk">Fragilistas</span><span class="sv">${doc.frag}</span></div>
+      </div>
+      <div class="scol">
+        <div class="sch">Philosopher's Stone</div>
+        <div class="sln"><span class="sk">Fragility</span><span class="sv"><div class="fbar"><div class="fbt"><div class="fbf" style="width:${doc.fp}%"></div></div><div class="fbp">${doc.fl}</div></div></span></div>
+        <div class="sln"><span class="sk">Vulnerabilities</span><span class="sv r">${doc.vuln}</span></div>
+        <div class="sln"><span class="sk">Non-linearity</span><span class="sv a">${doc.nonlin}</span></div>
+      </div>
+    </div>
+    <div class="endsrow">
+      <div class="ec hedge"><div class="elbl">Hedge</div><div class="etxt">${doc.hedge}</div></div>
+      <div class="ec edge"><div class="elbl">Edge</div><div class="etxt">${doc.edge}</div></div>
+    </div>
+    <div class="meansrow">
+      <div class="mcel"><div class="mhead">Craft</div>${doc.craft.map(c=>`<div class="mitem"><span class="mbul">—</span>${c}</div>`).join('')}</div>
+      <div class="mcel"><div class="mhead">Heuristics</div>${doc.heuristics.map(h=>`<div class="mitem"><span class="mbul">—</span>${h}</div>`).join('')}</div>
+      <div class="mcel"><div class="mhead">Avoid</div>${doc.avoid.map(a=>`<div class="mitem"><span class="mbul x">✕</span>${a}</div>`).join('')}</div>
+    </div>
+  </div>
+</div>
+<div class="sblk">
+  <div class="smark"><div class="snum">4</div><div class="slbl">Scenario · Threat · Response</div><div class="srule"></div></div>
+  <div class="scards">${doc.sc.map((s,i)=>`
+    <div class="scard ${i===0?'open':''}" id="sc${i}">
+      <div class="scardh" onclick="toggleSc('sc${i}')">
+        <div class="stype ${s.t}">${s.t==='T'?'Threat':s.t==='S'?'Scenario':'Response'}</div>
+        <div class="stitle">${s.title}</div>
+        <div class="schev">▾</div>
+      </div>
+      <div class="scardb">
+        <div class="ssit">${s.sit}</div>
+        <div class="sresp"><div class="sarr">→</div><div class="sact">${s.resp}</div></div>
+      </div>
+    </div>`).join('')}
+  </div>
+</div>
+<div class="sblk">
+  <div class="smark"><div class="snum">5</div><div class="slbl">State of Affairs — generate</div><div class="srule"></div></div>
+  <div class="exitpair">
+    <div class="exitc affair">
+      <div class="exhead">Affair</div>
+      <div class="exorg">From hedge · obligation · reduces fragility</div>
+      <div class="extxt">${doc.aff}</div>
+      <button class="exbtn" onclick="mkAffair('${d.name.replace(/'/g,"\\'")}','${dom}','${doc.aff.replace(/'/g,"\\'")}')">Create Affair →</button>
+    </div>
+    <div class="exitc interest">
+      <div class="exhead">Interest</div>
+      <div class="exorg">From edge · option · convex upside</div>
+      <div class="extxt">${doc.int}</div>
+      <button class="exbtn" onclick="mkInterest('${d.name.replace(/'/g,"\\'")}','${dom}','${doc.int.replace(/'/g,"\\'")}')">Create Interest →</button>
+    </div>
+  </div>
+</div>`;
+  document.getElementById('src-flow').innerHTML=H;
+}
+
+function mkAffair(src,dom,txt){
+  S.affairs.push({id:'a'+(S.affairs.length+1),name:txt.slice(0,52)+'…',domain:dom,src,status:'active',horizon:'TBD',frag:'medium',desc:txt,tasks:[]});
+  updBadges();ts('Affair created → Mission Command');setTimeout(()=>nav('mission'),700);
+}
+function mkInterest(src,dom,txt){
+  S.interests.push({id:'i'+(S.interests.length+1),name:txt.slice(0,44)+'…',domain:dom,src,conv:50,expiry:'TBD',kill:'TBD',desc:txt});
+  updBadges();ts('Interest created → Vision Command');setTimeout(()=>nav('vision'),700);
+}
+
+/* ════════════════ MISSION ════════════════ */
+function renderMission(){
+  const el=document.getElementById('mc-main');
+  el.innerHTML=`<div class="pghead"><div class="pgtitle">Mission Command</div><div class="pgdesc">Active obligations — sequenced by no-ruin logic</div></div>`+S.affairs.map(a=>affCard(a)).join('');
+}
+function affCard(a){
+  const cls=a.frag==='critical'||a.frag==='high'?'r':a.frag==='medium'?'a':'g';
+  const lbl=a.frag==='critical'?'Critical':a.frag==='high'?'High frag':a.frag==='medium'?'Medium':'Low';
+  const tasks=a.tasks.map(t=>`
+    <div class="atask">
+      <div class="tcb ${t.done?'done':''}" onclick="togTask('${a.id}','${t.id}')">${t.done?'✓':''}</div>
+      <div class="tl ${t.done?'done':''}">${t.label}</div>
+      <div class="th">${t.h}</div>
+    </div>`).join('');
+  return`<div class="acard" id="acard-${a.id}">
+    <div class="acard-head" onclick="togAcard('${a.id}')">
+      <div class="acard-orb ${cls}">◆</div>
+      <div class="acard-info">
+        <div class="acard-name">${a.name}</div>
+        <div class="acard-meta">
+          <div class="atag ${cls}">${lbl}</div>
+          <div class="atag n">${a.domain}</div>
+          <div class="acard-hor">${a.horizon}</div>
+        </div>
+      </div>
+      <div class="acard-chev">▾</div>
+    </div>
+    <div class="acard-body">
+      <div class="acard-desc">${a.desc}</div>
+      <div class="acard-tasks">${tasks||'<div style="font-size:11px;color:var(--t3)">No tasks — add via Surgical Execution.</div>'}</div>
+    </div>
+  </div>`;
+}
+function togAcard(id){document.getElementById('acard-'+id).classList.toggle('open');}
+function togTask(aid,tid){
+  const a=S.affairs.find(x=>x.id===aid),t=a.tasks.find(x=>x.id===tid);
+  t.done=!t.done;updBadges();renderMission();renderExec();ts(t.done?'✓ Task completed':'Task reopened');
+}
+function addAffair(){
+  const n=prompt('Affair name:');if(!n)return;
+  S.affairs.push({id:'a'+(S.affairs.length+1),name:n,domain:'Unassigned',src:'Manual',status:'active',horizon:'TBD',frag:'medium',desc:'',tasks:[]});
+  updBadges();renderMission();ts('Affair added');
+}
+
+/* ════════════════ VISION ════════════════ */
+function renderVision(){
+  const el=document.getElementById('vc-main');
+  el.innerHTML=`<div class="pghead"><div class="pgtitle">Vision Command</div><div class="pgdesc">Active options — sorted by convexity score</div></div><div class="vc-grid">`+
+  [...S.interests].sort((a,b)=>b.conv-a.conv).map(i=>`
+    <div class="icard">
+      <div class="icard-head">
+        <div class="icard-orb">◇</div>
+        <div class="icard-info"><div class="icard-name">${i.name}</div><div class="icard-src">${i.src} · ${i.domain}</div></div>
+      </div>
+      <div class="conv-row">
+        <div class="conv-lbl">Convexity</div>
+        <div class="conv-track"><div class="conv-fill" style="width:${i.conv}%"></div></div>
+        <div class="conv-pct">${i.conv}%</div>
+      </div>
+      <div class="icard-desc">${i.desc}</div>
+      <div class="ikv"><span class="ik">Expiry</span><span class="iv">${i.expiry}</span></div>
+      <div class="ikv"><span class="ik">Kill</span><span class="iv kill">${i.kill}</span></div>
+    </div>`).join('')+'</div>';
+}
+function addInterest(){
+  const n=prompt('Interest name:');if(!n)return;
+  S.interests.push({id:'i'+(S.interests.length+1),name:n,domain:'Unassigned',src:'Manual',conv:50,expiry:'TBD',kill:'TBD',desc:''});
+  updBadges();renderVision();ts('Interest added');
+}
+
+/* ════════════════ EXECUTION ════════════════ */
+function allTasks(){const t=[];S.affairs.forEach(a=>a.tasks.forEach(tk=>t.push({...tk,aName:a.name,aId:a.id,stat:tk.done?'done':['t1','t4','t7'].includes(tk.id)?'active':'queued'})));return t;}
+function renderExec(){
+  const all=allTasks();
+  const grps={active:all.filter(t=>t.stat==='active'),queued:all.filter(t=>t.stat==='queued'),blocked:all.filter(t=>t.stat==='blocked'),done:all.filter(t=>t.stat==='done')};
+  const tot=all.length;
+  ['a','q','b','d'].forEach((k,i)=>{
+    const gk=['active','queued','blocked','done'][i];const n=grps[gk].length;
+    const el=document.getElementById('tb-'+k);const lel=document.getElementById('tl-'+k);
+    if(el)el.style.width=(tot?Math.round(n/tot*100):0)+'%';
+    if(lel)lel.textContent=n;
+  });
+  const dc=document.getElementById('done-c');if(dc)dc.textContent=grps.done.length;
+  const rg=(lbl,tasks,cls)=>tasks.length?`<div class="tg"><div class="tg-head"><div class="tg-title">${lbl}</div><div class="tg-badge">${tasks.length}</div><div class="tgrule"></div></div>${tasks.map(t=>`
+    <div class="task" onclick="togExTask('${t.aId}','${t.id}')">
+      <div class="tcb2 ${t.done?'done':''}">${t.done?'✓':''}</div>
+      <div class="tbody">
+        <div class="tname ${t.done?'done':''}">${t.label}</div>
+        <div class="tmeta"><div class="tsrc">${t.aName}</div><div class="tstat ${t.stat}">${t.stat}</div><div class="thor">${t.h}</div></div>
+      </div>
+    </div>`).join('')}</div>`:'';
+  document.getElementById('ex-main').innerHTML=`<div class="pghead"><div class="pgtitle">Surgical Execution</div><div class="pgdesc">Task chains — connected to Affair doctrine upstream</div></div>`+rg('Active',grps.active,'act')+rg('Queued',grps.queued,'que')+rg('Blocked',grps.blocked,'blk')+rg('Done',grps.done,'done');
+}
+function togExTask(aid,tid){
+  const a=S.affairs.find(x=>x.id===aid);if(!a)return;
+  const t=a.tasks.find(x=>x.id===tid);if(!t)return;
+  t.done=!t.done;updBadges();renderExec();ts(t.done?'✓ Completed':'Reopened');
+}
+function addTask(){
+  const n=prompt('Task name:');if(!n)return;
+  const a=S.affairs[0];a.tasks.push({id:'t_'+Date.now(),label:n,done:false,h:'TBD'});
+  updBadges();renderExec();ts('Task added to '+a.name);
+}
+
+/* ════════════════ BADGES ════════════════ */
+function updBadges(){
+  const all=allTasks();
+  document.getElementById('badge-a').textContent=S.affairs.length;
+  document.getElementById('badge-i').textContent=S.interests.length;
+  document.getElementById('badge-t').textContent=all.length;
+  document.getElementById('sc-a').innerHTML=S.affairs.length+' <span class="sbc-s">active</span>';
+  document.getElementById('sc-i').innerHTML=S.interests.length+' <span class="sbc-s">open</span>';
+  document.getElementById('tc').textContent=all.length;
+}
+
+/* ════════════════ GRAPH ════════════════ */
+const GN=[
+  {id:'geo',t:'source',l:'Geopolitics',x:.12,y:.26,c:'#f0a832',r:17,desc:'Global power shifts, alliance instability.',tail:'Fat / cascade',doms:'Power, State, Wealth',pos:'Intel + Barbell'},
+  {id:'tech',t:'source',l:'Tech Shift',x:.10,y:.50,c:'#30e0b0',r:13,desc:'Disruption compressing competitive windows.',tail:'Thin / ergodic',doms:'Knowledge, Infra',pos:'Optionality first'},
+  {id:'eco',t:'source',l:'Economy',x:.14,y:.70,c:'#f06040',r:15,desc:'Rate environment, credit, capital cost.',tail:'Fat / non-linear',doms:'Wealth, Power',pos:'Barbell + hedge'},
+  {id:'nat',t:'source',l:'Nature',x:.07,y:.38,c:'#58d48a',r:10,desc:'Environmental force on domains.',tail:'Fat tail',doms:'Health, Food',pos:'No-ruin first'},
+  {id:'soc',t:'source',l:'Society',x:.06,y:.60,c:'#5898e8',r:11,desc:'Cultural shifts creating domain pressure.',tail:'Thin / slow',doms:'Family, State',pos:'Monitor'},
+  {id:'hs',t:'source',l:'Health',x:.08,y:.82,c:'#a878f8',r:12,desc:'Sleep debt, training overload, cliff risk.',tail:'Fat at cliff',doms:'Health',pos:'No-ruin first'},
+  {id:'pow',t:'domain',l:'Power',x:.37,y:.18,c:'#f0a832',r:19,desc:'Control and authority in key decisions.',tail:'Non-linear',doms:'Self, State',pos:'Intel + Hedge'},
+  {id:'wlt',t:'domain',l:'Wealth',x:.42,y:.40,c:'#d48820',r:15,desc:'Capital, cashflow, financial optionality.',tail:'Fat if leveraged',doms:'Self, Family',pos:'Barbell'},
+  {id:'hd',t:'domain',l:'Health',x:.36,y:.60,c:'#f06040',r:17,desc:'Physical and cognitive capacity. Fragile.',tail:'Fat / irreversible',doms:'Self',pos:'Reduce fragility now'},
+  {id:'fam',t:'domain',l:'Family',x:.44,y:.76,c:'#5898e8',r:12,desc:'Relational continuity, lineage exposure.',tail:'Thin',doms:'Family',pos:'Preserve optionality'},
+  {id:'kno',t:'domain',l:'Knowledge',x:.50,y:.28,c:'#30e0b0',r:13,desc:'Information advantage, skill capital.',tail:'Thin / ergodic',doms:'Self',pos:'Compound edge'},
+  {id:'inf',t:'domain',l:'Infra',x:.48,y:.55,c:'#a878f8',r:12,desc:'Systems, tools, key-person dependencies.',tail:'Fragile if key-person',doms:'Self',pos:'Reduce dependency'},
+  {id:'int',t:'craft',l:'Intelligence',x:.72,y:.20,c:'#a878f8',r:14,desc:'Gathering, sense-making, signal detection.',tail:'—',doms:'All sources',pos:'Always admissible'},
+  {id:'neg',t:'craft',l:'Negotiation',x:.76,y:.40,c:'#30e0b0',r:11,desc:'Structured agreement under uncertainty.',tail:'—',doms:'Power, Wealth',pos:'Quadrant II'},
+  {id:'fin',t:'craft',l:'Finance',x:.74,y:.60,c:'#f0a832',r:12,desc:'Capital structuring, barbell deployment.',tail:'—',doms:'Wealth',pos:'Barbell doctrine'},
+  {id:'str',t:'craft',l:'Strategy',x:.80,y:.30,c:'#58d48a',r:11,desc:'Long-horizon positioning.',tail:'—',doms:'All',pos:'Mission + Vision'},
+];
+const GE=[['geo','pow',.8],['geo','wlt',.4],['geo','kno',.3],['eco','wlt',.9],['eco','pow',.5],['eco','hd',.3],['tech','kno',.8],['tech','inf',.6],['nat','hd',.6],['nat','fam',.4],['soc','fam',.6],['soc','pow',.4],['hs','hd',.9],['pow','int',.8],['pow','str',.6],['pow','neg',.4],['wlt','fin',.9],['wlt','neg',.5],['kno','int',.7],['kno','str',.6],['inf','fin',.4],['hd','int',.3]];
+
+const gc2=document.getElementById('gc');
+const ctx=gc2.getContext('2d');
+let GW=0,GH=0,gdpr=1,gaf=0,gn=[],gsel=null,ghov=null,gt=0,gstars=[];
+
+function resizeG(){
+  const w=document.getElementById('gwrap');if(!w)return;
+  gdpr=window.devicePixelRatio||1;GW=w.clientWidth;GH=w.clientHeight;
+  gc2.width=GW*gdpr;gc2.height=GH*gdpr;gc2.style.width=GW+'px';gc2.style.height=GH+'px';
+  ctx.scale(gdpr,gdpr);buildGN();buildStars();
+}
+function buildGN(){gn=GN.map(n=>({...n,px:n.x*GW,py:n.y*GH}));}
+function buildStars(){
+  gstars=[];for(let i=0;i<120;i++)gstars.push({x:Math.random()*GW,y:Math.random()*GH,r:Math.random()*.8+.2,o:Math.random()*.4+.05,s:Math.random()*2+1});
+}
+function hxRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+function lite(h,a){const[r,g,b]=hxRgb(h);return`rgb(${Math.min(255,r+Math.round(a*100))},${Math.min(255,g+Math.round(a*100))},${Math.min(255,b+Math.round(a*100))})` ;}
+
+function drawG(){
+  gt+=.006;
+  ctx.clearRect(0,0,GW,GH);
+
+  // Deep space nebula background
+  const nbg=ctx.createRadialGradient(GW*.35,GH*.45,0,GW*.35,GH*.45,GW*.65);
+  nbg.addColorStop(0,'rgba(30,20,50,0.6)');nbg.addColorStop(.5,'rgba(15,15,25,0.3)');nbg.addColorStop(1,'rgba(4,4,6,0)');
+  ctx.fillStyle=nbg;ctx.fillRect(0,0,GW,GH);
+  const nbg2=ctx.createRadialGradient(GW*.7,GH*.3,0,GW*.7,GH*.3,GW*.4);
+  nbg2.addColorStop(0,'rgba(20,40,30,0.3)');nbg2.addColorStop(1,'rgba(4,4,6,0)');
+  ctx.fillStyle=nbg2;ctx.fillRect(0,0,GW,GH);
+
+  // Stars
+  gstars.forEach(s=>{
+    const twinkle=Math.sin(gt*s.s+s.x)*.15+s.o;
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${twinkle})`;ctx.fill();
+  });
+
+  // Grid (very subtle)
+  ctx.strokeStyle='rgba(255,255,255,0.018)';ctx.lineWidth=.5;
+  for(let x=0;x<GW;x+=44){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,GH);ctx.stroke();}
+  for(let y=0;y<GH;y+=44){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(GW,y);ctx.stroke();}
+
+  // Edges
+  GE.forEach(([a,b,w])=>{
+    const na=gn.find(n=>n.id===a),nb=gn.find(n=>n.id===b);if(!na||!nb)return;
+    const isSel=gsel&&(gsel.id===a||gsel.id===b);
+    const isHov=ghov&&(ghov.id===a||ghov.id===b);
+    const [r1,g1,b1]=hxRgb(na.c),[r2,g2,b2]=hxRgb(nb.c);
+    const mx=(na.px+nb.px)/2,my=(na.py+nb.py)/2-20*Math.sin((na.px-nb.px)/GW*Math.PI);
+    const grad=ctx.createLinearGradient(na.px,na.py,nb.px,nb.py);
+    grad.addColorStop(0,`rgba(${r1},${g1},${b1},${isSel?.85:isHov?.55:w*.3})`);
+    grad.addColorStop(1,`rgba(${r2},${g2},${b2},${isSel?.85:isHov?.55:w*.15})`);
+    ctx.beginPath();ctx.moveTo(na.px,na.py);ctx.quadraticCurveTo(mx,my,nb.px,nb.py);
+    ctx.strokeStyle=grad;ctx.lineWidth=isSel?2:isHov?1.2:w*.65;ctx.stroke();
+    // particle
+    if(isSel||isHov){
+      const pr=((gt*.5+a.charCodeAt(0)*.02)%1);
+      const t1=1-pr;
+      const ppx=t1*t1*na.px+2*t1*pr*mx+pr*pr*nb.px;
+      const ppy=t1*t1*na.py+2*t1*pr*my+pr*pr*nb.py;
+      ctx.beginPath();ctx.arc(ppx,ppy,3,0,Math.PI*2);
+      ctx.fillStyle=na.c;ctx.fill();
+      ctx.beginPath();ctx.arc(ppx,ppy,6,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${r1},${g1},${b1},.18)`;ctx.fill();
+    }
+  });
+
+  // Nodes
+  gn.forEach(n=>{
+    const{px,py}=n;
+    const isSel2=gsel&&gsel.id===n.id;const isHov2=ghov&&ghov.id===n.id;
+    const pulse=Math.sin(gt*1.2+n.x*8)*.5+.5;
+    const nr=n.r+(isSel2?5:isHov2?3:0);
+    const[r,g,b]=hxRgb(n.c);
+    // outer aura
+    const aura=ctx.createRadialGradient(px,py,0,px,py,nr*4.5);
+    aura.addColorStop(0,`rgba(${r},${g},${b},${isSel2?.3:isHov2?.2:pulse*.1+.04})`);
+    aura.addColorStop(.4,`rgba(${r},${g},${b},${isSel2?.08:isHov2?.04:pulse*.03})`);
+    aura.addColorStop(1,`rgba(${r},${g},${b},0)`);
+    ctx.beginPath();ctx.arc(px,py,nr*4.5,0,Math.PI*2);ctx.fillStyle=aura;ctx.fill();
+    // ring
+    if(isSel2||isHov2){
+      ctx.beginPath();ctx.arc(px,py,nr+6,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(${r},${g},${b},.4)`;ctx.lineWidth=.8;ctx.stroke();
+      ctx.beginPath();ctx.arc(px,py,nr+10,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(${r},${g},${b},.15)`;ctx.lineWidth=.5;ctx.stroke();
+    }
+    // node fill
+    const ng=ctx.createRadialGradient(px-nr*.3,py-nr*.35,0,px,py,nr);
+    ng.addColorStop(0,lite(n.c,.4));ng.addColorStop(.6,n.c);ng.addColorStop(1,`rgba(${r},${g},${b},.85)`);
+    ctx.beginPath();ctx.arc(px,py,nr,0,Math.PI*2);ctx.fillStyle=ng;ctx.fill();
+    // inner core
+    const core=ctx.createRadialGradient(px,py,0,px,py,nr*.45);
+    core.addColorStop(0,'rgba(255,255,255,.35)');core.addColorStop(1,`rgba(${r},${g},${b},0)`);
+    ctx.beginPath();ctx.arc(px,py,nr*.45,0,Math.PI*2);ctx.fillStyle=core;ctx.fill();
+    // label
+    const icon=n.t==='source'?'◈':n.t==='domain'?'◆':'✦';
+    ctx.font=`${isSel2||isHov2?'500':'400'} 10.5px "DM Mono"`;ctx.textAlign='center';
+    ctx.shadowColor=n.c;ctx.shadowBlur=isSel2?8:isHov2?5:0;
+    ctx.fillStyle=isSel2||isHov2?'#f2efe8':'#c8c4b8';
+    ctx.fillText(icon+' '+n.l,px,py+nr+15);
+    ctx.shadowBlur=0;
+  });
+  gaf=requestAnimationFrame(drawG);
+}
+
+function getGN(mx,my){return gn.find(n=>Math.hypot(n.px-mx,n.py-my)<n.r+10)||null;}
+
+gc2.addEventListener('mousemove',e=>{
+  const rc=gc2.getBoundingClientRect();
+  ghov=getGN(e.clientX-rc.left,e.clientY-rc.top);
+  gc2.style.cursor=ghov?'pointer':'default';
+});
+
+gc2.addEventListener('click',e=>{
+  const rc=gc2.getBoundingClientRect();
+  const hit=getGN(e.clientX-rc.left,e.clientY-rc.top);
+  if(hit){gsel=gsel?.id===hit.id?null:hit;gsel?showPop(hit,e.clientX,e.clientY):hidePop();}
+  else{gsel=null;hidePop();}
+});
+
+const npop2=document.getElementById('npop');
+function showPop(n,cx,cy){
+  document.getElementById('np-type').textContent=n.t.charAt(0).toUpperCase()+n.t.slice(1);
+  document.getElementById('np-title').textContent=n.l;
+  document.getElementById('np-desc').textContent=n.desc;
+  document.getElementById('np-tail').textContent=n.tail;
+  document.getElementById('np-doms').textContent=n.doms;
+  document.getElementById('np-pos').textContent=n.pos;
+  const gb=document.getElementById('np-game');
+  const ab=document.getElementById('np-affair');
+  if(n.t==='source'){
+    gb.style.display='block';
+    gb.onclick=()=>{
+      const km={Geopolitics:'geo',Economy:'eco','Tech Shift':'tech'};
+      const hMap={Health:'health'};
+      let k=Object.keys(km).find(kk=>kk===n.l)?km[n.l]:hMap[n.l]||'rate';
+      S.selSrc=k;curDom=null;
+      document.querySelectorAll('.srli').forEach(el=>el.classList.remove('on'));
+      nav('source');hidePop();
+    };
+  }else gb.style.display='none';
+  ab.onclick=()=>{mkAffair(n.l,n.doms.split(',')[0].trim(),'Affair from '+n.l+': '+n.desc);};
+  npop2.style.display='block';
+  const wr=document.getElementById('gwrap').getBoundingClientRect();
+  let lx=cx-wr.left+16,ly=cy-wr.top-90;
+  if(lx+240>wr.width)lx=cx-wr.left-250;
+  if(ly<0)ly=8;if(ly+260>wr.height)ly=wr.height-270;
+  npop2.style.left=lx+'px';npop2.style.top=ly+'px';
+}
+function hidePop(){npop2.style.display='none';}
+function resetGraph(){gsel=null;ghov=null;hidePop();ts('Graph reset');}
+
+/* ════════════════ TOAST ════════════════ */
+let tt=0;
+function ts(m){const el=document.getElementById('tst');el.textContent=m;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),2500);}
+
+/* ════════════════ INIT ════════════════ */
+window.addEventListener('resize',()=>{if(document.getElementById('page-warroom').classList.contains('on')){cancelAnimationFrame(gaf);resizeG();drawG();}});
+renderSrc();renderMission();renderVision();renderExec();updBadges();
+setTimeout(()=>{resizeG();drawG();},80);
+</script>
+</body>
+</html>

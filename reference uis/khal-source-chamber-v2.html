@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KHAL — War Gaming / Source</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:      #0e0d0b;
+  --ink-2:    #35342e;
+  --ink-3:    #74706a;
+  --ink-4:    #b0ac9e;
+  --ink-5:    #d4d0c4;
+  --paper:    #f6f4ef;
+  --paper-2:  #edeae2;
+  --rule:     #ddd9ce;
+  --red:      #b03018;
+  --red-bg:   #fdf0ec;
+  --red-mid:  #e8c4b8;
+  --amber:    #865808;
+  --amber-bg: #fdf5e4;
+  --teal:     #1a5c52;
+  --teal-bg:  #eaf3f1;
+  --teal-mid: #b8d8d3;
+  --serif:    'DM Serif Display', Georgia, serif;
+  --body:     'Newsreader', Georgia, serif;
+  --mono:     'DM Mono', monospace;
+}
+
+html, body {
+  height: 100%; background: var(--paper);
+  color: var(--ink); font-family: var(--body);
+  font-size: 15px; line-height: 1.7;
+}
+
+body { display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── TOPBAR ── */
+.bar {
+  height: 40px; flex-shrink: 0;
+  border-bottom: 1px solid var(--rule);
+  display: flex; align-items: center;
+  padding: 0 28px; gap: 0;
+  background: var(--paper);
+}
+.bar-brand {
+  font-family: var(--mono); font-size: 12px;
+  font-weight: 500; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink);
+  margin-right: 32px;
+}
+.bar-nav { display: flex; }
+.bar-nav a {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-4); padding: 0 14px; height: 40px;
+  display: flex; align-items: center;
+  border-bottom: 2px solid transparent;
+  text-decoration: none; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.bar-nav a:hover { color: var(--ink-2); }
+.bar-nav a.on { color: var(--ink); border-bottom-color: var(--ink); }
+.bar-right {
+  margin-left: auto; font-family: var(--mono);
+  font-size: 10px; color: var(--ink-4);
+  display: flex; align-items: center; gap: 8px;
+}
+.pulse { width: 5px; height: 5px; border-radius: 50%; background: var(--red); }
+
+/* ── SHELL ── */
+.shell { display: flex; flex: 1; overflow: hidden; }
+
+/* ── SOURCE RAIL ── */
+.rail {
+  width: 200px; flex-shrink: 0;
+  border-right: 1px solid var(--rule);
+  overflow-y: auto; padding: 20px 0;
+}
+.rail-head {
+  font-family: var(--mono); font-size: 9px;
+  font-weight: 500; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--ink-5);
+  padding: 0 18px 10px;
+}
+.src-item {
+  padding: 10px 18px 10px 16px;
+  border-left: 2px solid transparent;
+  cursor: pointer; transition: background .1s;
+}
+.src-item:hover { background: var(--paper-2); }
+.src-item.on {
+  border-left-color: var(--ink);
+  background: var(--paper-2);
+}
+.src-item-name {
+  font-size: 13px; color: var(--ink-2); line-height: 1.35;
+}
+.src-item.on .src-item-name { color: var(--ink); }
+.src-tag {
+  display: inline-block; margin-top: 4px;
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: .06em; padding: 2px 6px;
+  border-radius: 2px;
+}
+.src-tag.fat   { background: var(--red-bg); color: var(--red); }
+.src-tag.slow  { background: var(--amber-bg); color: var(--amber); }
+.src-tag.frag  { background: var(--paper-2); color: var(--ink-3); border: 1px solid var(--rule); }
+
+/* ── MAIN SCROLL ── */
+.scroll {
+  flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+
+/* ── DOCTRINE FLOW ── */
+.flow {
+  max-width: 760px; width: 100%;
+  margin: 0 auto; padding: 36px 40px 80px;
+  display: flex; flex-direction: column; gap: 0;
+}
+
+/* ── SECTION BLOCK ── */
+.block { margin-bottom: 44px; }
+
+/* spine connector */
+.block + .block { position: relative; }
+.block + .block::before {
+  content: '';
+  position: absolute;
+  top: -28px; left: -1px;
+  width: 1px; height: 28px;
+  background: var(--rule);
+}
+
+/* ── SECTION HEADER ── */
+.sec-marker {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 14px;
+}
+.sec-num {
+  font-family: var(--mono); font-size: 10px;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid var(--rule);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-4); flex-shrink: 0;
+}
+.sec-label {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-4);
+}
+.sec-rule { flex: 1; height: 1px; background: var(--rule); }
+
+/* ── SOURCE BLOCK ── */
+.source-title {
+  font-family: var(--serif); font-size: 30px;
+  font-weight: 400; color: var(--ink);
+  line-height: 1.15; margin-bottom: 8px;
+}
+.source-kind {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--ink-4); letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+.source-desc {
+  font-size: 15px; color: var(--ink-2);
+  line-height: 1.75; max-width: 580px;
+  margin-bottom: 16px;
+}
+.force-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.force-tag {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .08em; padding: 4px 10px;
+  border-radius: 2px; border: 1px solid var(--rule);
+  color: var(--ink-3);
+}
+.force-tag.red { background: var(--red-bg); border-color: var(--red-mid); color: var(--red); }
+.force-tag.amber { background: var(--amber-bg); border-color: #e0c080; color: var(--amber); }
+
+/* ── DOMAIN SELECTOR ── */
+.domain-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.domain-btn {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: .06em; padding: 6px 14px;
+  border-radius: 2px; border: 1px solid var(--rule);
+  background: transparent; color: var(--ink-3);
+  cursor: pointer; transition: all .12s;
+}
+.domain-btn:hover { background: var(--paper-2); color: var(--ink); }
+.domain-btn.on {
+  background: var(--ink); border-color: var(--ink);
+  color: var(--paper);
+}
+.domain-hint {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--ink-5); letter-spacing: .06em;
+  margin-bottom: 0;
+}
+
+/* ── STATE OF ART ── */
+.doctrine {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px; overflow: hidden;
+}
+.doctrine-domain-bar {
+  background: var(--ink); color: var(--paper);
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .12em; text-transform: uppercase;
+  padding: 8px 20px; display: flex; align-items: center;
+  justify-content: space-between;
+}
+.doctrine-domain-bar span { opacity: .5; font-size: 9px; letter-spacing: .1em; }
+
+/* MAP */
+.map-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--rule);
+}
+.map-cell {
+  padding: 14px 16px;
+  border-right: 1px solid var(--rule);
+}
+.map-cell:last-child { border-right: none; }
+.map-k {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-4); margin-bottom: 5px;
+}
+.map-v {
+  font-family: var(--mono); font-size: 12px;
+  font-weight: 500; color: var(--ink);
+  line-height: 1.35;
+}
+.map-v.red { color: var(--red); }
+.map-v.teal { color: var(--teal); }
+.map-v.amber { color: var(--amber); }
+
+/* STONE SECTIONS */
+.stone-cols {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--rule);
+}
+.stone-col { padding: 18px 20px; }
+.stone-col + .stone-col { border-left: 1px solid var(--rule); }
+.stone-head {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-4); margin-bottom: 12px;
+}
+.stone-line {
+  display: flex; justify-content: space-between;
+  align-items: baseline; gap: 8px;
+  padding: 5px 0; border-bottom: 1px solid var(--paper-2);
+}
+.stone-line:last-child { border-bottom: none; }
+.sk { font-family: var(--mono); font-size: 10px; color: var(--ink-4); flex-shrink: 0; }
+.sv { font-size: 12px; color: var(--ink-2); text-align: right; line-height: 1.3; }
+.sv.red { color: var(--red); }
+.sv.amber { color: var(--amber); }
+
+/* fragility bar */
+.fbar { display: flex; align-items: center; gap: 6px; }
+.fbar-track { flex: 1; height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.fbar-fill { height: 100%; border-radius: 2px; background: var(--red); }
+.fbar-pct { font-family: var(--mono); font-size: 10px; color: var(--red); }
+
+/* ENDS */
+.ends-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--rule);
+}
+.ends-cell { padding: 18px 20px; }
+.ends-cell.hedge { border-right: 1px solid var(--rule); }
+.ends-label {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: .14em; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.hedge .ends-label { color: var(--red); }
+.edge  .ends-label { color: var(--teal); }
+.ends-text { font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+
+/* MEANS */
+.means-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+}
+.means-cell { padding: 16px 18px; }
+.means-cell + .means-cell { border-left: 1px solid var(--rule); }
+.means-head {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-4); margin-bottom: 8px;
+}
+.means-item {
+  font-size: 12px; color: var(--ink-2);
+  line-height: 1.5; padding: 3px 0;
+  border-bottom: 1px solid var(--paper-2);
+  display: flex; gap: 6px;
+}
+.means-item:last-child { border-bottom: none; }
+.means-bullet { color: var(--ink-5); flex-shrink: 0; font-size: 10px; margin-top: 3px; }
+.means-bullet.x { color: var(--red); }
+
+/* ── SCENARIO SECTION ── */
+.scenario-list { display: flex; flex-direction: column; gap: 10px; }
+.sc-card {
+  border: 1px solid var(--rule);
+  border-radius: 3px; overflow: hidden;
+}
+.sc-head {
+  display: flex; align-items: center;
+  gap: 10px; padding: 12px 16px;
+  cursor: pointer; background: var(--paper);
+  transition: background .1s;
+}
+.sc-head:hover { background: var(--paper-2); }
+.sc-type {
+  font-family: var(--mono); font-size: 9px;
+  font-weight: 500; letter-spacing: .1em;
+  text-transform: uppercase; padding: 2px 7px;
+  border-radius: 2px; flex-shrink: 0;
+}
+.sc-type.T { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-mid); }
+.sc-type.S { background: var(--amber-bg); color: var(--amber); border: 1px solid #e0c080; }
+.sc-type.R { background: var(--teal-bg); color: var(--teal); border: 1px solid var(--teal-mid); }
+.sc-title { font-size: 13px; color: var(--ink); flex: 1; }
+.sc-chevron {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--ink-5); transition: transform .15s;
+}
+.sc-card.open .sc-chevron { transform: rotate(180deg); }
+.sc-body {
+  display: none; padding: 14px 16px 16px;
+  border-top: 1px solid var(--rule);
+  background: var(--paper);
+}
+.sc-card.open .sc-body { display: block; }
+.sc-situation {
+  font-size: 13px; color: var(--ink-2);
+  line-height: 1.65; margin-bottom: 12px;
+}
+.sc-response {
+  display: flex; gap: 10px;
+  padding-top: 12px; border-top: 1px solid var(--paper-2);
+}
+.sc-arrow {
+  font-family: var(--mono); font-size: 12px;
+  color: var(--teal); flex-shrink: 0; margin-top: 1px;
+}
+.sc-action { font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+
+/* ── GENERATE EXIT ── */
+.exit-pair {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.exit-card {
+  border-radius: 3px; padding: 18px 20px;
+}
+.exit-card.affair {
+  background: var(--red-bg);
+  border: 1px solid var(--red-mid);
+}
+.exit-card.interest {
+  background: var(--teal-bg);
+  border: 1px solid var(--teal-mid);
+}
+.exit-head {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: .14em; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.affair .exit-head { color: var(--red); }
+.interest .exit-head { color: var(--teal); }
+.exit-origin {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--ink-4); margin-bottom: 10px;
+  letter-spacing: .04em;
+}
+.exit-text {
+  font-size: 13px; color: var(--ink-2);
+  line-height: 1.6; margin-bottom: 14px;
+}
+.exit-btn {
+  width: 100%; padding: 9px 14px;
+  border-radius: 2px; font-family: var(--mono);
+  font-size: 10px; font-weight: 500;
+  letter-spacing: .1em; text-transform: uppercase;
+  cursor: pointer; border: 1px solid;
+  transition: opacity .15s;
+}
+.affair .exit-btn {
+  background: var(--red); border-color: var(--red);
+  color: white;
+}
+.interest .exit-btn {
+  background: var(--teal); border-color: var(--teal);
+  color: white;
+}
+.exit-btn:hover { opacity: .85; }
+
+/* ── ANIMATION ── */
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.doctrine { animation: rise .3s ease both; }
+.scenario-list { animation: rise .35s ease both .05s; animation-fill-mode: both; }
+.exit-pair { animation: rise .35s ease both .1s; animation-fill-mode: both; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; right: 28px;
+  background: var(--ink); color: var(--paper);
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: .06em; padding: 10px 18px;
+  border-radius: 3px; pointer-events: none;
+  opacity: 0; transform: translateY(6px);
+  transition: all .22s; z-index: 999;
+}
+.toast.show { opacity: 1; transform: none; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-brand">KHAL</div>
+  <nav class="bar-nav">
+    <a>War Room</a>
+    <a class="on">War Gaming</a>
+    <a>Mission Command</a>
+    <a>Vision Command</a>
+    <a>Surgical Execution</a>
+  </nav>
+  <div class="bar-right">
+    <div class="pulse"></div>
+    3 active sources
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- SOURCE RAIL -->
+  <aside class="rail">
+    <div class="rail-head">Sources</div>
+
+    <div class="src-item on" onclick="selectSource(this)">
+      <div class="src-item-name">Interest rate cycle</div>
+      <div class="src-tag fat">Fat tail</div>
+    </div>
+    <div class="src-item" onclick="selectSource(this)">
+      <div class="src-item-name">Regulatory shift</div>
+      <div class="src-tag slow">Slow burn</div>
+    </div>
+    <div class="src-item" onclick="selectSource(this)">
+      <div class="src-item-name">Key-person dependency</div>
+      <div class="src-tag frag">Structural</div>
+    </div>
+  </aside>
+
+  <!-- MAIN SCROLL -->
+  <div class="scroll">
+    <div class="flow">
+
+      <!-- ① SOURCE -->
+      <div class="block">
+        <div class="sec-marker">
+          <div class="sec-num">1</div>
+          <div class="sec-label">Source</div>
+          <div class="sec-rule"></div>
+        </div>
+
+        <div class="source-title">Interest rate cycle</div>
+        <div class="source-kind">Macro / monetary force — slow onset, non-linear consequence</div>
+        <div class="source-desc">
+          A sustained shift in the rate environment changes the cost of capital, the value of duration, and the fragility of anything financed with variable-rate or short-maturity debt. The force is ergodic in its onset and fat-tailed in its damage to over-leveraged positions.
+        </div>
+        <div class="force-tags">
+          <div class="force-tag red">Fat-tail damage</div>
+          <div class="force-tag amber">Non-linear above trigger</div>
+          <div class="force-tag">Externally driven</div>
+          <div class="force-tag">Irreversible at cliff</div>
+        </div>
+      </div>
+
+      <!-- ② AFFECTED DOMAINS -->
+      <div class="block">
+        <div class="sec-marker">
+          <div class="sec-num">2</div>
+          <div class="sec-label">Affected Domains — select one to game</div>
+          <div class="sec-rule"></div>
+        </div>
+
+        <div class="domain-row">
+          <button class="domain-btn on" onclick="setDomain(this,'capital')">Capital structure</button>
+          <button class="domain-btn" onclick="setDomain(this,'operating')">Operating model</button>
+          <button class="domain-btn" onclick="setDomain(this,'liquidity')">Liquidity reserve</button>
+        </div>
+        <div class="domain-hint">The same source reads differently through each domain. Doctrine below applies to the selected pair.</div>
+      </div>
+
+      <!-- ③ STATE OF THE ART -->
+      <div class="block">
+        <div class="sec-marker">
+          <div class="sec-num">3</div>
+          <div class="sec-label">State of the Art</div>
+          <div class="sec-rule"></div>
+        </div>
+
+        <div class="doctrine" id="doctrine-panel">
+
+          <div class="doctrine-domain-bar">
+            <span id="doctrine-pair">Interest rate cycle → Capital structure</span>
+            <span>Source-domain pair</span>
+          </div>
+
+          <!-- MAP -->
+          <div class="map-row">
+            <div class="map-cell">
+              <div class="map-k">Decision type</div>
+              <div class="map-v" id="m-dtype">One-way door</div>
+            </div>
+            <div class="map-cell">
+              <div class="map-k">Tail behavior</div>
+              <div class="map-v red" id="m-tail">Fat / irreversible</div>
+            </div>
+            <div class="map-cell">
+              <div class="map-k">Quadrant</div>
+              <div class="map-v" id="m-quad">IV — Unknown unknowns</div>
+            </div>
+            <div class="map-cell">
+              <div class="map-k">Admissible posture</div>
+              <div class="map-v teal" id="m-posture">Barbell + No-ruin first</div>
+            </div>
+          </div>
+
+          <!-- STONE -->
+          <div class="stone-cols">
+            <div class="stone-col">
+              <div class="stone-head">Skin in the Game</div>
+              <div class="stone-line">
+                <span class="sk">Stakes</span>
+                <span class="sv" id="s-stakes">Solvency of operating entity</span>
+              </div>
+              <div class="stone-line">
+                <span class="sk">Risks</span>
+                <span class="sv red" id="s-risks">Covenant breach, rollover cliff</span>
+              </div>
+              <div class="stone-line">
+                <span class="sk">Lineage</span>
+                <span class="sv amber" id="s-lineage">Self → Family</span>
+              </div>
+              <div class="stone-line">
+                <span class="sk">Fragilistas</span>
+                <span class="sv" id="s-frag">Lenders, fixed-rate counterparties</span>
+              </div>
+            </div>
+            <div class="stone-col">
+              <div class="stone-head">Philosopher's Stone</div>
+              <div class="stone-line">
+                <span class="sk">Fragility</span>
+                <span class="sv">
+                  <div class="fbar">
+                    <div class="fbar-track"><div class="fbar-fill" id="fbar" style="width:78%"></div></div>
+                    <div class="fbar-pct" id="fbar-label">High</div>
+                  </div>
+                </span>
+              </div>
+              <div class="stone-line">
+                <span class="sk">Vulnerabilities</span>
+                <span class="sv red" id="p-vuln">Variable-rate debt, short maturities</span>
+              </div>
+              <div class="stone-line">
+                <span class="sk">Non-linearity</span>
+                <span class="sv amber" id="p-nonlin">Convex loss above trigger rate</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ENDS -->
+          <div class="ends-row">
+            <div class="ends-cell hedge">
+              <div class="ends-label">Hedge</div>
+              <div class="ends-text" id="e-hedge">Eliminate variable-rate exposure above 30% of total debt. Build 6-month cash runway outside operating accounts. No covenant exposure within 2× stress.</div>
+            </div>
+            <div class="ends-cell edge">
+              <div class="ends-label">Edge</div>
+              <div class="ends-text" id="e-edge">Rate normalisation creates refinancing window. Position to lock fixed at peak if rates break. Option on distressed acquisition of over-leveraged peers.</div>
+            </div>
+          </div>
+
+          <!-- MEANS -->
+          <div class="means-row">
+            <div class="means-cell">
+              <div class="means-head">Craft</div>
+              <div class="means-item"><span class="means-bullet">—</span>Barbell strategy</div>
+              <div class="means-item"><span class="means-bullet">—</span>Debt structure audit</div>
+              <div class="means-item"><span class="means-bullet">—</span>Rate cap / swap protocol</div>
+            </div>
+            <div class="means-cell">
+              <div class="means-head">Heuristics</div>
+              <div class="means-item"><span class="means-bullet">—</span>Optimise for survival before optimising for return</div>
+              <div class="means-item"><span class="means-bullet">—</span>A covenant breach is a cliff, not a negotiation</div>
+              <div class="means-item"><span class="means-bullet">—</span>Fix the debt; keep optionality in cash</div>
+            </div>
+            <div class="means-cell">
+              <div class="means-head">Avoid</div>
+              <div class="means-item"><span class="means-bullet x">✕</span>Averaging into variable exposure in a rising cycle</div>
+              <div class="means-item"><span class="means-bullet x">✕</span>Treating forecast revenue as cash for covenants</div>
+              <div class="means-item"><span class="means-bullet x">✕</span>Waiting for rate certainty before hedging</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ④ SCENARIO / THREAT / RESPONSE -->
+      <div class="block">
+        <div class="sec-marker">
+          <div class="sec-num">4</div>
+          <div class="sec-label">Scenario · Threat · Response</div>
+          <div class="sec-rule"></div>
+        </div>
+
+        <div class="scenario-list">
+
+          <div class="sc-card open">
+            <div class="sc-head" onclick="toggleSc(this)">
+              <div class="sc-type T">Threat</div>
+              <div class="sc-title">Rates hold above 6% for 18+ months</div>
+              <div class="sc-chevron">▾</div>
+            </div>
+            <div class="sc-body">
+              <div class="sc-situation">Variable tranche ($2.4M) reprices at 6.8%. Monthly debt service rises ~$9,600. Runway compresses from 11 to 7 months. Covenant test fails at month 9 under base-case revenue.</div>
+              <div class="sc-response">
+                <div class="sc-arrow">→</div>
+                <div class="sc-action">Swap variable tranche to fixed via rate cap immediately. Trigger 90-day liquidity review. Freeze discretionary capex. Notify board of covenant risk horizon.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sc-card">
+            <div class="sc-head" onclick="toggleSc(this)">
+              <div class="sc-type T">Threat</div>
+              <div class="sc-title">Lender pulls $800K facility at rollover</div>
+              <div class="sc-chevron">▾</div>
+            </div>
+            <div class="sc-body">
+              <div class="sc-situation">Primary lender declines renewal. Replacement facility requires 3–4 month lead time. Gap forces draw on operating reserves, exposing cash coverage below 1.2×.</div>
+              <div class="sc-response">
+                <div class="sc-arrow">→</div>
+                <div class="sc-action">Start secondary lender relationship now. Keep facility below 70% utilisation. No surprise draws in 90 days before rollover. Maintain clean covenant record throughout.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sc-card">
+            <div class="sc-head" onclick="toggleSc(this)">
+              <div class="sc-type S">Scenario</div>
+              <div class="sc-title">Rate cut cycle opens refinancing window</div>
+              <div class="sc-chevron">▾</div>
+            </div>
+            <div class="sc-body">
+              <div class="sc-situation">Central bank pivots. Fixed-rate window briefly opens at 4.1%. Peers with variable exposure rush simultaneously — spreads compress and lead times lengthen fast.</div>
+              <div class="sc-response">
+                <div class="sc-arrow">→</div>
+                <div class="sc-action">Pre-position: complete lender diligence packages in advance. Move at window open, not at rate bottom. Lock 5-year fixed on primary tranche before spread compression.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ⑤ STATE OF AFFAIRS GENERATION -->
+      <div class="block">
+        <div class="sec-marker">
+          <div class="sec-num">5</div>
+          <div class="sec-label">State of Affairs — generate</div>
+          <div class="sec-rule"></div>
+        </div>
+
+        <div class="exit-pair">
+          <div class="exit-card affair">
+            <div class="exit-head">Affair</div>
+            <div class="exit-origin">From hedge · obligation · reduces fragility</div>
+            <div class="exit-text" id="exit-affair">Eliminate variable-rate exposure and establish 6-month cash reserve. Covenant protection before any growth allocation. No-ruin sequencing enforced.</div>
+            <button class="exit-btn" onclick="createAffair()">Create Affair →</button>
+          </div>
+          <div class="exit-card interest">
+            <div class="exit-head">Interest</div>
+            <div class="exit-origin">From edge · option · convex upside</div>
+            <div class="exit-text" id="exit-interest">Monitor rate normalisation signal. Pre-position lender docs and distressed peer watch list. Expiry: 9 months. Kill if rates stable above 5.5% for 6 months.</div>
+            <button class="exit-btn" onclick="createInterest()">Create Interest →</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const domain_data = {
+  capital: {
+    pair: 'Interest rate cycle → Capital structure',
+    dtype: 'One-way door', tail: 'Fat / irreversible', quad: 'IV — Unknown unknowns', posture: 'Barbell + No-ruin first',
+    stakes: 'Solvency of operating entity', risks: 'Covenant breach, rollover cliff',
+    lineage: 'Self → Family', frag: 'Lenders, fixed-rate counterparties',
+    fbar: 78, fbar_label: 'High',
+    vuln: 'Variable-rate debt, short maturities', nonlin: 'Convex loss above trigger rate',
+    hedge: 'Eliminate variable-rate exposure above 30% of total debt. Build 6-month cash runway outside operating accounts. No covenant exposure within 2× stress.',
+    edge: 'Rate normalisation creates refinancing window. Position to lock fixed at peak if rates break. Option on distressed acquisition of over-leveraged peers.',
+    affair: 'Eliminate variable-rate exposure and establish 6-month cash reserve. Covenant protection before any growth allocation. No-ruin sequencing enforced.',
+    interest: 'Monitor rate normalisation signal. Pre-position lender docs and distressed peer watch list. Expiry: 9 months. Kill if rates stable above 5.5% for 6 months.'
+  },
+  operating: {
+    pair: 'Interest rate cycle → Operating model',
+    dtype: 'Two-way / reversible', tail: 'Thin / ergodic', quad: 'II — Known unknowns', posture: 'Margin stress-test + flexibility',
+    stakes: 'Margin compression, pricing power', risks: 'Cost inflation, customer churn on repricing',
+    lineage: 'Self', frag: 'Fixed-cost suppliers, long-contract customers',
+    fbar: 44, fbar_label: 'Moderate',
+    vuln: 'Fixed-cost base with variable revenue', nonlin: 'Moderate — linear compression, not cliff',
+    hedge: 'Stress-test margin at +2% cost environment. Build variable cost flexibility. Renegotiate fixed supplier contracts before cycle peak.',
+    edge: 'Competitors with weaker margins face harder repricing decisions. Window to gain price position on new contracts during rate uncertainty.',
+    affair: 'Stress-test operating margin under +2% cost scenario. Identify fixed costs convertible to variable within 60 days.',
+    interest: 'Monitor competitor pricing behaviour. If they blink on contract rates first, position to capture switching customers. Expiry: 6 months.'
+  },
+  liquidity: {
+    pair: 'Interest rate cycle → Liquidity reserve',
+    dtype: 'One-way door (if depleted)', tail: 'Fat on depletion', quad: 'III — Unknown knowns', posture: 'Reserve floor + duration mismatch fix',
+    stakes: 'Operating continuity, covenant headroom', risks: 'Cash draw at peak need, negative carry on reserve',
+    lineage: 'Self → Family', frag: 'Banks reducing credit lines, counterparties watching coverage',
+    fbar: 62, fbar_label: 'Elevated',
+    vuln: 'Reserve held in instruments with rate sensitivity', nonlin: 'Non-linear — reserve below floor triggers cascading calls',
+    hedge: 'Establish hard floor: 6 months operating costs in short-duration, instantly accessible instruments. No yield-chasing with reserve capital.',
+    edge: 'High-rate environment means reserve earns real yield for first time in a decade. Opportunity to improve return on safety capital without duration risk.',
+    affair: 'Move reserve to short-duration, high-yield cash instruments. Establish floor covenant — no draw below 6-month coverage without board sign-off.',
+    interest: 'Explore T-bill ladder for reserve yield optimisation. Upside is material at current rates. Downside capped by duration constraint. Review quarterly.'
+  }
+};
+
+let currentDomain = 'capital';
+
+function setDomain(btn, d) {
+  document.querySelectorAll('.domain-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  currentDomain = d;
+  const data = domain_data[d];
+
+  document.getElementById('doctrine-pair').textContent = data.pair;
+  document.getElementById('m-dtype').textContent = data.dtype;
+  document.getElementById('m-tail').textContent = data.tail;
+  document.getElementById('m-quad').textContent = data.quad;
+  document.getElementById('m-posture').textContent = data.posture;
+  document.getElementById('s-stakes').textContent = data.stakes;
+  document.getElementById('s-risks').textContent = data.risks;
+  document.getElementById('s-lineage').textContent = data.lineage;
+  document.getElementById('s-frag').textContent = data.frag;
+  document.getElementById('fbar').style.width = data.fbar + '%';
+  document.getElementById('fbar-label').textContent = data.fbar_label;
+  document.getElementById('p-vuln').textContent = data.vuln;
+  document.getElementById('p-nonlin').textContent = data.nonlin;
+  document.getElementById('e-hedge').textContent = data.hedge;
+  document.getElementById('e-edge').textContent = data.edge;
+  document.getElementById('exit-affair').textContent = data.affair;
+  document.getElementById('exit-interest').textContent = data.interest;
+
+  // animate
+  const panel = document.getElementById('doctrine-panel');
+  panel.style.animation = 'none';
+  requestAnimationFrame(() => { panel.style.animation = 'rise .25s ease'; });
+}
+
+function toggleSc(head) {
+  const card = head.parentElement;
+  card.classList.toggle('open');
+}
+
+function selectSource(item) {
+  document.querySelectorAll('.src-item').forEach(s => s.classList.remove('on'));
+  item.classList.add('on');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+function createAffair() {
+  toast('Affair created → Mission Command');
+}
+function createInterest() {
+  toast('Interest created → Vision Command');
+}
+</script>
+</body>
+</html>

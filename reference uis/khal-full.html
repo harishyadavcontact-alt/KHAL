@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KHAL — Decision Operating System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#060608;--bg1:#0c0c0f;--bg2:#111115;--bg3:#17171c;
+  --bg4:#1e1e25;--bg5:#25252e;--bg6:#2d2d38;
+  --bdr:rgba(255,255,255,0.055);--bdr2:rgba(255,255,255,0.1);--bdr3:rgba(255,255,255,0.16);
+  --t0:#edeae6;--t1:#bfbcb4;--t2:#82807a;--t3:#4a4845;--t4:#2a2926;
+  --amber:#e8a030;--amb2:#c47818;--amb3:rgba(232,160,48,.18);--amb4:rgba(232,160,48,.07);
+  --teal:#2dd4aa;--tel2:#1aaa84;--tel3:rgba(45,212,170,.16);--tel4:rgba(45,212,170,.07);
+  --coral:#e05a3a;--cor2:rgba(224,90,58,.16);--cor4:rgba(224,90,58,.07);
+  --blue:#4a90d9;--blu3:rgba(74,144,217,.16);
+  --green:#56c48a;--purple:#9b6ef3;
+  --r:'DM Mono',monospace;--s:'Syne',sans-serif;--i:'Inter',sans-serif;
+}
+html,body{height:100%;background:var(--bg0);color:var(--t0);overflow:hidden}
+body{display:flex;flex-direction:column;font-family:var(--i);font-size:13px}
+button{font-family:var(--i);cursor:pointer}
+
+/* ── TOPBAR ── */
+.top{height:44px;flex-shrink:0;background:var(--bg1);border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;padding:0 16px;gap:14px;z-index:100;position:relative}
+.logo{display:flex;align-items:center;gap:8px;font-family:var(--s);font-size:16px;
+  font-weight:700;color:var(--t0);letter-spacing:-.02em;flex-shrink:0;cursor:pointer}
+.logo-b{width:24px;height:24px;background:var(--amber);border-radius:5px;
+  display:flex;align-items:center;justify-content:center}
+.logo-b svg{width:12px;height:12px}
+.tsep{width:1px;height:18px;background:var(--bdr2)}
+.tnav{display:flex;gap:1px}
+.tn{font-family:var(--r);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--t3);padding:0 11px;height:44px;display:flex;align-items:center;
+  border-bottom:2px solid transparent;cursor:pointer;transition:all .12s;background:none;border-top:none;border-left:none;border-right:none}
+.tn:hover{color:var(--t2)}
+.tn.on{color:var(--t0);border-bottom-color:var(--amber)}
+.tr{margin-left:auto;display:flex;align-items:center;gap:7px}
+.tsearch{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--bdr);
+  border-radius:5px;padding:0 10px;height:27px;width:148px}
+.tsearch input{background:none;border:none;outline:none;color:var(--t1);font-size:11px;font-family:var(--i);width:100%}
+.tsearch input::placeholder{color:var(--t3)}
+.ic{width:27px;height:27px;border-radius:5px;background:var(--bg3);border:1px solid var(--bdr);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2);transition:all .12s}
+.ic:hover{border-color:var(--bdr2);color:var(--t1)}
+.av{width:27px;height:27px;border-radius:50%;
+  background:conic-gradient(var(--amber) 0 200deg,var(--teal) 200deg 360deg);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--r);font-size:9px;color:var(--bg0);font-weight:500;cursor:pointer}
+
+/* ── SHELL ── */
+.shell{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sb{width:152px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--bdr);
+  display:flex;flex-direction:column;overflow-y:auto;padding:8px 0}
+.sbh{font-family:var(--r);font-size:9px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--t4);padding:10px 13px 4px}
+.si{display:flex;align-items:center;gap:8px;padding:7px 13px;cursor:pointer;
+  transition:background .1s;color:var(--t2);font-size:12px;
+  border-left:2px solid transparent;border:none;background:none;width:100%;text-align:left}
+.si:hover{background:var(--bg3);color:var(--t1)}
+.si.on{background:var(--bg3);color:var(--t0);border-left:2px solid var(--amber)}
+.si svg{width:13px;height:13px;flex-shrink:0;opacity:.65}
+.si.on svg{opacity:1}
+.sibadge{margin-left:auto;font-family:var(--r);font-size:9px;
+  background:var(--bg5);border:1px solid var(--bdr2);color:var(--t2);
+  padding:1px 5px;border-radius:3px}
+.sdiv{height:1px;background:var(--bdr);margin:6px 13px}
+.si-indent{padding-left:28px;font-size:11px}
+
+/* ── PAGES (views) ── */
+.page{display:none;flex:1;overflow:hidden;flex-direction:column}
+.page.on{display:flex}
+
+/* ══════════════════════════════
+   WAR ROOM
+══════════════════════════════ */
+.wr-sub{height:36px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;padding:0 16px;gap:8px}
+.wr-title{font-family:var(--s);font-size:14px;font-weight:600;color:var(--t0);letter-spacing:-.01em}
+.wtag{font-family:var(--r);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 9px;border-radius:4px;border:1px solid var(--bdr2);color:var(--t2);
+  cursor:pointer;transition:all .12s;background:none}
+.wtag:hover{border-color:var(--bdr3);color:var(--t0)}
+.wtag.on{background:var(--bg5);border-color:var(--bdr2);color:var(--t0)}
+.wr-r{margin-left:auto;display:flex;gap:6px;align-items:center}
+.wpill{font-family:var(--r);font-size:9px;padding:3px 8px;border-radius:4px;
+  background:var(--bg4);border:1px solid var(--bdr);color:var(--t2)}
+.wpill.live{color:var(--teal);border-color:var(--tel2);background:var(--tel4)}
+
+.wr-body{flex:1;display:flex;overflow:hidden}
+.graph-wrap{flex:1;position:relative;overflow:hidden;background:var(--bg0)}
+canvas#gc{position:absolute;top:0;left:0;width:100%;height:100%}
+
+/* node popover */
+.npop{position:absolute;background:var(--bg3);border:1px solid var(--bdr2);
+  border-radius:8px;padding:14px 16px;width:216px;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);display:none;z-index:60}
+.npop-tag{font-family:var(--r);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:5px}
+.npop-title{font-family:var(--s);font-size:14px;font-weight:600;color:var(--t0);margin-bottom:6px}
+.npop-desc{font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:10px}
+.npop-row{display:flex;gap:6px;margin-bottom:3px}
+.npop-k{font-family:var(--r);font-size:9px;color:var(--t3);letter-spacing:.06em;width:58px;flex-shrink:0}
+.npop-v{font-size:11px;color:var(--t1)}
+.npop-v.r{color:var(--coral)}.npop-v.g{color:var(--teal)}.npop-v.a{color:var(--amber)}
+.npop-btns{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr)}
+.npop-btn{flex:1;font-family:var(--r);font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  padding:6px 0;border-radius:4px;border:1px solid;cursor:pointer;text-align:center;transition:opacity .15s}
+.npop-btn:hover{opacity:.78}
+.npop-btn.g{background:var(--tel4);border-color:var(--tel2);color:var(--teal)}
+.npop-btn.o{background:var(--amb4);border-color:var(--amb2);color:var(--amber)}
+
+/* right panel */
+.wrp{width:234px;flex-shrink:0;border-left:1px solid var(--bdr);
+  display:flex;flex-direction:column;background:var(--bg1);overflow:hidden}
+.rblk{border-bottom:1px solid var(--bdr);padding:12px 13px;flex-shrink:0}
+.rbh{font-family:var(--r);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:9px;display:flex;align-items:center;justify-content:space-between}
+.rbmore{color:var(--t3);cursor:pointer;font-size:15px;line-height:1}
+.rbmore:hover{color:var(--t2)}
+
+/* posture ring */
+.pring{display:flex;gap:10px;align-items:center}
+.rc{position:relative;width:58px;height:58px;flex-shrink:0}
+.rc svg{transform:rotate(-90deg)}
+.rv{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--r);font-size:13px;font-weight:500;color:var(--t0)}
+.pss{display:flex;flex-direction:column;gap:5px}
+.ps{display:flex;align-items:baseline;gap:5px}
+.psl{font-family:var(--r);font-size:9px;letter-spacing:.1em;color:var(--t3);text-transform:uppercase;width:42px}
+.psv{font-family:var(--r);font-size:13px;font-weight:500}
+
+/* priorities */
+.pri{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--bdr)}
+.pri:last-child{border-bottom:none}
+.prid{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.prib{flex:1}
+.prin{font-size:11px;color:var(--t1)}
+.pria{font-family:var(--r);font-size:9px}
+.pribar{margin-top:4px;height:2px;background:var(--bg5);border-radius:1px;overflow:hidden}
+.pribar-f{height:100%;border-radius:1px}
+
+/* lineage */
+.li{display:flex;align-items:center;gap:7px;padding:4px 0}
+.lin{font-family:var(--r);font-size:10px;color:var(--t2);width:50px}
+.lit{flex:1;height:2px;background:var(--bg5);border-radius:1px;overflow:hidden}
+.lif{height:100%;border-radius:1px}
+.lip{font-family:var(--r);font-size:10px;width:26px;text-align:right}
+
+.repscroll{flex:1;overflow-y:auto;padding:12px 13px}
+.repitem{padding:9px 10px;border-radius:5px;background:var(--bg3);border:1px solid var(--bdr);
+  margin-bottom:8px;cursor:pointer;transition:all .15s}
+.repitem:hover{border-color:var(--bdr2);background:var(--bg4)}
+.repitem:last-child{margin-bottom:0}
+.repit{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.reptag{font-family:var(--r);font-size:9px;padding:2px 6px;border-radius:3px}
+.reptag.r{background:var(--cor2);color:var(--coral)}
+.reptag.g{background:var(--tel3);color:var(--teal)}
+.reptag.a{background:var(--amb3);color:var(--amber)}
+.repdesc{font-size:11px;color:var(--t2);line-height:1.5}
+.repmeta{display:flex;gap:10px;margin-top:5px}
+.repm{font-family:var(--r);font-size:9px;color:var(--t3)}
+
+/* summary bar */
+.sumbar{height:52px;flex-shrink:0;border-top:1px solid var(--bdr);
+  background:var(--bg2);display:flex;align-items:stretch}
+.sbc{flex:1;display:flex;align-items:center;gap:10px;padding:0 14px;
+  border-right:1px solid var(--bdr);cursor:pointer;transition:background .12s}
+.sbc:last-child{border-right:none}
+.sbc:hover{background:var(--bg3)}
+.sbci{font-size:16px;flex-shrink:0}
+.sbcb{flex:1}
+.sbcn{font-family:var(--r);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:1px}
+.sbcv{font-family:var(--s);font-size:15px;font-weight:600;color:var(--t0);line-height:1}
+.sbcs{font-size:10px;color:var(--t2)}
+.sbca{font-family:var(--r);font-size:10px;color:var(--t3);margin-left:auto}
+
+/* timeline */
+.tbar{height:36px;flex-shrink:0;border-top:1px solid var(--bdr);
+  background:var(--bg1);display:flex;align-items:center;padding:0 16px;gap:12px}
+.tbnow{font-family:var(--r);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--amber);padding:3px 8px;border:1px solid var(--amb2);border-radius:3px;background:var(--amb4)}
+.tbtn{font-family:var(--r);font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--t3);cursor:pointer;padding:3px 7px;border-radius:3px;transition:all .12s;background:none;border:none}
+.tbtn:hover{color:var(--t1);background:var(--bg4)}
+.tbsep{width:1px;height:14px;background:var(--bdr2)}
+.tbi{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)}
+.tbid{width:5px;height:5px;border-radius:50%}
+.tbr{margin-left:auto;display:flex;gap:7px;align-items:center}
+.tbstat{font-family:var(--r);font-size:9px;color:var(--t3)}
+.tbstat span{color:var(--t1)}
+.tbact{font-family:var(--r);font-size:9px;padding:3px 10px;border-radius:3px;
+  background:var(--bg4);border:1px solid var(--bdr);color:var(--t1);cursor:pointer;transition:all .12s}
+.tbact:hover{border-color:var(--amber);color:var(--amber)}
+
+/* ══════════════════════════════
+   WAR GAMING / SOURCE
+══════════════════════════════ */
+.src-layout{flex:1;display:flex;overflow:hidden}
+.src-rail{width:188px;flex-shrink:0;border-right:1px solid var(--bdr);
+  overflow-y:auto;padding:12px 0;background:var(--bg1)}
+.srlh{font-family:var(--r);font-size:9px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--t4);padding:8px 14px 5px}
+.srli{display:flex;align-items:flex-start;gap:8px;padding:9px 14px;cursor:pointer;
+  transition:background .1s;border-left:2px solid transparent}
+.srli:hover{background:var(--bg3)}
+.srli.on{background:var(--bg3);border-left-color:var(--amber)}
+.srli-name{font-size:12px;color:var(--t1);line-height:1.35}
+.srli.on .srli-name{color:var(--t0)}
+.srli-tag{display:inline-block;margin-top:4px;font-family:var(--r);font-size:9px;
+  letter-spacing:.06em;padding:2px 6px;border-radius:2px}
+.srli-tag.fat{background:var(--cor2);color:var(--coral)}
+.srli-tag.slow{background:var(--amb3);color:var(--amber)}
+.srli-tag.str{background:var(--bg5);border:1px solid var(--bdr2);color:var(--t2)}
+
+.src-scroll{flex:1;overflow-y:auto}
+.src-flow{max-width:780px;padding:28px 36px 60px;display:flex;flex-direction:column;gap:0}
+
+.sblk{margin-bottom:38px;animation:fadeup .3s ease both}
+.sblk+.sblk{position:relative}
+.sblk+.sblk::before{content:'';position:absolute;top:-22px;left:-1px;
+  width:1px;height:22px;background:var(--bdr2)}
+
+.smark{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+.snum{font-family:var(--r);font-size:10px;width:19px;height:19px;border-radius:50%;
+  border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;
+  color:var(--t3);flex-shrink:0}
+.slbl{font-family:var(--r);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)}
+.srule{flex:1;height:1px;background:var(--bdr)}
+
+.src-title{font-family:var(--s);font-size:26px;font-weight:600;color:var(--t0);
+  line-height:1.15;margin-bottom:6px;letter-spacing:-.01em}
+.src-kind{font-family:var(--r);font-size:11px;color:var(--t3);letter-spacing:.08em;margin-bottom:10px}
+.src-desc{font-size:14px;color:var(--t1);line-height:1.72;max-width:560px;margin-bottom:14px}
+.ftags{display:flex;gap:7px;flex-wrap:wrap}
+.ftag{font-family:var(--r);font-size:9px;letter-spacing:.08em;padding:4px 10px;
+  border-radius:2px;border:1px solid var(--bdr);color:var(--t2)}
+.ftag.r{background:var(--cor4);border-color:rgba(224,90,58,.3);color:var(--coral)}
+.ftag.a{background:var(--amb4);border-color:rgba(232,160,48,.3);color:var(--amber)}
+
+.dombtns{display:flex;gap:7px;margin-bottom:9px;flex-wrap:wrap}
+.dombt{font-family:var(--r);font-size:10px;letter-spacing:.06em;padding:5px 13px;
+  border-radius:2px;border:1px solid var(--bdr);background:transparent;
+  color:var(--t3);cursor:pointer;transition:all .12s}
+.dombt:hover{background:var(--bg4);color:var(--t1)}
+.dombt.on{background:var(--t0);border-color:var(--t0);color:var(--bg0)}
+.domhint{font-family:var(--r);font-size:9px;color:var(--t4);letter-spacing:.06em}
+
+/* doctrine panel */
+.doc{background:var(--bg1);border:1px solid var(--bdr);border-radius:4px;overflow:hidden;
+  animation:fadeup .25s ease both}
+.docbar{background:var(--bg4);color:var(--t1);font-family:var(--r);font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase;padding:8px 18px;
+  display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bdr)}
+.docbar span{opacity:.4;font-size:9px}
+
+.maprow{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border-bottom:1px solid var(--bdr)}
+.mc{padding:13px 15px;border-right:1px solid var(--bdr)}
+.mc:last-child{border-right:none}
+.mk{font-family:var(--r);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:5px}
+.mv{font-family:var(--r);font-size:11px;font-weight:500;color:var(--t0);line-height:1.35}
+.mv.r{color:var(--coral)}.mv.g{color:var(--teal)}.mv.a{color:var(--amber)}
+
+.stonecols{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--bdr)}
+.scol{padding:15px 16px}
+.scol+.scol{border-left:1px solid var(--bdr)}
+.schead{font-family:var(--r);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:10px}
+.sln{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  padding:5px 0;border-bottom:1px solid var(--bg4)}
+.sln:last-child{border-bottom:none}
+.sk{font-family:var(--r);font-size:9px;color:var(--t3);flex-shrink:0}
+.sv{font-size:11px;color:var(--t1);text-align:right;line-height:1.3}
+.sv.r{color:var(--coral)}.sv.a{color:var(--amber)}
+.fbar{display:flex;align-items:center;gap:6px}
+.fbt{flex:1;height:2px;background:var(--bg5);border-radius:1px;overflow:hidden}
+.fbf{height:100%;border-radius:1px;background:var(--coral)}
+.fbp{font-family:var(--r);font-size:10px;color:var(--coral)}
+
+.endsrow{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--bdr)}
+.ec{padding:15px 17px}
+.ec.hedge{border-right:1px solid var(--bdr)}
+.elbl{font-family:var(--r);font-size:9px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px}
+.hedge .elbl{color:var(--coral)}.edge .elbl{color:var(--teal)}
+.etxt{font-size:12px;color:var(--t1);line-height:1.6}
+
+.meansrow{display:grid;grid-template-columns:1fr 1fr 1fr}
+.mcel{padding:14px 16px}
+.mcel+.mcel{border-left:1px solid var(--bdr)}
+.mhead{font-family:var(--r);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:7px}
+.mitem{display:flex;gap:6px;font-size:11px;color:var(--t1);padding:3px 0;
+  border-bottom:1px solid var(--bg4);line-height:1.4}
+.mitem:last-child{border-bottom:none}
+.mbul{color:var(--t4);flex-shrink:0;font-size:9px;margin-top:3px}
+.mbul.x{color:var(--coral)}
+
+/* scenario cards */
+.scards{display:flex;flex-direction:column;gap:9px}
+.scard{border:1px solid var(--bdr);border-radius:3px;overflow:hidden}
+.scardh{display:flex;align-items:center;gap:9px;padding:11px 14px;
+  cursor:pointer;background:var(--bg1);transition:background .1s}
+.scardh:hover{background:var(--bg3)}
+.stype{font-family:var(--r);font-size:9px;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;padding:2px 7px;border-radius:2px;flex-shrink:0}
+.stype.T{background:var(--cor2);color:var(--coral);border:1px solid rgba(224,90,58,.3)}
+.stype.S{background:var(--amb3);color:var(--amber);border:1px solid rgba(232,160,48,.3)}
+.stype.R{background:var(--tel3);color:var(--teal);border:1px solid rgba(45,212,170,.3)}
+.stitle{font-size:12px;color:var(--t0);flex:1}
+.schev{font-family:var(--r);font-size:11px;color:var(--t4);transition:transform .15s}
+.scard.open .schev{transform:rotate(180deg)}
+.scardb{display:none;padding:13px 15px 15px;border-top:1px solid var(--bdr);background:var(--bg0)}
+.scard.open .scardb{display:block}
+.ssit{font-size:12px;color:var(--t1);line-height:1.65;margin-bottom:10px}
+.sresp{display:flex;gap:9px;padding-top:10px;border-top:1px solid var(--bdr2)}
+.sarr{font-family:var(--r);font-size:12px;color:var(--teal);flex-shrink:0;margin-top:1px}
+.sact{font-size:12px;color:var(--t1);line-height:1.6}
+
+/* exit pair */
+.exitpair{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.exitc{border-radius:3px;padding:16px 18px}
+.exitc.affair{background:var(--cor4);border:1px solid rgba(224,90,58,.25)}
+.exitc.interest{background:var(--tel4);border:1px solid rgba(45,212,170,.25)}
+.exhead{font-family:var(--r);font-size:9px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:5px}
+.affair .exhead{color:var(--coral)}.interest .exhead{color:var(--teal)}
+.exorg{font-family:var(--r);font-size:9px;color:var(--t3);margin-bottom:9px;letter-spacing:.04em}
+.extxt{font-size:12px;color:var(--t1);line-height:1.6;margin-bottom:13px}
+.exbtn{width:100%;padding:8px 14px;border-radius:2px;font-family:var(--r);
+  font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;border:1px solid;transition:opacity .15s}
+.exbtn:hover{opacity:.8}
+.affair .exbtn{background:var(--coral);border-color:var(--coral);color:#fff}
+.interest .exbtn{background:var(--teal);border-color:var(--teal);color:#000}
+
+/* ══════════════════════════════
+   MISSION COMMAND
+══════════════════════════════ */
+.mc-layout{flex:1;display:flex;overflow:hidden}
+.mc-main{flex:1;overflow-y:auto;padding:24px 28px 48px}
+.mc-aside{width:220px;flex-shrink:0;border-left:1px solid var(--bdr);overflow-y:auto;background:var(--bg1)}
+.pghead{margin-bottom:20px}
+.pgtitle{font-family:var(--s);font-size:20px;font-weight:600;color:var(--t0);
+  letter-spacing:-.01em;margin-bottom:4px}
+.pgdesc{font-size:12px;color:var(--t2)}
+
+/* affair card */
+.acard{background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;
+  margin-bottom:10px;overflow:hidden;transition:border-color .15s;cursor:pointer}
+.acard:hover{border-color:var(--bdr2)}
+.acard.open{border-color:var(--bdr2)}
+.acard-head{display:flex;align-items:center;gap:10px;padding:13px 16px}
+.acard-icon{font-size:14px;flex-shrink:0}
+.acard-info{flex:1}
+.acard-name{font-size:13px;color:var(--t0);margin-bottom:2px}
+.acard-meta{display:flex;gap:10px}
+.acard-tag{font-family:var(--r);font-size:9px;padding:2px 7px;border-radius:2px}
+.acard-tag.r{background:var(--cor2);color:var(--coral)}
+.acard-tag.a{background:var(--amb3);color:var(--amber)}
+.acard-tag.g{background:var(--tel3);color:var(--teal)}
+.acard-hor{font-family:var(--r);font-size:9px;color:var(--t3)}
+.acard-chev{font-family:var(--r);font-size:11px;color:var(--t4);transition:transform .15s}
+.acard.open .acard-chev{transform:rotate(180deg)}
+.acard-body{display:none;padding:14px 16px 16px;border-top:1px solid var(--bdr);background:var(--bg1)}
+.acard.open .acard-body{display:block}
+.acard-desc{font-size:12px;color:var(--t1);line-height:1.65;margin-bottom:12px}
+.acard-tasks{display:flex;flex-direction:column;gap:6px}
+.atask{display:flex;align-items:center;gap:9px;padding:7px 10px;
+  border-radius:4px;background:var(--bg3);border:1px solid var(--bdr)}
+.atask-cb{width:13px;height:13px;border-radius:2px;border:1px solid var(--bdr2);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  cursor:pointer;transition:all .12s;background:none}
+.atask-cb.done{background:var(--teal);border-color:var(--teal)}
+.atask-label{font-size:12px;color:var(--t1);flex:1}
+.atask-label.done{color:var(--t3);text-decoration:line-through}
+.atask-hor{font-family:var(--r);font-size:9px;color:var(--t3)}
+
+/* dependency panel */
+.dep-item{display:flex;align-items:center;gap:8px;padding:8px 13px;
+  border-bottom:1px solid var(--bdr);cursor:pointer;transition:background .1s}
+.dep-item:hover{background:var(--bg3)}
+.dep-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.dep-name{font-size:11px;color:var(--t1);flex:1}
+.dep-status{font-family:var(--r);font-size:9px;padding:2px 6px;border-radius:2px}
+.dep-status.act{background:var(--tel3);color:var(--teal)}
+.dep-status.blk{background:var(--cor2);color:var(--coral)}
+.dep-status.que{background:var(--amb3);color:var(--amber)}
+
+/* ══════════════════════════════
+   VISION COMMAND
+══════════════════════════════ */
+.vc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.icard{background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;
+  padding:16px;cursor:pointer;transition:all .15s}
+.icard:hover{border-color:var(--bdr2);background:var(--bg3)}
+.icard-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.icard-icon{font-size:16px;flex-shrink:0}
+.icard-info{flex:1}
+.icard-name{font-size:13px;color:var(--t0);margin-bottom:3px}
+.icard-src{font-family:var(--r);font-size:9px;color:var(--t3)}
+.icard-conv{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.icard-conv-bar{flex:1;height:3px;background:var(--bg5);border-radius:2px;overflow:hidden}
+.icard-conv-fill{height:100%;border-radius:2px;background:var(--teal)}
+.icard-conv-pct{font-family:var(--r);font-size:9px;color:var(--teal)}
+.icard-tags{display:flex;gap:5px;flex-wrap:wrap}
+.icard-row{display:flex;justify-content:space-between;font-size:11px;margin-top:6px}
+.icard-rl{color:var(--t3);font-family:var(--r);font-size:9px}
+.icard-rv{color:var(--t1);font-size:11px}
+
+/* ══════════════════════════════
+   SURGICAL EXECUTION
+══════════════════════════════ */
+.ex-layout{flex:1;display:flex;overflow:hidden}
+.ex-main{flex:1;overflow-y:auto;padding:24px 28px 48px}
+.ex-aside{width:220px;flex-shrink:0;border-left:1px solid var(--bdr);overflow-y:auto;background:var(--bg1)}
+
+.task-group{margin-bottom:22px}
+.tg-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tg-title{font-family:var(--r);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3)}
+.tg-count{font-family:var(--r);font-size:9px;padding:1px 6px;border-radius:2px;
+  background:var(--bg4);border:1px solid var(--bdr);color:var(--t2)}
+.tgrule{flex:1;height:1px;background:var(--bdr)}
+
+.task{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;
+  background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;
+  margin-bottom:7px;cursor:pointer;transition:all .15s}
+.task:hover{border-color:var(--bdr2);background:var(--bg3)}
+.tcb{width:14px;height:14px;border-radius:3px;border:1px solid var(--bdr2);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  cursor:pointer;transition:all .12s;background:none;margin-top:1px}
+.tcb.done{background:var(--teal);border-color:var(--teal);color:#000;font-size:9px}
+.tbody{flex:1}
+.tname{font-size:12px;color:var(--t0);margin-bottom:3px}
+.tname.done{color:var(--t3);text-decoration:line-through}
+.tmeta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tsrc{font-family:var(--r);font-size:9px;color:var(--t3)}
+.tstat{font-family:var(--r);font-size:9px;padding:2px 6px;border-radius:2px}
+.tstat.active{background:var(--tel3);color:var(--teal)}
+.tstat.queued{background:var(--amb3);color:var(--amber)}
+.tstat.blocked{background:var(--cor2);color:var(--coral)}
+.tstat.done{background:var(--bg5);color:var(--t3)}
+.thor{font-family:var(--r);font-size:9px;color:var(--t3);margin-left:auto}
+.tpri{font-family:var(--r);font-size:9px;padding:2px 6px;border-radius:2px;
+  background:var(--bg5);border:1px solid var(--bdr);color:var(--t2)}
+
+/* ══════════════════════════════
+   SHARED
+══════════════════════════════ */
+.page-subhead{height:36px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;padding:0 16px;gap:8px}
+.psh-title{font-family:var(--s);font-size:14px;font-weight:600;color:var(--t0)}
+.psh-r{margin-left:auto;display:flex;gap:6px;align-items:center}
+.psh-btn{font-family:var(--r);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 10px;border-radius:4px;border:1px solid var(--bdr2);
+  background:var(--bg4);color:var(--t1);cursor:pointer;transition:all .12s}
+.psh-btn:hover{border-color:var(--bdr3);color:var(--t0)}
+.psh-btn.primary{background:var(--amber);border-color:var(--amber);color:#000}
+.psh-btn.primary:hover{background:var(--amb2);border-color:var(--amb2)}
+
+.aside-blk{padding:12px 13px;border-bottom:1px solid var(--bdr)}
+.aside-blk-h{font-family:var(--r);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:9px}
+
+/* ANIMATIONS */
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fadeup{animation:fadeup .3s ease both}
+
+/* TOAST */
+.toast{position:fixed;bottom:58px;right:18px;background:var(--bg5);
+  border:1px solid var(--bdr2);color:var(--t1);font-family:var(--r);
+  font-size:10px;letter-spacing:.06em;padding:9px 14px;border-radius:5px;
+  pointer-events:none;opacity:0;transform:translateY(5px);
+  transition:all .2s;z-index:999;max-width:280px}
+.toast.show{opacity:1;transform:none}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg6);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="top">
+  <div class="logo" onclick="nav('warroom')">
+    <div class="logo-b">
+      <svg viewBox="0 0 12 12" fill="none">
+        <path d="M6 1L11 3.8v4.4L6 11 1 8.2V3.8L6 1z" stroke="#060608" stroke-width="1.3"/>
+        <path d="M6 4L8.5 5.5v3L6 10 3.5 8.5v-3L6 4z" fill="#060608"/>
+      </svg>
+    </div>
+    KHAL
+  </div>
+  <div class="tsep"></div>
+  <nav class="tnav">
+    <button class="tn on" id="tn-warroom" onclick="nav('warroom')">War Room</button>
+    <button class="tn" id="tn-source" onclick="nav('source')">Sources</button>
+    <button class="tn" id="tn-mission" onclick="nav('mission')">Mission</button>
+    <button class="tn" id="tn-vision" onclick="nav('vision')">Vision</button>
+    <button class="tn" id="tn-execution" onclick="nav('execution')">Execution</button>
+  </nav>
+  <div class="tr">
+    <div class="tsearch">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="4.5" cy="4.5" r="3.2" stroke="#4a4845" stroke-width="1.1"/><path d="M7 7L9.5 9.5" stroke="#4a4845" stroke-width="1.1" stroke-linecap="round"/></svg>
+      <input type="text" placeholder="Search">
+    </div>
+    <div class="ic" title="Notifications">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5a3.5 3.5 0 013.5 3.5v2.5H10V9H2V7.5h.5V5A3.5 3.5 0 016 1.5z" stroke="#82807a" stroke-width="1" fill="none"/></svg>
+    </div>
+    <div class="av">KH</div>
+  </div>
+</div>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sb">
+  <button class="si on" id="si-warroom" onclick="nav('warroom')">
+    <svg viewBox="0 0 13 13" fill="none"><polygon points="6.5,1 12,4 12,9 6.5,12 1,9 1,4" stroke="currentColor" stroke-width="1.2"/><circle cx="6.5" cy="6.5" r="1.8" fill="currentColor" opacity=".5"/></svg>
+    War Room
+  </button>
+  <div class="sdiv"></div>
+  <div class="sbh">War Gaming</div>
+  <button class="si si-indent" id="si-source" onclick="nav('source')">⟳ Source</button>
+  <button class="si si-indent" id="si-domain" onclick="toast_s('Domain chamber — coming soon')">◈ Domain</button>
+  <button class="si si-indent" id="si-craft" onclick="toast_s('Craft chamber — coming soon')">✦ Craft</button>
+  <button class="si si-indent" id="si-affair" onclick="nav('mission')">◆ Affair</button>
+  <button class="si si-indent" id="si-interest" onclick="nav('vision')">◇ Interest</button>
+  <div class="sdiv"></div>
+  <button class="si" id="si-mission" onclick="nav('mission')">
+    <svg viewBox="0 0 13 13" fill="none"><path d="M2 9.5V5L6.5 1.5 11 5v4.5H2z" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 9.5V7h4v2.5" stroke="currentColor" stroke-width="1.1"/></svg>
+    Mission Command
+    <div class="sibadge" id="badge-affairs">3</div>
+  </button>
+  <button class="si" id="si-vision" onclick="nav('vision')">
+    <svg viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M6.5 4v2.5l1.5 1.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+    Vision Command
+    <div class="sibadge" id="badge-interests">5</div>
+  </button>
+  <button class="si" id="si-execution" onclick="nav('execution')">
+    <svg viewBox="0 0 13 13" fill="none"><path d="M2 9L4 4l2.5 3L9 2l2 7H2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/></svg>
+    Surgical Execution
+    <div class="sibadge" id="badge-tasks">9</div>
+  </button>
+  <div class="sdiv"></div>
+  <button class="si" onclick="toast_s('Lab — coming soon')">
+    <svg viewBox="0 0 13 13" fill="none"><path d="M5 2v4L2.5 10h8L8 6V2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M4.5 2h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    Lab
+  </button>
+</aside>
+
+<!-- ═══ WAR ROOM PAGE ═══ -->
+<div class="page on" id="page-warroom">
+  <div class="wr-sub">
+    <div class="wr-title">War Room</div>
+    <button class="wtag on">Dashboard</button>
+    <button class="wtag">Weak Nodes</button>
+    <button class="wtag">Modality</button>
+    <div class="wr-r">
+      <div class="wpill live">● 6 sources live</div>
+      <div class="wpill" id="wrp-nodes">15 nodes</div>
+      <button class="ic" onclick="resetGraph()" title="Reset graph" style="width:26px;height:26px">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.5A3.5 3.5 0 109 5.5" stroke="#82807a" stroke-width="1.2" stroke-linecap="round"/><path d="M7.5 3.5l1.5 2-1.5 2" stroke="#82807a" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="wr-body">
+    <div class="graph-wrap" id="gwrap">
+      <canvas id="gc"></canvas>
+      <div class="npop" id="npop">
+        <div class="npop-tag" id="np-type">Source</div>
+        <div class="npop-title" id="np-title">—</div>
+        <div class="npop-desc" id="np-desc">—</div>
+        <div class="npop-row"><div class="npop-k">Tail</div><div class="npop-v r" id="np-tail">—</div></div>
+        <div class="npop-row"><div class="npop-k">Domains</div><div class="npop-v" id="np-dom">—</div></div>
+        <div class="npop-row"><div class="npop-k">Posture</div><div class="npop-v g" id="np-pos">—</div></div>
+        <div class="npop-btns">
+          <button class="npop-btn g" id="np-game">Game Source →</button>
+          <button class="npop-btn o" id="np-affair">Create Affair</button>
+        </div>
+      </div>
+    </div>
+    <div class="wrp">
+      <div class="rblk">
+        <div class="rbh">Decision Posture <div class="rbmore">⋯</div></div>
+        <div class="pring">
+          <div class="rc">
+            <svg width="58" height="58" viewBox="0 0 58 58">
+              <circle cx="29" cy="29" r="23" fill="none" stroke="#25252e" stroke-width="5"/>
+              <circle cx="29" cy="29" r="23" fill="none" stroke="#2dd4aa" stroke-width="5"
+                stroke-dasharray="90 54" stroke-linecap="round"/>
+              <circle cx="29" cy="29" r="23" fill="none" stroke="#e05a3a" stroke-width="5"
+                stroke-dasharray="26 118" stroke-dashoffset="-90" stroke-linecap="round"/>
+            </svg>
+            <div class="rv">62%</div>
+          </div>
+          <div class="pss">
+            <div class="ps"><div class="psl">Robust</div><div class="psv" style="color:var(--teal)">62%</div></div>
+            <div class="ps"><div class="psl">Fragile</div><div class="psv" style="color:var(--coral)">−18%</div></div>
+            <div class="ps"><div class="psl">Optional</div><div class="psv" style="color:var(--t1)">20%</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="rblk">
+        <div class="rbh">Next Priorities <div class="rbmore">∧</div></div>
+        <div class="pri"><div class="prid" style="background:var(--coral)"></div><div class="prib"><div class="prin">Health</div><div class="pria" style="color:var(--coral)">Reduce Fragility</div><div class="pribar"><div class="pribar-f" style="width:72%;background:var(--coral)"></div></div></div></div>
+        <div class="pri"><div class="prid" style="background:var(--amber)"></div><div class="prib"><div class="prin">Infra</div><div class="pria" style="color:var(--amber)">Hedge + Expand</div><div class="pribar"><div class="pribar-f" style="width:50%;background:var(--amber)"></div></div></div></div>
+        <div class="pri"><div class="prid" style="background:var(--teal)"></div><div class="prib"><div class="prin">Family</div><div class="pria" style="color:var(--teal)">Preserve optionality</div><div class="pribar"><div class="pribar-f" style="width:35%;background:var(--teal)"></div></div></div></div>
+      </div>
+      <div class="rblk">
+        <div class="rbh">Lineage Exposure</div>
+        <div class="li"><div class="lin">Self</div><div class="lit"><div class="lif" style="width:12%;background:var(--amber)"></div></div><div class="lip" style="color:var(--amber)">12%</div></div>
+        <div class="li"><div class="lin">Family</div><div class="lit"><div class="lif" style="width:18%;background:var(--coral)"></div></div><div class="lip" style="color:var(--coral)">18%</div></div>
+        <div class="li"><div class="lin">State</div><div class="lit"><div class="lif" style="width:20%;background:var(--amber)"></div></div><div class="lip" style="color:var(--amber)">20%</div></div>
+        <div class="li"><div class="lin">Nation</div><div class="lit"><div class="lif" style="width:32%;background:var(--teal)"></div></div><div class="lip" style="color:var(--teal)">32%</div></div>
+        <div class="li"><div class="lin">Humanity</div><div class="lit"><div class="lif" style="width:41%;background:var(--teal)"></div></div><div class="lip" style="color:var(--teal)">41%</div></div>
+        <div class="li"><div class="lin">Nature</div><div class="lit"><div class="lif" style="width:27%;background:var(--green)"></div></div><div class="lip" style="color:var(--green)">27%</div></div>
+      </div>
+      <div style="padding:10px 13px 6px;flex-shrink:0"><div class="rbh" style="margin-bottom:6px">Repercussions</div></div>
+      <div class="repscroll">
+        <div class="repitem" onclick="nav('source')"><div class="repit"><span style="font-size:12px">♥</span><span style="font-size:12px;color:var(--t0);flex:1">Health</span><div class="reptag r">Fragile</div></div><div class="repdesc">Sleep debt compounding. Training unstructured.</div><div class="repmeta"><span class="repm">Impact <span style="color:var(--coral)">High</span></span><span class="repm">30d</span></div></div>
+        <div class="repitem" onclick="nav('mission')"><div class="repit"><span style="font-size:12px">⬡</span><span style="font-size:12px;color:var(--t0);flex:1">Infrastructure</span><div class="reptag a">Exposed</div></div><div class="repdesc">Key-person dependency on critical systems.</div><div class="repmeta"><span class="repm">Impact <span style="color:var(--amber)">Mid</span></span><span class="repm">60d</span></div></div>
+        <div class="repitem" onclick="nav('vision')"><div class="repit"><span style="font-size:12px">⌂</span><span style="font-size:12px;color:var(--t0);flex:1">Family</span><div class="reptag g">Stable</div></div><div class="repdesc">Optionality preserved. No acute fragility.</div><div class="repmeta"><span class="repm">Impact <span style="color:var(--teal)">Low</span></span><span class="repm">90d</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="sumbar">
+    <div class="sbc" onclick="nav('mission')"><div class="sbci">◆</div><div class="sbcb"><div class="sbcn">Affairs</div><div class="sbcv" id="sc-affairs">3 <span class="sbcs">active</span></div></div><div class="sbca">→</div></div>
+    <div class="sbc" onclick="nav('vision')"><div class="sbci">◇</div><div class="sbcb"><div class="sbcn">Interests</div><div class="sbcv" id="sc-interests">5 <span class="sbcs">open</span></div></div><div class="sbca">→</div></div>
+    <div class="sbc" onclick="toast_s('Crafts library')"><div class="sbci">✦</div><div class="sbcb"><div class="sbcn">Crafts</div><div class="sbcv">8 <span class="sbcs">available</span></div></div><div class="sbca">→</div></div>
+    <div class="sbc" onclick="nav('execution')"><div class="sbci" style="color:var(--coral)">⚠</div><div class="sbcb"><div class="sbcn">Weak Links</div><div class="sbcv" style="color:var(--coral)" id="sc-weak">4 <span class="sbcs" style="color:var(--t2)">flagged</span></div></div><div class="sbca" style="color:var(--coral)">→</div></div>
+  </div>
+  <div class="tbar">
+    <div class="tbnow">NOW</div>
+    <button class="tbtn">3M</button><button class="tbtn">6M</button>
+    <button class="tbtn">1Y</button><button class="tbtn">5Y</button>
+    <div class="tbsep"></div>
+    <div class="tbi"><div class="tbid" style="background:var(--teal)"></div>Dependencies</div>
+    <div class="tbi"><div class="tbid" style="background:var(--amber)"></div>Sleep Protocol</div>
+    <div class="tbi"><div class="tbid" style="background:var(--coral)"></div>Review Threat Tree</div>
+    <div class="tbr">
+      <div class="tbstat">Sources <span>6</span></div>
+      <div class="tbstat">Tasks <span id="task-count">9</span></div>
+      <button class="tbact" onclick="nav('source')">Game Source →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ WAR GAMING / SOURCE PAGE ═══ -->
+<div class="page" id="page-source">
+  <div class="page-subhead">
+    <div class="psh-title">War Gaming / Source</div>
+    <div class="wtag on" style="margin-left:8px">State of the Art</div>
+    <div class="wtag">Scenarios</div>
+    <div class="psh-r">
+      <button class="psh-btn" onclick="nav('warroom')">← War Room</button>
+      <button class="psh-btn" onclick="nav('mission')">Mission Command →</button>
+    </div>
+  </div>
+  <div class="src-layout">
+    <aside class="src-rail">
+      <div class="srlh">Sources</div>
+      <div class="srli on" onclick="selectSrc(this,'rate')">
+        <div><div class="srli-name">Interest rate cycle</div><div class="srli-tag fat">Fat tail</div></div>
+      </div>
+      <div class="srli" onclick="selectSrc(this,'geo')">
+        <div><div class="srli-name">Geopolitics</div><div class="srli-tag slow">Slow burn</div></div>
+      </div>
+      <div class="srli" onclick="selectSrc(this,'keyperson')">
+        <div><div class="srli-name">Key-person dependency</div><div class="srli-tag str">Structural</div></div>
+      </div>
+      <div class="srli" onclick="selectSrc(this,'tech')">
+        <div><div class="srli-name">Tech shift</div><div class="srli-tag slow">Slow burn</div></div>
+      </div>
+      <div class="srli" onclick="selectSrc(this,'health')">
+        <div><div class="srli-name">Health fragility</div><div class="srli-tag fat">Fat tail</div></div>
+      </div>
+    </aside>
+    <div class="src-scroll">
+      <div class="src-flow" id="src-flow-content">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MISSION COMMAND PAGE ═══ -->
+<div class="page" id="page-mission">
+  <div class="page-subhead">
+    <div class="psh-title">Mission Command</div>
+    <div class="wtag on">Hierarchy</div>
+    <div class="wtag">Dependencies</div>
+    <div class="psh-r">
+      <button class="psh-btn primary" onclick="addAffair()">+ New Affair</button>
+    </div>
+  </div>
+  <div class="mc-layout">
+    <div class="mc-main" id="mc-main"><!-- rendered by JS --></div>
+    <aside class="mc-aside">
+      <div class="aside-blk"><div class="aside-blk-h">Dependencies</div>
+        <div class="dep-item"><div class="dep-dot" style="background:var(--teal)"></div><div class="dep-name">Core Security</div><div class="dep-status act">Active</div></div>
+        <div class="dep-item"><div class="dep-dot" style="background:var(--amber)"></div><div class="dep-name">Negotiate Alliance</div><div class="dep-status que">Queued</div></div>
+        <div class="dep-item"><div class="dep-dot" style="background:var(--coral)"></div><div class="dep-name">Design Hedge</div><div class="dep-status blk">Blocked</div></div>
+        <div class="dep-item"><div class="dep-dot" style="background:var(--teal)"></div><div class="dep-name">Sleep Protocol v2</div><div class="dep-status act">Active</div></div>
+      </div>
+      <div class="aside-blk"><div class="aside-blk-h">No-ruin sequence</div>
+        <div style="font-size:11px;color:var(--t2);line-height:1.65">Affairs are sequenced: hedge before edge. No obligation runs until the one above it is complete or explicitly overridden.</div>
+      </div>
+      <div class="aside-blk" style="border-bottom:none"><div class="aside-blk-h">Lineage threshold</div>
+        <div class="li"><div class="lin">Self</div><div class="lit"><div class="lif" style="width:12%;background:var(--amber)"></div></div><div class="lip" style="color:var(--amber)">12%</div></div>
+        <div class="li"><div class="lin">Family</div><div class="lit"><div class="lif" style="width:18%;background:var(--coral)"></div></div><div class="lip" style="color:var(--coral)">18%</div></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ═══ VISION COMMAND PAGE ═══ -->
+<div class="page" id="page-vision">
+  <div class="page-subhead">
+    <div class="psh-title">Vision Command</div>
+    <div class="wtag on">Option Paths</div>
+    <div class="wtag">Convexity Map</div>
+    <div class="psh-r">
+      <button class="psh-btn primary" onclick="addInterest()">+ New Interest</button>
+    </div>
+  </div>
+  <div class="mc-layout">
+    <div class="mc-main" id="vc-main"><!-- rendered by JS --></div>
+    <aside class="mc-aside">
+      <div class="aside-blk"><div class="aside-blk-h">Convexity signal</div>
+        <div style="font-size:11px;color:var(--t2);line-height:1.65">Interests are sorted by convexity score. Kill criteria and expiry are enforced before any resource allocation.</div>
+      </div>
+      <div class="aside-blk"><div class="aside-blk-h">Kill criteria</div>
+        <div class="dep-item" style="padding:6px 0"><div class="dep-dot" style="background:var(--coral)"></div><div class="dep-name" style="font-size:11px">Rate cycle stalls 6+ months</div></div>
+        <div class="dep-item" style="padding:6px 0"><div class="dep-dot" style="background:var(--coral)"></div><div class="dep-name" style="font-size:11px">No signal after 90 days</div></div>
+        <div class="dep-item" style="padding:6px 0"><div class="dep-dot" style="background:var(--amber)"></div><div class="dep-name" style="font-size:11px">Downside exceeds cap</div></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ═══ SURGICAL EXECUTION PAGE ═══ -->
+<div class="page" id="page-execution">
+  <div class="page-subhead">
+    <div class="psh-title">Surgical Execution</div>
+    <div class="wtag on">Task Chains</div>
+    <div class="wtag">Timeline</div>
+    <div class="psh-r">
+      <div class="tbstat" style="color:var(--t2)">Completed <span id="done-count" style="color:var(--teal)">0</span></div>
+      <button class="psh-btn primary" onclick="addTask()">+ New Task</button>
+    </div>
+  </div>
+  <div class="ex-layout">
+    <div class="ex-main" id="ex-main"><!-- rendered by JS --></div>
+    <aside class="ex-aside">
+      <div class="aside-blk"><div class="aside-blk-h">Task status</div>
+        <div class="li"><div class="lin">Active</div><div class="lit"><div class="lif" id="tbar-active" style="background:var(--teal)"></div></div><div class="lip" style="color:var(--teal)" id="tlbl-active">—</div></div>
+        <div class="li"><div class="lin">Queued</div><div class="lit"><div class="lif" id="tbar-queued" style="background:var(--amber)"></div></div><div class="lip" style="color:var(--amber)" id="tlbl-queued">—</div></div>
+        <div class="li"><div class="lin">Blocked</div><div class="lit"><div class="lif" id="tbar-blocked" style="background:var(--coral)"></div></div><div class="lip" style="color:var(--coral)" id="tlbl-blocked">—</div></div>
+        <div class="li"><div class="lin">Done</div><div class="lit"><div class="lif" id="tbar-done" style="background:var(--green)"></div></div><div class="lip" style="color:var(--green)" id="tlbl-done">—</div></div>
+      </div>
+      <div class="aside-blk" style="border-bottom:none"><div class="aside-blk-h">Doctrine context</div>
+        <div style="font-size:11px;color:var(--t2);line-height:1.65">Every task traces back to an Affair or Interest. Click any task to see its upstream doctrine source.</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+</div><!-- end shell -->
+<div class="toast" id="toast-el"></div>
+
+<script>
+// ══════════════════════════════
+// STATE
+// ══════════════════════════════
+const STATE = {
+  affairs: [
+    {id:'a1',name:'Eliminate rate exposure',domain:'Capital structure',src:'Interest rate cycle',
+     status:'active',horizon:'30d',fragility:'high',
+     desc:'Fix variable-rate debt above 30% threshold. No covenant exposure within 2× stress scenario.',
+     tasks:[
+       {id:'t1',label:'Audit variable-rate tranches',done:false,horizon:'7d'},
+       {id:'t2',label:'Engage rate-cap broker',done:false,horizon:'14d'},
+       {id:'t3',label:'Draft covenant stress model',done:true,horizon:'done'},
+     ]},
+    {id:'a2',name:'Build 6-month cash runway',domain:'Liquidity reserve',src:'Interest rate cycle',
+     status:'active',horizon:'21d',fragility:'high',
+     desc:'Establish hard floor: 6 months operating costs in short-duration accessible instruments.',
+     tasks:[
+       {id:'t4',label:'Model 6-month burn rate',done:true,horizon:'done'},
+       {id:'t5',label:'Open T-bill ladder account',done:false,horizon:'10d'},
+       {id:'t6',label:'Move reserve to short-duration',done:false,horizon:'21d'},
+     ]},
+    {id:'a3',name:'Reduce health fragility',domain:'Health',src:'Health fragility',
+     status:'active',horizon:'45d',fragility:'critical',
+     desc:'Sleep protocol, training structure, and cognitive load reduction before any growth allocation.',
+     tasks:[
+       {id:'t7',label:'Set 90-min sleep window protocol',done:false,horizon:'3d'},
+       {id:'t8',label:'Define training load ceiling',done:false,horizon:'7d'},
+       {id:'t9',label:'Remove 2 non-essential obligations',done:false,horizon:'14d'},
+     ]},
+  ],
+  interests: [
+    {id:'i1',name:'Rate normalisation optionality',domain:'Capital structure',src:'Interest rate cycle',
+     convexity:82,expiry:'9 months',kill:'Rates stable above 5.5% for 6 months',
+     desc:'Pre-position for fixed-rate refinancing window. Monitor lender docs and distressed peer watch list.'},
+    {id:'i2',name:'Distressed peer acquisition',domain:'Wealth',src:'Economy',
+     convexity:61,expiry:'12 months',kill:'No peer distress signals after 6 months',
+     desc:'Over-leveraged competitors face covenant breach. Position to acquire assets at discount.'},
+    {id:'i3',name:'AI toolchain edge',domain:'Knowledge',src:'Tech shift',
+     convexity:74,expiry:'6 months',kill:'No productivity gain after 60-day trial',
+     desc:'Compound information advantage through selective AI toolchain deployment.'},
+    {id:'i4',name:'Alliance network build',domain:'Power',src:'Geopolitics',
+     convexity:55,expiry:'18 months',kill:'No traction after 90 days of outreach',
+     desc:'Expand strategic relationships in power domain before geopolitical window closes.'},
+    {id:'i5',name:'Knowledge stack expansion',domain:'Knowledge',src:'Tech shift',
+     convexity:68,expiry:'Open',kill:'Returns below threshold for 3 months',
+     desc:'Compound skill capital systematically. Treat as long-term position, not project.'},
+  ],
+  tasks: [], // populated from affairs
+  selectedSrc: 'rate',
+};
+
+// flatten tasks from affairs
+function rebuildTasks() {
+  STATE.tasks = [];
+  STATE.affairs.forEach(a => {
+    a.tasks.forEach(t => {
+      STATE.tasks.push({...t, affairId: a.id, affairName: a.name, src: a.src, domain: a.domain,
+        status: t.done ? 'done' : (t.id==='t1'||t.id==='t4'||t.id==='t7') ? 'active' :
+                         (t.id==='t3'||t.id==='t9') ? 'queued' : 'active'});
+    });
+  });
+}
+rebuildTasks();
+
+// ══════════════════════════════
+// NAVIGATION
+// ══════════════════════════════
+const PAGES = ['warroom','source','mission','vision','execution'];
+function nav(page) {
+  PAGES.forEach(p => {
+    document.getElementById('page-'+p).classList.toggle('on', p===page);
+    const tn = document.getElementById('tn-'+p);
+    if (tn) tn.classList.toggle('on', p===page);
+    const si = document.getElementById('si-'+p);
+    if (si) si.classList.toggle('on', p===page);
+  });
+  // sidebar war gaming sub-items
+  ['source','domain','craft','affair','interest'].forEach(id => {
+    const el = document.getElementById('si-'+id);
+    if (el) el.classList.toggle('on',
+      (id==='source'&&page==='source')||(id==='affair'&&page==='mission')||(id==='interest'&&page==='vision'));
+  });
+  if (page==='source') renderSource();
+  if (page==='mission') renderMission();
+  if (page==='vision') renderVision();
+  if (page==='execution') renderExecution();
+  if (page==='warroom') { setTimeout(resizeGraph,50); }
+}
+
+// ══════════════════════════════
+// SOURCE DATA
+// ══════════════════════════════
+const SRC_DATA = {
+  rate: {
+    name:'Interest rate cycle', kind:'Macro / monetary force — slow onset, non-linear consequence',
+    desc:'A sustained shift in the rate environment changes the cost of capital and the fragility of variable-rate or short-maturity debt. The force is ergodic in onset and fat-tailed in damage to over-leveraged positions.',
+    tags:[{l:'Fat-tail damage',c:'r'},{l:'Non-linear above trigger',c:'a'},{l:'Externally driven',c:''},{l:'Irreversible at cliff',c:''}],
+    domains:['Capital structure','Operating model','Liquidity reserve'],
+    doctrine:{
+      'Capital structure':{
+        pair:'Interest rate cycle → Capital structure',
+        dtype:'One-way door',tail:'Fat / irreversible',quad:'IV — Unknown unknowns',posture:'Barbell + no-ruin first',
+        stakes:'Solvency of operating entity',risks:'Covenant breach, rollover cliff',
+        lineage:'Self → Family',frag:'Lenders, fixed-rate counterparties',
+        fragPct:78,fragLbl:'High',vuln:'Variable-rate debt, short maturities',nonlin:'Convex loss above trigger rate',
+        hedge:'Eliminate variable-rate exposure above 30% of total debt. Build 6-month cash runway. No covenant exposure within 2× stress.',
+        edge:'Rate normalisation creates refinancing window. Lock fixed at peak. Option on distressed acquisition of over-leveraged peers.',
+        craft:['Barbell strategy','Debt structure audit','Rate cap/swap protocol'],
+        heuristics:['Optimise for survival before return','A covenant breach is a cliff, not a negotiation','Fix the debt; keep optionality in cash'],
+        avoid:['Averaging into variable exposure in a rising cycle','Treating forecast revenue as cash for covenants','Waiting for rate certainty before hedging'],
+        affairs:'Eliminate variable-rate exposure and establish 6-month cash reserve. Covenant protection before growth allocation.',
+        interests:'Monitor rate normalisation signal. Pre-position lender docs. Expiry: 9 months. Kill: rates stable above 5.5% for 6 months.',
+        scenarios:[
+          {type:'T',title:'Rates hold above 6% for 18+ months',sit:'Variable tranche ($2.4M) reprices at 6.8%. Monthly debt service rises ~$9,600. Runway compresses from 11 to 7 months. Covenant test fails at month 9 under base-case revenue.',resp:'Swap variable tranche to fixed via rate cap immediately. Trigger 90-day liquidity review. Freeze discretionary capex.'},
+          {type:'T',title:'Lender pulls $800K facility at rollover',sit:'Primary lender declines renewal. Replacement requires 3–4 month lead time. Gap forces draw on operating reserves.',resp:'Start secondary lender relationship now. Keep facility below 70% utilisation. No surprise draws in 90 days before rollover.'},
+          {type:'S',title:'Rate cut cycle opens refinancing window',sit:'Central bank pivots. Fixed-rate window opens at 4.1%. Peers rush simultaneously — spreads compress and lead times lengthen.',resp:'Pre-position: complete lender diligence packages in advance. Move at window open, not rate bottom. Lock 5-year fixed.'},
+        ]
+      },
+      'Operating model':{
+        pair:'Interest rate cycle → Operating model',
+        dtype:'Two-way / reversible',tail:'Thin / ergodic',quad:'II — Known unknowns',posture:'Margin stress-test + flexibility',
+        stakes:'Margin compression, pricing power',risks:'Cost inflation, customer churn on repricing',
+        lineage:'Self',frag:'Fixed-cost suppliers, long-contract customers',
+        fragPct:44,fragLbl:'Moderate',vuln:'Fixed-cost base with variable revenue',nonlin:'Linear compression, not cliff',
+        hedge:'Stress-test margin at +2% cost environment. Build variable cost flexibility. Renegotiate fixed supplier contracts.',
+        edge:'Competitors with weaker margins face harder repricing. Window to gain price position on new contracts.',
+        craft:['Margin analysis','Variable cost audit','Pricing strategy'],
+        heuristics:['Stress-test margin before optimising revenue','Fixed costs in a variable-rate world are fragile','Repricing power is the hedge'],
+        avoid:['Locking new fixed-cost commitments at cycle peak','Assuming revenue covers cost increase','Delaying price review past 6 months'],
+        affairs:'Stress-test operating margin under +2% cost scenario. Identify fixed costs convertible to variable within 60 days.',
+        interests:'Monitor competitor pricing behaviour. If they blink first, capture switching customers. Expiry: 6 months.',
+        scenarios:[
+          {type:'T',title:'Cost base rises 2% across fixed suppliers',sit:'All fixed supplier contracts reprice at cycle peak. Margin compresses from 34% to 28%. Break-even revenue threshold rises 18%.',resp:'Audit all fixed contracts immediately. Negotiate variable-indexed terms before next renewal.'},
+          {type:'S',title:'Competitor breaks on contract pricing',sit:'Weaker-margin competitor reduces contract prices to retain customers. Creates expectation pressure.',resp:'Do not follow. Hold pricing discipline. Highlight quality differential. Prepare customer retention playbook.'},
+        ]
+      },
+      'Liquidity reserve':{
+        pair:'Interest rate cycle → Liquidity reserve',
+        dtype:'One-way door (if depleted)',tail:'Fat on depletion',quad:'III — Unknown knowns',posture:'Reserve floor + duration fix',
+        stakes:'Operating continuity, covenant headroom',risks:'Cash draw at peak need, negative carry on reserve',
+        lineage:'Self → Family',frag:'Banks reducing credit lines',
+        fragPct:62,fragLbl:'Elevated',vuln:'Reserve in rate-sensitive instruments',nonlin:'Non-linear below floor — cascading calls',
+        hedge:'Hard floor: 6 months operating costs in short-duration accessible instruments. No yield-chasing with reserve capital.',
+        edge:'High-rate environment means reserve earns real yield. Improve return on safety capital without duration risk.',
+        craft:['Cash management','T-bill ladder','Reserve floor protocol'],
+        heuristics:['Liquidity is the immune system — protect it first','Never chase yield with reserve capital','Short duration on safety capital, always'],
+        avoid:['Holding reserve in duration-sensitive instruments','Drawing below 6-month floor without board sign-off','Confusing yield optimisation with reserve management'],
+        affairs:'Move reserve to short-duration T-bill ladder. Establish floor covenant. No draw below 6-month coverage.',
+        interests:'Explore T-bill ladder for reserve yield. Upside material at current rates. Downside capped by duration constraint.',
+        scenarios:[
+          {type:'T',title:'Unexpected 3-month cash gap',sit:'Major client delays payment. Reserve drawn to 2 months coverage. Covenant threshold breached.',resp:'Trigger emergency credit line. Accelerate collections. Notify board. Do not touch investment reserve.'},
+          {type:'S',title:'Rates provide 5.2% yield on T-bills',sit:'Short-duration reserve now earns meaningful yield without duration risk.',resp:'Optimise reserve allocation within duration constraint. Document yield improvement for board.'},
+        ]
+      }
+    }
+  },
+  geo:{
+    name:'Geopolitics',kind:'Structural / macro force — slow onset, cascade potential',
+    desc:'Global power shifts, alliance instability, and cross-border friction affecting resource flows, regulatory environment, and operational security.',
+    tags:[{l:'Fat-tail cascade',c:'r'},{l:'Slow onset',c:'a'},{l:'Externally driven',c:''},{l:'State-level force',c:''}],
+    domains:['Power','Wealth','State'],
+    doctrine:{
+      'Power':{
+        pair:'Geopolitics → Power',dtype:'One-way door',tail:'Fat / cascade potential',quad:'IV',posture:'Intelligence + Barbell',
+        stakes:'Control and authority in key decisions',risks:'Alliance failure, regulatory capture',
+        lineage:'Self → State',frag:'Regulatory bodies, key counterparties',
+        fragPct:55,fragLbl:'Moderate-High',vuln:'Concentration of influence in single jurisdiction',nonlin:'Non-linear above threshold',
+        hedge:'Diversify jurisdictional exposure. Build second-order relationships before they are needed.',
+        edge:'Geopolitical instability creates asymmetric opportunity for well-positioned operators.',
+        craft:['Intelligence gathering','Negotiation','Strategic positioning'],
+        heuristics:['Geopolitical risk is not diversifiable — it must be hedged','Build relationships in good times','Never be the last to know'],
+        avoid:['Single-jurisdiction concentration','Reactive relationship building','Assuming stability continues'],
+        affairs:'Map jurisdictional exposure. Identify top-3 relationship gaps. Begin outreach before instability hits.',
+        interests:'Monitor geopolitical signal for alliance opportunity. Expiry: 18 months.',
+        scenarios:[
+          {type:'T',title:'Key regulatory ally loses position',sit:'Primary regulatory contact loses role. Institutional knowledge gap opens.',resp:'Activate secondary contacts immediately. Document regulatory history. Begin relationship rebuild.'},
+        ]
+      }
+    }
+  },
+  keyperson:{
+    name:'Key-person dependency',kind:'Structural / internal force — latent, non-linear at trigger',
+    desc:'Single points of failure in critical systems, knowledge, or relationships. Damage is invisible until triggered.',
+    tags:[{l:'Structural fragility',c:'r'},{l:'Internal force',c:''},{l:'Non-linear at trigger',c:'a'}],
+    domains:['Infrastructure','Knowledge','Operations'],
+    doctrine:{
+      'Infrastructure':{
+        pair:'Key-person → Infrastructure',dtype:'One-way door',tail:'Fat at departure',quad:'III',posture:'Dependency map + succession',
+        stakes:'System continuity, operational capability',risks:'Knowledge loss, capability cliff at departure',
+        lineage:'Self',frag:'Individuals holding undocumented critical knowledge',
+        fragPct:70,fragLbl:'High',vuln:'Undocumented processes, single-person systems',nonlin:'Cliff at departure — not gradual',
+        hedge:'Document all critical processes. Cross-train at least one backup. No critical system held by single operator.',
+        edge:'Systematising removes fragility and creates organisational scalability.',
+        craft:['Process documentation','Cross-training','System audit'],
+        heuristics:['If one person leaving breaks a system, the system is broken','Document before the person leaves, not after','Redundancy is not waste — it is anti-fragility'],
+        avoid:["Assuming key people won't leave","Undocumented tribal knowledge","Single-operator critical systems"],
+        affairs:'Audit all single-person critical processes. Document top-3 within 30 days. Assign cross-training pairs.',
+        interests:'Systematisation opens capacity for scale. Treat as optionality unlock, not just risk reduction.',
+        scenarios:[
+          {type:'T',title:'Critical system operator departs suddenly',sit:'Sole operator of core system gives 2-week notice. No documentation exists.',resp:'Emergency knowledge transfer session. Record all sessions. Rebuild process docs in parallel.'},
+        ]
+      }
+    }
+  },
+  tech:{
+    name:'Tech shift',kind:'Structural / market force — ergodic onset, compounding advantage',
+    desc:'Technology disruption compressing competitive windows and creating asymmetric advantage for early movers.',
+    tags:[{l:'Ergodic onset',c:'a'},{l:'Compounding advantage',c:''},{l:'Externally driven',c:''}],
+    domains:['Knowledge','Infrastructure','Operations'],
+    doctrine:{
+      'Knowledge':{
+        pair:'Tech shift → Knowledge',dtype:'Two-way / reversible',tail:'Thin / ergodic',quad:'II',posture:'Optionality + early positioning',
+        stakes:'Information advantage, skill capital',risks:'Competitive compression if late mover',
+        lineage:'Self',frag:'Slow adopters, single-tool dependencies',
+        fragPct:35,fragLbl:'Low-Moderate',vuln:'Over-reliance on single tech stack',nonlin:'Advantage compounds non-linearly early',
+        hedge:'Maintain broad awareness. Avoid deep lock-in to any single tool. Keep learning cadence.',
+        edge:'Early compounding advantage in new toolchains creates durable position.',
+        craft:['Toolchain evaluation','Skill compounding','Technology scouting'],
+        heuristics:['Adopt early enough to compound, late enough to avoid dead ends','Never let a single tool own your workflow','The edge is in the application, not the tool'],
+        avoid:['Deep lock-in to legacy tools','Ignoring compounding signals','Adopting without clear use case'],
+        affairs:'Map current tool dependencies. Identify top-3 leverage points for AI toolchain adoption.',
+        interests:'Systematic AI toolchain experiment. Expiry: 6 months. Kill: no productivity gain after 60-day trial.',
+        scenarios:[
+          {type:'S',title:'AI toolchain reduces research time 60%',sit:'Early adopters report dramatic productivity gains. Competitive window opening.',resp:'Begin structured 60-day trial. Measure output, not input. Adopt if signal confirmed.'},
+        ]
+      }
+    }
+  },
+  health:{
+    name:'Health fragility',kind:'Physical / biological force — slow accumulation, cliff at threshold',
+    desc:'Sleep debt, training load mismanagement, and cognitive overload accumulate silently until performance cliff.',
+    tags:[{l:'Fat tail at cliff',c:'r'},{l:'Slow accumulation',c:'a'},{l:'Irreversible at cliff',c:'r'}],
+    domains:['Health','Cognition','Performance'],
+    doctrine:{
+      'Health':{
+        pair:'Health fragility → Health',dtype:'One-way door at cliff',tail:'Fat / irreversible at threshold',quad:'IV',posture:'No-ruin first — structural protocol',
+        stakes:'Cognitive performance, physical capacity',risks:'Burnout, injury, cognitive cliff',
+        lineage:'Self → Family',frag:'Sleep debt, training overload',
+        fragPct:78,fragLbl:'High',vuln:'No structured recovery protocol',nonlin:'Linear accumulation, non-linear collapse',
+        hedge:'90-minute sleep window. Training load ceiling. Two non-essential obligations removed.',
+        edge:'Structural health protocol creates compounding cognitive advantage.',
+        craft:['Sleep protocol','Training periodisation','Load management'],
+        heuristics:['Sleep debt compounds — pay it before investing anywhere else','No performance without recovery','Recovery is the training'],
+        avoid:["Optimising performance before optimising recovery","Treating sleep as a discretionary variable","Adding load without removing load"],
+        affairs:'Set 90-min sleep window protocol. Define training load ceiling. Remove 2 non-essential obligations.',
+        interests:'Structured health protocol creates sustained cognitive edge. Treat as long-term position.',
+        scenarios:[
+          {type:'T',title:'Sleep debt reaches critical threshold',sit:'8 consecutive nights below 6.5 hours. Cognitive performance measurably declining.',resp:'Immediate: cancel non-essential commitments. 10-day recovery protocol. No major decisions until restored.'},
+        ]
+      }
+    }
+  }
+};
+
+// ══════════════════════════════
+// RENDER SOURCE
+// ══════════════════════════════
+let currentSrcDomain = null;
+function selectSrc(el, id) {
+  document.querySelectorAll('.srli').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+  STATE.selectedSrc = id;
+  currentSrcDomain = null;
+  renderSource();
+}
+
+function renderSource() {
+  const d = SRC_DATA[STATE.selectedSrc];
+  if (!d) return;
+  const dom = currentSrcDomain || d.domains[0];
+  if (!currentSrcDomain) currentSrcDomain = dom;
+  const doc = d.doctrine[dom] || d.doctrine[Object.keys(d.doctrine)[0]];
+
+  const html = `
+  <div class="sblk fadeup">
+    <div class="smark"><div class="snum">1</div><div class="slbl">Source</div><div class="srule"></div></div>
+    <div class="src-title">${d.name}</div>
+    <div class="src-kind">${d.kind}</div>
+    <div class="src-desc">${d.desc}</div>
+    <div class="ftags">${d.tags.map(t=>`<div class="ftag ${t.c}">${t.l}</div>`).join('')}</div>
+  </div>
+
+  <div class="sblk fadeup">
+    <div class="smark"><div class="snum">2</div><div class="slbl">Affected Domains — select one to game</div><div class="srule"></div></div>
+    <div class="dombtns">${d.domains.map(dm=>`<button class="dombt ${dm===dom?'on':''}" onclick="switchSrcDomain('${dm}')">${dm}</button>`).join('')}</div>
+    <div class="domhint">The same source reads differently through each domain. Doctrine below applies to the selected pair.</div>
+  </div>
+
+  <div class="sblk fadeup">
+    <div class="smark"><div class="snum">3</div><div class="slbl">State of the Art</div><div class="srule"></div></div>
+    <div class="doc" id="doc-inner">
+      <div class="docbar"><span id="docpair">${doc.pair}</span><span>source–domain pair</span></div>
+      <div class="maprow">
+        <div class="mc"><div class="mk">Decision type</div><div class="mv">${doc.dtype}</div></div>
+        <div class="mc"><div class="mk">Tail behavior</div><div class="mv r">${doc.tail}</div></div>
+        <div class="mc"><div class="mk">Quadrant</div><div class="mv">${doc.quad}</div></div>
+        <div class="mc"><div class="mk">Admissible posture</div><div class="mv g">${doc.posture}</div></div>
+      </div>
+      <div class="stonecols">
+        <div class="scol">
+          <div class="schead">Skin in the Game</div>
+          <div class="sln"><span class="sk">Stakes</span><span class="sv">${doc.stakes}</span></div>
+          <div class="sln"><span class="sk">Risks</span><span class="sv r">${doc.risks}</span></div>
+          <div class="sln"><span class="sk">Lineage</span><span class="sv a">${doc.lineage}</span></div>
+          <div class="sln"><span class="sk">Fragilistas</span><span class="sv">${doc.frag}</span></div>
+        </div>
+        <div class="scol">
+          <div class="schead">Philosopher's Stone</div>
+          <div class="sln"><span class="sk">Fragility</span><span class="sv"><div class="fbar"><div class="fbt"><div class="fbf" style="width:${doc.fragPct}%"></div></div><div class="fbp">${doc.fragLbl}</div></div></span></div>
+          <div class="sln"><span class="sk">Vulnerabilities</span><span class="sv r">${doc.vuln}</span></div>
+          <div class="sln"><span class="sk">Non-linearity</span><span class="sv a">${doc.nonlin}</span></div>
+        </div>
+      </div>
+      <div class="endsrow">
+        <div class="ec hedge"><div class="elbl">Hedge</div><div class="etxt">${doc.hedge}</div></div>
+        <div class="ec edge"><div class="elbl">Edge</div><div class="etxt">${doc.edge}</div></div>
+      </div>
+      <div class="meansrow">
+        <div class="mcel"><div class="mhead">Craft</div>${doc.craft.map(c=>`<div class="mitem"><span class="mbul">—</span>${c}</div>`).join('')}</div>
+        <div class="mcel"><div class="mhead">Heuristics</div>${doc.heuristics.map(h=>`<div class="mitem"><span class="mbul">—</span>${h}</div>`).join('')}</div>
+        <div class="mcel"><div class="mhead">Avoid</div>${doc.avoid.map(a=>`<div class="mitem"><span class="mbul x">✕</span>${a}</div>`).join('')}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sblk fadeup">
+    <div class="smark"><div class="snum">4</div><div class="slbl">Scenario · Threat · Response</div><div class="srule"></div></div>
+    <div class="scards">${doc.scenarios.map((s,i)=>`
+      <div class="scard ${i===0?'open':''}" id="sc${i}">
+        <div class="scardh" onclick="toggleSc('sc${i}')">
+          <div class="stype ${s.type}">${s.type==='T'?'Threat':s.type==='S'?'Scenario':'Response'}</div>
+          <div class="stitle">${s.title}</div>
+          <div class="schev">▾</div>
+        </div>
+        <div class="scardb">
+          <div class="ssit">${s.sit}</div>
+          <div class="sresp"><div class="sarr">→</div><div class="sact">${s.resp}</div></div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="sblk fadeup">
+    <div class="smark"><div class="snum">5</div><div class="slbl">State of Affairs — generate</div><div class="srule"></div></div>
+    <div class="exitpair">
+      <div class="exitc affair">
+        <div class="exhead">Affair</div>
+        <div class="exorg">From hedge · obligation · reduces fragility</div>
+        <div class="extxt">${doc.affairs}</div>
+        <button class="exbtn" onclick="createAffairFrom('${d.name}','${dom}','${doc.affairs}')">Create Affair →</button>
+      </div>
+      <div class="exitc interest">
+        <div class="exhead">Interest</div>
+        <div class="exorg">From edge · option · convex upside</div>
+        <div class="extxt">${doc.interests}</div>
+        <button class="exbtn" onclick="createInterestFrom('${d.name}','${dom}','${doc.interests}')">Create Interest →</button>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('src-flow-content').innerHTML = html;
+}
+
+function switchSrcDomain(dom) {
+  currentSrcDomain = dom;
+  renderSource();
+}
+function toggleSc(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+function createAffairFrom(src,dom,txt) {
+  const id = 'a'+(STATE.affairs.length+1);
+  STATE.affairs.push({id,name:txt.slice(0,48)+'…',domain:dom,src,status:'active',horizon:'TBD',fragility:'medium',desc:txt,tasks:[]});
+  updateBadges();
+  toast_s('Affair created → Mission Command');
+  setTimeout(()=>nav('mission'),800);
+}
+function createInterestFrom(src,dom,txt) {
+  const id = 'i'+(STATE.interests.length+1);
+  STATE.interests.push({id,name:txt.slice(0,42)+'…',domain:dom,src,convexity:50,expiry:'TBD',kill:'TBD',desc:txt});
+  updateBadges();
+  toast_s('Interest created → Vision Command');
+  setTimeout(()=>nav('vision'),800);
+}
+
+// ══════════════════════════════
+// RENDER MISSION COMMAND
+// ══════════════════════════════
+function renderMission() {
+  const el = document.getElementById('mc-main');
+  el.innerHTML = `<div class="pghead fadeup">
+    <div class="pgtitle">Mission Command</div>
+    <div class="pgdesc">Active obligations — sequenced by no-ruin logic. Hedge before edge.</div>
+  </div>` + STATE.affairs.map(a=>affairCard(a)).join('');
+}
+
+function affairCard(a) {
+  const tagCls = a.fragility==='critical'||a.fragility==='high'?'r':a.fragility==='medium'?'a':'g';
+  const tagLbl = a.fragility==='critical'?'Critical':a.fragility==='high'?'High frag':a.fragility==='medium'?'Medium':'Low';
+  const tasks = a.tasks.map(t=>`
+    <div class="atask">
+      <div class="atask-cb ${t.done?'done':''}" onclick="toggleTask('${a.id}','${t.id}')">${t.done?'✓':''}</div>
+      <div class="atask-label ${t.done?'done':''}">${t.label}</div>
+      <div class="atask-hor">${t.horizon}</div>
+    </div>`).join('');
+  return `<div class="acard" id="acard-${a.id}">
+    <div class="acard-head" onclick="toggleAcard('${a.id}')">
+      <div class="acard-icon">◆</div>
+      <div class="acard-info">
+        <div class="acard-name">${a.name}</div>
+        <div class="acard-meta">
+          <div class="acard-tag ${tagCls}">${tagLbl}</div>
+          <div class="acard-tag" style="background:var(--bg5);color:var(--t2)">${a.domain}</div>
+          <div class="acard-hor">${a.horizon}</div>
+        </div>
+      </div>
+      <div class="acard-chev">▾</div>
+    </div>
+    <div class="acard-body">
+      <div class="acard-desc">${a.desc}</div>
+      <div class="acard-tasks">${tasks||'<div style="font-size:11px;color:var(--t3)">No tasks yet — go to Surgical Execution to add.</div>'}</div>
+    </div>
+  </div>`;
+}
+
+function toggleAcard(id) {
+  document.getElementById('acard-'+id).classList.toggle('open');
+}
+
+function toggleTask(affairId, taskId) {
+  const a = STATE.affairs.find(x=>x.id===affairId);
+  const t = a.tasks.find(x=>x.id===taskId);
+  t.done = !t.done;
+  rebuildTasks();
+  updateBadges();
+  renderMission();
+  renderExecution();
+  toast_s(t.done ? '✓ Task completed' : 'Task reopened');
+}
+
+function addAffair() {
+  const name = prompt('Affair name:');
+  if (!name) return;
+  const id = 'a'+(STATE.affairs.length+1);
+  STATE.affairs.push({id,name,domain:'Unassigned',src:'Manual',status:'active',horizon:'TBD',fragility:'medium',desc:'',tasks:[]});
+  updateBadges();
+  renderMission();
+  toast_s('Affair added to Mission Command');
+}
+
+// ══════════════════════════════
+// RENDER VISION COMMAND
+// ══════════════════════════════
+function renderVision() {
+  const el = document.getElementById('vc-main');
+  el.innerHTML = `<div class="pghead fadeup">
+    <div class="pgtitle">Vision Command</div>
+    <div class="pgdesc">Active options — sorted by convexity. Each has a kill criteria and expiry.</div>
+  </div><div class="vc-grid">` +
+  [...STATE.interests].sort((a,b)=>b.convexity-a.convexity).map(i=>`
+    <div class="icard fadeup" onclick="toast_s('Opening Interest: ${i.name.replace(/'/g,'')}')">
+      <div class="icard-head">
+        <div class="icard-icon">◇</div>
+        <div class="icard-info">
+          <div class="icard-name">${i.name}</div>
+          <div class="icard-src">${i.src} · ${i.domain}</div>
+        </div>
+      </div>
+      <div class="icard-conv">
+        <div style="font-family:var(--r);font-size:9px;color:var(--t3);width:60px">Convexity</div>
+        <div class="icard-conv-bar"><div class="icard-conv-fill" style="width:${i.convexity}%"></div></div>
+        <div class="icard-conv-pct">${i.convexity}%</div>
+      </div>
+      <div class="etxt" style="font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:8px">${i.desc}</div>
+      <div class="icard-row">
+        <span class="icard-rl">Expiry</span><span class="icard-rv">${i.expiry}</span>
+      </div>
+      <div class="icard-row">
+        <span class="icard-rl">Kill</span><span class="icard-rv" style="color:var(--coral);font-size:10px">${i.kill}</span>
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+function addInterest() {
+  const name = prompt('Interest name:');
+  if (!name) return;
+  const id = 'i'+(STATE.interests.length+1);
+  STATE.interests.push({id,name,domain:'Unassigned',src:'Manual',convexity:50,expiry:'TBD',kill:'TBD',desc:''});
+  updateBadges();
+  renderVision();
+  toast_s('Interest added to Vision Command');
+}
+
+// ══════════════════════════════
+// RENDER SURGICAL EXECUTION
+// ══════════════════════════════
+function renderExecution() {
+  rebuildTasks();
+  const el = document.getElementById('ex-main');
+  const groups = {
+    active: STATE.tasks.filter(t=>t.status==='active'),
+    queued: STATE.tasks.filter(t=>t.status==='queued'),
+    blocked: STATE.tasks.filter(t=>t.status==='blocked'),
+    done: STATE.tasks.filter(t=>t.status==='done'),
+  };
+  updateTaskStats(groups);
+
+  const renderGroup = (label,tasks,status) => {
+    if (!tasks.length) return '';
+    return `<div class="task-group fadeup">
+      <div class="tg-head">
+        <div class="tg-title">${label}</div>
+        <div class="tg-count">${tasks.length}</div>
+        <div class="tgrule"></div>
+      </div>
+      ${tasks.map(t=>`
+        <div class="task" onclick="toggleExTask('${t.affairId}','${t.id}')">
+          <div class="tcb ${t.done?'done':''}">${t.done?'✓':''}</div>
+          <div class="tbody">
+            <div class="tname ${t.done?'done':''}">${t.label}</div>
+            <div class="tmeta">
+              <div class="tsrc">${t.affairName}</div>
+              <div class="tstat ${t.status}">${t.status.charAt(0).toUpperCase()+t.status.slice(1)}</div>
+              <div class="thor">${t.horizon}</div>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  };
+
+  el.innerHTML = `<div class="pghead fadeup">
+    <div class="pgtitle">Surgical Execution</div>
+    <div class="pgdesc">Task chains — connected to Affair and Interest doctrine upstream.</div>
+  </div>` +
+  renderGroup('Active', groups.active, 'active') +
+  renderGroup('Queued', groups.queued, 'queued') +
+  renderGroup('Blocked', groups.blocked, 'blocked') +
+  renderGroup('Done', groups.done, 'done');
+}
+
+function toggleExTask(affairId, taskId) {
+  const a = STATE.affairs.find(x=>x.id===affairId);
+  if (!a) return;
+  const t = a.tasks.find(x=>x.id===taskId);
+  if (!t) return;
+  t.done = !t.done;
+  rebuildTasks();
+  updateBadges();
+  renderExecution();
+  toast_s(t.done ? '✓ Task completed' : 'Task reopened');
+}
+
+function addTask() {
+  const label = prompt('Task name:');
+  if (!label) return;
+  const aff = STATE.affairs[0];
+  const id = 't_'+(Date.now());
+  aff.tasks.push({id,label,done:false,horizon:'TBD'});
+  rebuildTasks();
+  updateBadges();
+  renderExecution();
+  toast_s('Task added to ' + aff.name);
+}
+
+function updateTaskStats(groups) {
+  const total = STATE.tasks.length;
+  const pct = (n)=>total?Math.round(n/total*100)+'%':'0%';
+  ['active','queued','blocked','done'].forEach(s=>{
+    const n = groups[s].length;
+    const el = document.getElementById('tbar-'+s);
+    const lbl = document.getElementById('tlbl-'+s);
+    if (el) el.style.width = pct(n);
+    if (lbl) lbl.textContent = n;
+  });
+  const done = document.getElementById('done-count');
+  if (done) done.textContent = groups.done.length;
+}
+
+// ══════════════════════════════
+// BADGES
+// ══════════════════════════════
+function updateBadges() {
+  rebuildTasks();
+  document.getElementById('badge-affairs').textContent = STATE.affairs.length;
+  document.getElementById('badge-interests').textContent = STATE.interests.length;
+  document.getElementById('badge-tasks').textContent = STATE.tasks.length;
+  document.getElementById('sc-affairs').innerHTML = STATE.affairs.length+' <span class="sbcs">active</span>';
+  document.getElementById('sc-interests').innerHTML = STATE.interests.length+' <span class="sbcs">open</span>';
+  document.getElementById('task-count').textContent = STATE.tasks.length;
+}
+
+// ══════════════════════════════
+// NODE GRAPH
+// ══════════════════════════════
+const NODES = [
+  {id:'geo',type:'source',label:'Geopolitics',x:.12,y:.26,color:'#e8a030',r:17,
+    desc:'Global power shifts, alliance instability.',tail:'Fat / cascade',domains:'Power, State, Wealth',posture:'Intel + Barbell'},
+  {id:'tech',type:'source',label:'Tech Shift',x:.10,y:.50,color:'#2dd4aa',r:13,
+    desc:'Disruption compressing competitive windows.',tail:'Thin / ergodic',domains:'Knowledge, Infra',posture:'Optionality first'},
+  {id:'eco',type:'source',label:'Economy',x:.14,y:.70,color:'#e05a3a',r:15,
+    desc:'Rate environment, credit, capital cost.',tail:'Fat / non-linear',domains:'Wealth, Power',posture:'Barbell + hedge'},
+  {id:'nat',type:'source',label:'Nature',x:.07,y:.38,color:'#56c48a',r:10,
+    desc:'Environmental force on domains.',tail:'Fat tail',domains:'Health, Food',posture:'No-ruin first'},
+  {id:'soc',type:'source',label:'Society',x:.06,y:.60,color:'#4a90d9',r:11,
+    desc:'Cultural shifts creating domain pressure.',tail:'Thin / slow',domains:'Family, State',posture:'Monitor'},
+  {id:'health_src',type:'source',label:'Health',x:.08,y:.82,color:'#9b6ef3',r:12,
+    desc:'Sleep debt, training overload, cliff risk.',tail:'Fat at cliff',domains:'Health',posture:'No-ruin first'},
+  {id:'power',type:'domain',label:'Power',x:.37,y:.18,color:'#e8a030',r:19,
+    desc:'Control and authority in key decisions.',tail:'Non-linear',domains:'Self, State',posture:'Intel + Hedge'},
+  {id:'wealth',type:'domain',label:'Wealth',x:.42,y:.40,color:'#c47818',r:15,
+    desc:'Capital, cashflow, financial optionality.',tail:'Fat if leveraged',domains:'Self, Family',posture:'Barbell'},
+  {id:'health_d',type:'domain',label:'Health',x:.36,y:.60,color:'#e05a3a',r:17,
+    desc:'Physical and cognitive capacity. Fragile.',tail:'Fat / irreversible',domains:'Self',posture:'Reduce fragility now'},
+  {id:'family',type:'domain',label:'Family',x:.44,y:.76,color:'#4a90d9',r:12,
+    desc:'Relational continuity, lineage exposure.',tail:'Thin',domains:'Family',posture:'Preserve optionality'},
+  {id:'know',type:'domain',label:'Knowledge',x:.50,y:.28,color:'#2dd4aa',r:13,
+    desc:'Information advantage, skill capital.',tail:'Thin / ergodic',domains:'Self',posture:'Compound edge'},
+  {id:'infra',type:'domain',label:'Infra',x:.48,y:.55,color:'#9b6ef3',r:12,
+    desc:'Systems, tools, key-person dependencies.',tail:'Fragile if key-person',domains:'Self',posture:'Reduce dependency'},
+  {id:'intel',type:'craft',label:'Intelligence',x:.71,y:.20,color:'#9b6ef3',r:14,
+    desc:'Gathering, sense-making, signal detection.',tail:'—',domains:'All',posture:'Always admissible'},
+  {id:'neg',type:'craft',label:'Negotiation',x:.76,y:.40,color:'#2dd4aa',r:11,
+    desc:'Structured agreement under uncertainty.',tail:'—',domains:'Power, Wealth',posture:'Quadrant II'},
+  {id:'fin',type:'craft',label:'Finance',x:.74,y:.60,color:'#e8a030',r:12,
+    desc:'Capital structuring, barbell deployment.',tail:'—',domains:'Wealth',posture:'Barbell doctrine'},
+  {id:'strat',type:'craft',label:'Strategy',x:.80,y:.30,color:'#56c48a',r:11,
+    desc:'Long-horizon positioning, option preservation.',tail:'—',domains:'All',posture:'Mission + Vision'},
+];
+const EDGES = [
+  ['geo','power',.8],['geo','wealth',.4],['geo','power',.5],['geo','know',.3],
+  ['eco','wealth',.9],['eco','power',.5],['eco','health_d',.3],
+  ['tech','know',.8],['tech','infra',.6],['tech','wealth',.3],
+  ['nat','health_d',.6],['nat','family',.4],
+  ['soc','family',.6],['soc','power',.4],
+  ['health_src','health_d',.85],
+  ['power','intel',.8],['power','strat',.6],['power','neg',.4],
+  ['wealth','fin',.9],['wealth','neg',.5],
+  ['health_d','intel',.3],['know','intel',.7],['know','strat',.6],
+  ['infra','fin',.4],['infra','strat',.3],
+];
+
+const gc = document.getElementById('gc');
+const gctx = gc.getContext('2d');
+let GW=0,GH=0,gdpr=1,graf=0,gnodes=[],gsel=null,ghov=null,gt=0;
+
+function resizeGraph(){
+  const wrap = document.getElementById('gwrap');
+  if(!wrap) return;
+  gdpr=window.devicePixelRatio||1;
+  GW=wrap.clientWidth; GH=wrap.clientHeight;
+  gc.width=GW*gdpr; gc.height=GH*gdpr;
+  gc.style.width=GW+'px'; gc.style.height=GH+'px';
+  gctx.scale(gdpr,gdpr);
+  buildGnodes();
+}
+function buildGnodes(){gnodes=NODES.map(n=>({...n,px:n.x*GW,py:n.y*GH}))}
+function hexRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)]}
+function lighten(h,a){const[r,g,b]=hexRgb(h);return`rgb(${Math.min(255,r+Math.round(a*90))},${Math.min(255,g+Math.round(a*90))},${Math.min(255,b+Math.round(a*90))})`}
+
+function drawGraph(){
+  gt+=.007;
+  gctx.clearRect(0,0,GW,GH);
+  // grid
+  gctx.strokeStyle='rgba(255,255,255,.022)';gctx.lineWidth=.5;
+  for(let x=0;x<GW;x+=40){gctx.beginPath();gctx.moveTo(x,0);gctx.lineTo(x,GH);gctx.stroke()}
+  for(let y=0;y<GH;y+=40){gctx.beginPath();gctx.moveTo(0,y);gctx.lineTo(GW,y);gctx.stroke()}
+  // edges
+  EDGES.forEach(([a,b,w])=>{
+    const na=gnodes.find(n=>n.id===a),nb=gnodes.find(n=>n.id===b);if(!na||!nb)return;
+    const isSel=gsel&&(gsel.id===a||gsel.id===b);
+    const isHov=ghov&&(ghov.id===a||ghov.id===b);
+    const [r1,g1,b1]=hexRgb(na.color),[r2,g2,b2]=hexRgb(nb.color);
+    const grad=gctx.createLinearGradient(na.px,na.py,nb.px,nb.py);
+    grad.addColorStop(0,`rgba(${r1},${g1},${b1},${isSel?.75:isHov?.48:w*.32})`);
+    grad.addColorStop(1,`rgba(${r2},${g2},${b2},${isSel?.75:isHov?.48:w*.18})`);
+    const mx=(na.px+nb.px)/2,my=(na.py+nb.py)/2-16*Math.sin((na.px-nb.px)/GW*Math.PI);
+    gctx.beginPath();gctx.moveTo(na.px,na.py);gctx.quadraticCurveTo(mx,my,nb.px,nb.py);
+    gctx.strokeStyle=grad;gctx.lineWidth=isSel?1.8:isHov?1.1:w*.7;gctx.stroke();
+    if(isSel||isHov){
+      const p=((gt*.55+a.charCodeAt(0)*.015)%1);
+      const t2=p,t1=1-t2;
+      const px=t1*t1*na.px+2*t1*t2*mx+t2*t2*nb.px;
+      const py2=t1*t1*na.py+2*t1*t2*my+t2*t2*nb.py;
+      gctx.beginPath();gctx.arc(px,py2,2.5,0,Math.PI*2);
+      gctx.fillStyle=na.color;gctx.fill();
+    }
+  });
+  // nodes
+  gnodes.forEach(n=>{
+    const{px,py}=n;
+    const isS=gsel&&gsel.id===n.id;const isH=ghov&&ghov.id===n.id;
+    const pulse=Math.sin(gt*1.4+n.x*9)*.5+.5;
+    const r=n.r+(isS?5:isH?3:0);
+    const[r1,g1,b1]=hexRgb(n.color);
+    const glow=gctx.createRadialGradient(px,py,0,px,py,r*3.8);
+    glow.addColorStop(0,`rgba(${r1},${g1},${b1},${isS?.28:isH?.2:pulse*.09+.04})`);
+    glow.addColorStop(1,`rgba(${r1},${g1},${b1},0)`);
+    gctx.beginPath();gctx.arc(px,py,r*3.8,0,Math.PI*2);gctx.fillStyle=glow;gctx.fill();
+    if(isS||isH){
+      gctx.beginPath();gctx.arc(px,py,r+5,0,Math.PI*2);
+      gctx.strokeStyle=`rgba(${r1},${g1},${b1},.35)`;gctx.lineWidth=1;gctx.stroke();
+    }
+    const ng=gctx.createRadialGradient(px-r*.3,py-r*.35,0,px,py,r);
+    ng.addColorStop(0,lighten(n.color,.35));ng.addColorStop(1,n.color);
+    gctx.beginPath();gctx.arc(px,py,r,0,Math.PI*2);gctx.fillStyle=ng;gctx.fill();
+    gctx.beginPath();gctx.arc(px,py,r*.3,0,Math.PI*2);
+    gctx.fillStyle='rgba(0,0,0,.45)';gctx.fill();
+    const icon=n.type==='source'?'◈':n.type==='domain'?'◆':'✦';
+    gctx.font=`${isS||isH?500:400} 11px "DM Mono"`;gctx.textAlign='center';
+    gctx.fillStyle=isS||isH?'#edeae6':'#bfbcb4';
+    gctx.fillText(icon+' '+n.label,px,py+r+14);
+  });
+  graf=requestAnimationFrame(drawGraph);
+}
+
+function getGnode(mx,my){return gnodes.find(n=>Math.hypot(n.px-mx,n.py-my)<n.r+9)||null}
+
+gc.addEventListener('mousemove',e=>{
+  const rc=gc.getBoundingClientRect();
+  ghov=getGnode(e.clientX-rc.left,e.clientY-rc.top);
+  gc.style.cursor=ghov?'pointer':'default';
+});
+
+gc.addEventListener('click',e=>{
+  const rc=gc.getBoundingClientRect();
+  const hit=getGnode(e.clientX-rc.left,e.clientY-rc.top);
+  if(hit){
+    gsel=gsel?.id===hit.id?null:hit;
+    if(gsel) showPop(hit,e.clientX,e.clientY);
+    else hidePop();
+  } else {gsel=null;hidePop();}
+});
+
+const npop=document.getElementById('npop');
+function showPop(n,cx,cy){
+  document.getElementById('np-type').textContent=n.type.charAt(0).toUpperCase()+n.type.slice(1);
+  document.getElementById('np-title').textContent=n.label;
+  document.getElementById('np-desc').textContent=n.desc;
+  document.getElementById('np-tail').textContent=n.tail;
+  document.getElementById('np-dom').textContent=n.domains;
+  document.getElementById('np-pos').textContent=n.posture;
+  const gameBtn=document.getElementById('np-game');
+  const affairBtn=document.getElementById('np-affair');
+  if(n.type==='source'){
+    gameBtn.style.display='block';
+    gameBtn.onclick=()=>{
+      const srcMap={'Geopolitics':'geo','Economy':'eco','Tech Shift':'tech','Health':'health_src'};
+      const key=Object.keys(SRC_DATA).find(k=>SRC_DATA[k].name===n.label)||(n.id==='health_src'?'health':'rate');
+      STATE.selectedSrc=key||'rate';
+      document.querySelectorAll('.srli').forEach(el=>{el.classList.remove('on')});
+      nav('source');hidePop();
+    };
+  } else { gameBtn.style.display='none'; }
+  affairBtn.onclick=()=>{createAffairFrom(n.label,n.domains.split(',')[0].trim(),'Affair from node: '+n.label);};
+  npop.style.display='block';
+  const wr=document.getElementById('gwrap').getBoundingClientRect();
+  let lx=cx-wr.left+14,ly=cy-wr.top-80;
+  if(lx+228>wr.width)lx=cx-wr.left-238;
+  if(ly<0)ly=8;if(ly+240>wr.height)ly=wr.height-250;
+  npop.style.left=lx+'px';npop.style.top=ly+'px';
+}
+function hidePop(){npop.style.display='none'}
+function resetGraph(){gsel=null;ghov=null;hidePop();toast_s('Graph reset')}
+
+// ══════════════════════════════
+// TOAST
+// ══════════════════════════════
+let toastTimer=0;
+function toast_s(msg){
+  const el=document.getElementById('toast-el');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2400);
+}
+
+// ══════════════════════════════
+// INIT
+// ══════════════════════════════
+window.addEventListener('resize',()=>{
+  if(document.getElementById('page-warroom').classList.contains('on')){
+    cancelAnimationFrame(graf);resizeGraph();drawGraph();
+  }
+});
+
+// Initial render
+renderSource();
+renderMission();
+renderVision();
+renderExecution();
+updateBadges();
+setTimeout(()=>{resizeGraph();drawGraph();},60);
+</script>
+</body>
+</html>

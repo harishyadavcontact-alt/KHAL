@@ -1,11 +1,43 @@
 # KHAL
 
-KHAL is a local-first decision operating system for uncertainty. It is built around a volatility-first doctrine:
+KHAL is a local-first decision operating system.
 
-- `Affairs` are obligations that remove fragility (hedge lane).
-- `Interests` are options that increase convexity (edge lane).
-- `Mission Command` organizes execution hierarchy.
+At its simplest:
+
+- `War Room` helps the user think clearly about one domain.
+- `Mission Command` aggregates `Affairs` into hierarchy.
+- `Vision Command` aggregates `Interests` into hierarchy.
+
+Surface model:
+
+- `War Room` = see the decision
+- `War Gaming` = game the decision
+- `Mission Command` = organize affairs
+- `Vision Command` = organize interests
+- `Dashboard` = global system telemetry
+
+The core thinking loop inside KHAL is:
+
+- `State of the Art`
+  - `Skin in the Game`
+  - `Philosopher's Stone`
+  - `Ends`
+  - `Means`
+- `State of Affairs`
+  - `Affairs`
+  - `Interests`
+
+Doctrine:
+
+- `Affairs` are obligations that remove fragility.
+- `Interests` are options that preserve or create convexity.
 - Decision clarity should be available in under one second.
+
+UI / UX principles:
+
+- `Form follows function`
+- `Show, don't tell`
+- `The medium is the message`
 
 ## Runtime Authority
 - **Single runtime and strategic authority**: SQLite (`data/KHAL.sqlite`).

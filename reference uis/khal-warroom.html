@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KHAL — Decision Operating System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg0: #080808;
+  --bg1: #0e0e0f;
+  --bg2: #131316;
+  --bg3: #1a1a1f;
+  --bg4: #222228;
+  --bg5: #2a2a32;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text0: #f0efe8;
+  --text1: #c8c6bc;
+  --text2: #8a887e;
+  --text3: #52504a;
+  --amber: #e8a030;
+  --amber2: #c47820;
+  --amber-dim: rgba(232,160,48,0.15);
+  --teal: #2dd4aa;
+  --teal2: #1aaa84;
+  --teal-dim: rgba(45,212,170,0.12);
+  --coral: #e05a3a;
+  --coral-dim: rgba(224,90,58,0.12);
+  --blue: #4a90d9;
+  --blue-dim: rgba(74,144,217,0.12);
+  --green: #5cb85c;
+  --green-dim: rgba(92,184,92,0.1);
+  --purple: #9b6ef3;
+  --r: 'DM Mono', monospace;
+  --s: 'Syne', sans-serif;
+  --b: 'Inter', sans-serif;
+}
+
+html, body { height: 100%; background: var(--bg0); color: var(--text0); overflow: hidden; }
+body { display: flex; flex-direction: column; font-family: var(--b); font-size: 13px; }
+
+/* ── TOPBAR ── */
+.top {
+  height: 48px; flex-shrink: 0;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 20px; gap: 20px;
+  position: relative; z-index: 10;
+}
+.logo {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--s); font-size: 17px; font-weight: 700;
+  color: var(--text0); letter-spacing: -0.02em;
+  text-decoration: none; flex-shrink: 0;
+}
+.logo-mark {
+  width: 26px; height: 26px;
+  background: var(--amber); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-mark svg { width: 14px; height: 14px; }
+.top-sub {
+  font-family: var(--r); font-size: 10px;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--text3); padding-left: 16px;
+  border-left: 1px solid var(--border2);
+}
+.top-search {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; padding: 0 12px; height: 30px; width: 180px;
+}
+.top-search input {
+  background: none; border: none; outline: none;
+  color: var(--text1); font-size: 12px; font-family: var(--b); width: 100%;
+}
+.top-search input::placeholder { color: var(--text3); }
+.top-icon {
+  width: 30px; height: 30px; border-radius: 6px;
+  background: var(--bg3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text2); font-size: 14px;
+  transition: border-color .15s;
+}
+.top-icon:hover { border-color: var(--border2); }
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--amber), var(--teal));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--r); font-size: 10px; color: var(--bg0);
+  font-weight: 500; cursor: pointer;
+}
+
+/* ── SHELL ── */
+.shell { display: flex; flex: 1; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 168px; flex-shrink: 0;
+  background: var(--bg1);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow-y: auto; padding: 12px 0;
+}
+.sb-section { margin-bottom: 4px; }
+.sb-head {
+  font-family: var(--r); font-size: 9px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text3); padding: 8px 16px 4px;
+}
+.sb-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 16px; cursor: pointer;
+  transition: background .1s; border-radius: 0;
+  color: var(--text2); font-size: 12px;
+  border-left: 2px solid transparent;
+}
+.sb-item:hover { background: var(--bg3); color: var(--text1); }
+.sb-item.on { background: var(--bg3); color: var(--text0); border-left-color: var(--amber); }
+.sb-item svg { width: 14px; height: 14px; flex-shrink: 0; opacity: .7; }
+.sb-item.on svg { opacity: 1; }
+.sb-sub {
+  padding-left: 32px; font-size: 11px; color: var(--text3);
+}
+.sb-sub.on { color: var(--text1); }
+.sb-sub:hover { color: var(--text2); }
+.sb-divider { height: 1px; background: var(--border); margin: 8px 16px; }
+
+/* ── MAIN ── */
+.main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+/* ── WAR ROOM ── */
+.warroom { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.wr-header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.wr-title {
+  font-family: var(--s); font-size: 18px; font-weight: 600;
+  color: var(--text0); letter-spacing: -0.01em;
+}
+.wr-tabs { display: flex; gap: 2px; margin-left: 8px; }
+.wr-tab {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--r); font-size: 10px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text3);
+  padding: 5px 12px; border-radius: 5px;
+  cursor: pointer; transition: all .12s;
+  border: 1px solid transparent;
+}
+.wr-tab:hover { color: var(--text1); background: var(--bg3); }
+.wr-tab.on { color: var(--text0); background: var(--bg4); border-color: var(--border2); }
+.wr-tab-dot { width: 5px; height: 5px; border-radius: 50%; }
+.wr-controls { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.chip {
+  font-family: var(--r); font-size: 10px; letter-spacing: .06em;
+  padding: 4px 10px; border-radius: 4px;
+  background: var(--bg4); border: 1px solid var(--border);
+  color: var(--text2); cursor: pointer;
+}
+.chip:hover { border-color: var(--border2); color: var(--text1); }
+
+/* ── WAR ROOM BODY ── */
+.wr-body {
+  flex: 1; display: flex; overflow: hidden;
+}
+
+/* NODE GRAPH PANEL */
+.graph-panel {
+  flex: 1; display: flex; flex-direction: column;
+  padding: 0; position: relative; overflow: hidden;
+  background: var(--bg1);
+}
+
+.graph-cols {
+  display: flex; flex: 1; overflow: hidden;
+}
+
+.graph-col {
+  flex: 1; display: flex; flex-direction: column;
+  padding: 16px 12px 12px; position: relative;
+}
+.graph-col + .graph-col { border-left: 1px solid var(--border); }
+
+.graph-col-head {
+  font-family: var(--r); font-size: 9px;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.graph-col-head::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.node-list { display: flex; flex-direction: column; gap: 6px; }
+
+.node-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: 6px;
+  background: var(--bg3); border: 1px solid var(--border);
+  cursor: pointer; transition: all .15s;
+  position: relative;
+}
+.node-row:hover { background: var(--bg4); border-color: var(--border2); }
+.node-row.active { border-color: var(--amber); background: rgba(232,160,48,0.06); }
+.node-icon { font-size: 14px; flex-shrink: 0; width: 18px; text-align: center; }
+.node-name { font-size: 12px; color: var(--text1); flex: 1; }
+.node-row.active .node-name { color: var(--text0); }
+.node-bar-wrap { width: 48px; height: 2px; background: var(--bg5); border-radius: 1px; }
+.node-bar { height: 2px; border-radius: 1px; }
+.node-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  position: absolute; right: -3px; top: 50%; transform: translateY(-50%);
+}
+
+/* SVG CONNECTIONS */
+.graph-svg {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; overflow: visible;
+}
+
+/* RIGHT PANELS */
+.wr-right {
+  width: 220px; flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow-y: auto; background: var(--bg1);
+}
+
+.rp-block {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 14px;
+}
+.rp-head {
+  font-family: var(--r); font-size: 9px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.rp-more { color: var(--text3); cursor: pointer; font-size: 16px; line-height: 1; }
+.rp-more:hover { color: var(--text2); }
+
+/* DECISION POSTURE */
+.posture-ring {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 10px;
+}
+.ring-wrap { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+.ring-wrap svg { transform: rotate(-90deg); }
+.ring-label {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--r); font-size: 13px; font-weight: 500; color: var(--text0);
+}
+.posture-stats { display: flex; flex-direction: column; gap: 5px; }
+.pstat { display: flex; align-items: baseline; gap: 5px; }
+.pstat-label { font-family: var(--r); font-size: 9px; letter-spacing: .1em; color: var(--text3); text-transform: uppercase; }
+.pstat-val { font-family: var(--r); font-size: 14px; font-weight: 500; }
+.pstat-val.rob { color: var(--teal); }
+.pstat-val.frag { color: var(--coral); }
+.pstat-val.opt { color: var(--text1); }
+
+.priority-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.priority-item:last-child { border-bottom: none; }
+.pi-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.pi-name { font-size: 11px; color: var(--text1); flex: 1; }
+.pi-action { font-family: var(--r); font-size: 10px; color: var(--text3); }
+
+/* LINEAGE EXPOSURE */
+.lineage-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 0;
+}
+.li-name { font-family: var(--r); font-size: 10px; color: var(--text2); width: 56px; }
+.li-track { flex: 1; height: 2px; background: var(--bg5); border-radius: 1px; overflow: hidden; }
+.li-fill { height: 100%; border-radius: 1px; }
+.li-pct { font-family: var(--r); font-size: 10px; color: var(--text2); width: 28px; text-align: right; }
+
+/* ── BOTTOM ROW: 4 PANELS ── */
+.bottom-row {
+  display: flex; flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  height: 200px; overflow: hidden;
+  background: var(--bg1);
+}
+
+.bp {
+  flex: 1; padding: 12px 14px;
+  border-right: 1px solid var(--border);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.bp:last-child { border-right: none; }
+.bp-head {
+  font-family: var(--r); font-size: 9px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.bp-tabs { display: flex; gap: 1px; }
+.bp-tab {
+  font-family: var(--r); font-size: 9px; letter-spacing: .08em;
+  text-transform: uppercase; padding: 3px 8px; border-radius: 3px;
+  color: var(--text3); cursor: pointer; transition: all .1s;
+}
+.bp-tab.on { background: var(--bg4); color: var(--text1); }
+.bp-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 0; border-bottom: 1px solid var(--border);
+}
+.bp-item:last-child { border-bottom: none; }
+.bp-icon { font-size: 12px; width: 16px; text-align: center; flex-shrink: 0; }
+.bp-name { font-size: 11px; color: var(--text1); flex: 1; }
+.bp-bar-wrap { width: 40px; height: 2px; background: var(--bg5); border-radius: 1px; }
+.bp-bar { height: 2px; border-radius: 1px; }
+.bp-status {
+  font-family: var(--r); font-size: 9px;
+  padding: 2px 6px; border-radius: 3px;
+}
+.bp-status.active { background: var(--teal-dim); color: var(--teal); }
+.bp-status.queued { background: var(--amber-dim); color: var(--amber); }
+.bp-status.blocked { background: var(--coral-dim); color: var(--coral); }
+.bp-horizon { font-family: var(--r); font-size: 10px; color: var(--text3); width: 28px; text-align: right; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 2px; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeup { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.graph-col { animation: fadeup .4s ease both; }
+.graph-col:nth-child(2) { animation-delay: .06s; }
+.graph-col:nth-child(3) { animation-delay: .12s; }
+
+@keyframes dash {
+  to { stroke-dashoffset: -20; }
+}
+.conn-active {
+  stroke-dasharray: 4 6;
+  animation: dash 1.8s linear infinite;
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 20px; right: 20px;
+  background: var(--bg4); border: 1px solid var(--border2);
+  color: var(--text1); font-family: var(--r); font-size: 11px;
+  letter-spacing: .06em; padding: 10px 16px; border-radius: 6px;
+  pointer-events: none; opacity: 0; transform: translateY(6px);
+  transition: all .2s; z-index: 999;
+}
+.toast.show { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="top">
+  <a class="logo" href="#">
+    <div class="logo-mark">
+      <svg viewBox="0 0 14 14" fill="none">
+        <path d="M7 1L13 4.5V10.5L7 14L1 10.5V4.5L7 1Z" fill="none" stroke="#080808" stroke-width="1.5"/>
+        <path d="M7 4L10 5.8V9.2L7 11L4 9.2V5.8L7 4Z" fill="#080808"/>
+      </svg>
+    </div>
+    KHAL
+  </a>
+  <div class="top-sub">Decision Operating System</div>
+  <div class="top-search">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="#52504a" stroke-width="1.2"/><path d="M8 8L10.5 10.5" stroke="#52504a" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <input type="text" placeholder="Search">
+  </div>
+  <div class="top-icon">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5C4.51 1.5 2.5 3.51 2.5 6c0 1.5.7 2.83 1.8 3.7V11.5h5.4V9.7A4.49 4.49 0 0011.5 6c0-2.49-2.01-4.5-4.5-4.5z" stroke="#8a887e" stroke-width="1.1"/><path d="M5 11.5h4v1H5z" fill="#8a887e" opacity=".5"/></svg>
+  </div>
+  <div class="top-icon">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2.5a1 1 0 10-2 0A4 4 0 002 6.5v2.5H1v1h12v-1h-1V6.5A4 4 0 009 2.5a1 1 0 10-2 0z" stroke="#8a887e" stroke-width="1.1" fill="none"/></svg>
+  </div>
+  <div class="avatar">KH</div>
+</div>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-section">
+      <div class="sb-item" onclick="alert('Dashboard')">
+        <svg viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+        Dashboard
+      </div>
+      <div class="sb-item on">
+        <svg viewBox="0 0 14 14" fill="none"><polygon points="7,1 13,4.5 13,9.5 7,13 1,9.5 1,4.5" stroke="currentColor" stroke-width="1.2" fill="none"/><circle cx="7" cy="7" r="2" fill="currentColor" opacity=".5"/></svg>
+        War Room
+      </div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-head">War Gaming</div>
+      <div class="sb-item sb-sub on">⟳&nbsp; Source</div>
+      <div class="sb-item sb-sub">◈&nbsp; Domain</div>
+      <div class="sb-item sb-sub">✦&nbsp; Craft</div>
+      <div class="sb-item sb-sub">◆&nbsp; Affair</div>
+      <div class="sb-item sb-sub">◇&nbsp; Interest</div>
+      <div class="sb-item sb-sub">⊘&nbsp; Lineage</div>
+      <div class="sb-item sb-sub">⊞&nbsp; Mission</div>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-item">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M7 1L11 3.5v5L7 11 3 8.5v-5L7 1z" stroke="currentColor" stroke-width="1.2"/><path d="M7 5v4M5 7h4" stroke="currentColor" stroke-width="1.1"/></svg>
+      Mission Command
+    </div>
+    <div class="sb-item">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M2 7C2 4.24 4.24 2 7 2s5 2.24 5 5-2.24 5-5 5-5-2.24-5-5z" stroke="currentColor" stroke-width="1.2"/><path d="M7 5v2l1.5 1.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+      Vision Command
+    </div>
+    <div class="sb-item">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M2 10L5 4l3 4 2-3 2 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+      Surgical Execution
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-item">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M7 2v1M7 11v1M2 7H1M13 7h-1M3.5 3.5l-.7-.7M11.2 11.2l-.7-.7M3.5 10.5l-.7.7M11.2 2.8l-.7.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="7" cy="7" r="2.5" stroke="currentColor" stroke-width="1.2"/></svg>
+      Lab
+    </div>
+    <div class="sb-item">
+      <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4.5a1.5 1.5 0 011.5 1.5c0 .83-.67 1.5-1.5 1.5v1" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><circle cx="7" cy="10" r=".6" fill="currentColor"/></svg>
+      Settings
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="warroom">
+
+      <!-- WAR ROOM HEADER -->
+      <div class="wr-header">
+        <div class="wr-title">War Room</div>
+        <div class="wr-tabs">
+          <div class="wr-tab on">
+            <div class="wr-tab-dot" style="background:var(--amber)"></div>
+            Sources
+          </div>
+          <div class="wr-tab">
+            <div class="wr-tab-dot" style="background:var(--teal)"></div>
+            Domains
+          </div>
+          <div class="wr-tab">
+            <div class="wr-tab-dot" style="background:var(--purple)"></div>
+            Crafts
+          </div>
+        </div>
+        <div class="wr-controls">
+          <div class="chip">Managing ∨</div>
+          <div class="chip" style="color:var(--teal);border-color:var(--teal2)">● 6 active</div>
+          <div class="top-icon" style="width:26px;height:26px">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 3h8M2 6h8M2 9h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- WAR ROOM BODY -->
+      <div class="wr-body">
+
+        <!-- NODE GRAPH -->
+        <div class="graph-panel">
+          <div class="graph-cols" id="graph-cols">
+
+            <!-- VOLATILITY SOURCES -->
+            <div class="graph-col" id="col-sources">
+              <div class="graph-col-head">
+                <span style="color:var(--amber)">◈</span> Volatility Sources
+              </div>
+              <div class="node-list">
+                <div class="node-row active" id="s-geo" onclick="selectSource('geo')">
+                  <div class="node-icon">🌐</div>
+                  <div class="node-name">Geopolitics</div>
+                  <div class="node-bar-wrap"><div class="node-bar" style="width:80%;background:var(--amber)"></div></div>
+                  <div class="node-dot" style="background:var(--amber)"></div>
+                </div>
+                <div class="node-row" id="s-tech" onclick="selectSource('tech')">
+                  <div class="node-icon">⚙</div>
+                  <div class="node-name">Tech Shift</div>
+                  <div class="node-bar-wrap"><div class="node-bar" style="width:55%;background:var(--teal)"></div></div>
+                  <div class="node-dot" style="background:var(--teal)"></div>
+                </div>
+                <div class="node-row" id="s-eco" onclick="selectSource('eco')">
+                  <div class="node-icon">📈</div>
+                  <div class="node-name">Economy</div>
+                  <div class="node-bar-wrap"><div class="node-bar" style="width:68%;background:var(--coral)"></div></div>
+                  <div class="node-dot" style="background:var(--coral)"></div>
+                </div>
+                <div class="node-row" id="s-nat" onclick="selectSource('nat')">
+                  <div class="node-icon">🌱</div>
+                  <div class="node-name">Nature</div>
+                  <div class="node-bar-wrap"><div class="node-bar" style="width:38%;background:var(--green)"></div></div>
+                  <div class="node-dot" style="background:var(--green)"></div>
+                </div>
+                <div class="node-row" id="s-soc" onclick="selectSource('soc')">
+                  <div class="node-icon">👥</div>
+                  <div class="node-name">Society</div>
+                  <div class="node-bar-wrap"><div class="node-bar" style="width:44%;background:var(--blue)"></div></div>
+                  <div class="node-dot" style="background:var(--blue)"></div>
+                </div>
+                <div class="node-row" id="s-hlt" onclick="selectSource('hlt')">
+                  <div class="node-icon">♥</div>
+                  <div class="node-name">Health</div>
+                  <div class="node-bar-wrap"><div class="node-bar" style="width:30%;background:var(--purple)"></div></div>
+                  <div class="node-dot" style="background:var(--purple)"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- DOMAINS -->
+            <div class="graph-col" id="col-domains">
+              <div class="graph-col-head">
+                <span style="color:var(--teal)">◈</span> Domains
+              </div>
+              <div class="node-list">
+                <div class="node-row active" id="d-pow">
+                  <div class="node-icon">⚡</div>
+                  <div class="node-name">Power</div>
+                  <div class="node-dot" style="background:var(--amber)"></div>
+                </div>
+                <div class="node-row" id="d-wlt">
+                  <div class="node-icon">◈</div>
+                  <div class="node-name">Wealth</div>
+                  <div class="node-dot" style="background:var(--amber)"></div>
+                </div>
+                <div class="node-row" id="d-hlt">
+                  <div class="node-icon">♥</div>
+                  <div class="node-name">Health</div>
+                  <div class="node-dot" style="background:var(--teal)"></div>
+                </div>
+                <div class="node-row" id="d-fam">
+                  <div class="node-icon">⌂</div>
+                  <div class="node-name">Family</div>
+                  <div class="node-dot" style="background:var(--coral)"></div>
+                </div>
+                <div class="node-row" id="d-sta">
+                  <div class="node-icon">🏛</div>
+                  <div class="node-name">State</div>
+                  <div class="node-dot" style="background:var(--amber)"></div>
+                </div>
+                <div class="node-row" id="d-kno">
+                  <div class="node-icon">◎</div>
+                  <div class="node-name">Knowledge</div>
+                  <div class="node-dot" style="background:var(--teal)"></div>
+                </div>
+                <div class="node-row" id="d-inf">
+                  <div class="node-icon">⬡</div>
+                  <div class="node-name">Infrastructure</div>
+                  <div class="node-dot" style="background:var(--blue)"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CRAFTS -->
+            <div class="graph-col" id="col-crafts">
+              <div class="graph-col-head">
+                <span style="color:var(--purple)">✦</span> Crafts
+              </div>
+              <div class="node-list">
+                <div class="node-row active" id="c-int">
+                  <div class="node-icon">◉</div>
+                  <div class="node-name">Intelligence</div>
+                </div>
+                <div class="node-row" id="c-neg">
+                  <div class="node-icon">⟺</div>
+                  <div class="node-name">Negotiation</div>
+                </div>
+                <div class="node-row" id="c-log">
+                  <div class="node-icon">▣</div>
+                  <div class="node-name">Logistics</div>
+                </div>
+                <div class="node-row" id="c-str">
+                  <div class="node-icon">◈</div>
+                  <div class="node-name">Strategy</div>
+                </div>
+                <div class="node-row" id="c-gro">
+                  <div class="node-icon">✦</div>
+                  <div class="node-name">Grooming</div>
+                </div>
+                <div class="node-row" id="c-ops">
+                  <div class="node-icon">⚙</div>
+                  <div class="node-name">Ops</div>
+                </div>
+                <div class="node-row" id="c-fin">
+                  <div class="node-icon">◈</div>
+                  <div class="node-name">Finance</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- SVG CONNECTION LINES -->
+          <svg class="graph-svg" id="conn-svg" viewBox="0 0 900 320" preserveAspectRatio="none">
+            <defs>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="1.5" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <!-- Geopolitics → Power -->
+            <path d="M 200 58 C 320 58, 380 52, 500 52" stroke="#e8a030" stroke-width="1" fill="none" opacity=".7" class="conn-active" filter="url(#glow)"/>
+            <!-- Geopolitics → Wealth -->
+            <path d="M 200 58 C 320 80, 380 95, 500 96" stroke="#e8a030" stroke-width=".6" fill="none" opacity=".4"/>
+            <!-- Geopolitics → State -->
+            <path d="M 200 58 C 320 100, 380 175, 500 187" stroke="#e8a030" stroke-width=".6" fill="none" opacity=".3"/>
+            <!-- Tech → Health -->
+            <path d="M 200 102 C 320 110, 380 135, 500 143" stroke="#2dd4aa" stroke-width="1" fill="none" opacity=".6" class="conn-active"/>
+            <!-- Tech → Knowledge -->
+            <path d="M 200 102 C 320 130, 380 225, 500 234" stroke="#2dd4aa" stroke-width=".6" fill="none" opacity=".35"/>
+            <!-- Economy → Power -->
+            <path d="M 200 147 C 310 100, 380 65, 500 52" stroke="#e05a3a" stroke-width=".8" fill="none" opacity=".45"/>
+            <!-- Economy → Wealth -->
+            <path d="M 200 147 C 320 140, 380 108, 500 96" stroke="#e05a3a" stroke-width="1" fill="none" opacity=".65"/>
+            <!-- Nature → Family -->
+            <path d="M 200 192 C 320 180, 380 152, 500 143" stroke="#5cb85c" stroke-width=".6" fill="none" opacity=".4"/>
+            <!-- Society → Family -->
+            <path d="M 200 237 C 320 200, 380 160, 500 143" stroke="#4a90d9" stroke-width=".6" fill="none" opacity=".3"/>
+            <!-- Society → State -->
+            <path d="M 200 237 C 320 220, 380 198, 500 187" stroke="#4a90d9" stroke-width=".8" fill="none" opacity=".5"/>
+            <!-- Power → Intelligence -->
+            <path d="M 600 52 C 700 52, 740 52, 800 52" stroke="#e8a030" stroke-width="1" fill="none" opacity=".7" class="conn-active"/>
+            <!-- Power → Strategy -->
+            <path d="M 600 52 C 700 80, 740 160, 800 192" stroke="#e8a030" stroke-width=".6" fill="none" opacity=".35"/>
+            <!-- Wealth → Negotiation -->
+            <path d="M 600 96 C 700 96, 740 88, 800 96" stroke="#c47820" stroke-width=".8" fill="none" opacity=".5"/>
+            <!-- Wealth → Finance -->
+            <path d="M 600 96 C 700 150, 740 240, 800 283" stroke="#c47820" stroke-width=".6" fill="none" opacity=".35"/>
+            <!-- Health → Logistics -->
+            <path d="M 600 143 C 700 143, 740 140, 800 143" stroke="#2dd4aa" stroke-width=".8" fill="none" opacity=".55"/>
+            <!-- Knowledge → Ops -->
+            <path d="M 600 234 C 700 234, 740 230, 800 237" stroke="#2dd4aa" stroke-width=".6" fill="none" opacity=".4"/>
+          </svg>
+        </div>
+
+        <!-- RIGHT PANELS -->
+        <div class="wr-right">
+
+          <!-- DECISION POSTURE -->
+          <div class="rp-block">
+            <div class="rp-head">
+              Decision Posture
+              <div class="rp-more">⋯</div>
+            </div>
+            <div class="posture-ring">
+              <div class="ring-wrap">
+                <svg width="64" height="64" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r="26" fill="none" stroke="#2a2a32" stroke-width="6"/>
+                  <circle cx="32" cy="32" r="26" fill="none" stroke="#2dd4aa" stroke-width="6"
+                    stroke-dasharray="101 62" stroke-dashoffset="0" stroke-linecap="round"/>
+                  <circle cx="32" cy="32" r="26" fill="none" stroke="#e05a3a" stroke-width="6"
+                    stroke-dasharray="29 134" stroke-dashoffset="-101" stroke-linecap="round"/>
+                </svg>
+                <div class="ring-label">62%</div>
+              </div>
+              <div class="posture-stats">
+                <div class="pstat"><span class="pstat-label">Robust</span><span class="pstat-val rob">62%</span></div>
+                <div class="pstat"><span class="pstat-label">Fragile</span><span class="pstat-val frag">−18%</span></div>
+                <div class="pstat"><span class="pstat-label">Optional</span><span class="pstat-val opt">20%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NEXT PRIORITIES -->
+          <div class="rp-block">
+            <div class="rp-head">
+              Next Priorities
+              <div class="rp-more">∧</div>
+            </div>
+            <div class="priority-item">
+              <div class="pi-dot" style="background:var(--coral)"></div>
+              <div>
+                <div class="pi-name">Health</div>
+                <div class="pi-action" style="color:var(--coral)">Reduce Fragility</div>
+              </div>
+            </div>
+            <div class="priority-item">
+              <div class="pi-dot" style="background:var(--amber)"></div>
+              <div>
+                <div class="pi-name">Infra</div>
+                <div class="pi-action" style="color:var(--amber)">Hedge + Expand</div>
+              </div>
+            </div>
+            <div class="priority-item">
+              <div class="pi-dot" style="background:var(--teal)"></div>
+              <div>
+                <div class="pi-name">Family</div>
+                <div class="pi-action" style="color:var(--teal)">Preserve optionality</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LINEAGE EXPOSURE -->
+          <div class="rp-block">
+            <div class="rp-head">Lineage Exposure</div>
+            <div class="lineage-row">
+              <div class="li-name">Self</div>
+              <div class="li-track"><div class="li-fill" style="width:12%;background:var(--amber)"></div></div>
+              <div class="li-pct" style="color:var(--amber)">12%</div>
+            </div>
+            <div class="lineage-row">
+              <div class="li-name">Family</div>
+              <div class="li-track"><div class="li-fill" style="width:18%;background:var(--coral)"></div></div>
+              <div class="li-pct" style="color:var(--coral)">18%</div>
+            </div>
+            <div class="lineage-row">
+              <div class="li-name">State</div>
+              <div class="li-track"><div class="li-fill" style="width:20%;background:var(--amber)"></div></div>
+              <div class="li-pct" style="color:var(--amber)">20%</div>
+            </div>
+            <div class="lineage-row">
+              <div class="li-name">Nation</div>
+              <div class="li-track"><div class="li-fill" style="width:32%;background:var(--teal)"></div></div>
+              <div class="li-pct" style="color:var(--teal)">32%</div>
+            </div>
+            <div class="lineage-row">
+              <div class="li-name">Humanity</div>
+              <div class="li-track"><div class="li-fill" style="width:41%;background:var(--teal)"></div></div>
+              <div class="li-pct" style="color:var(--teal)">41%</div>
+            </div>
+            <div class="lineage-row">
+              <div class="li-name">Nature</div>
+              <div class="li-track"><div class="li-fill" style="width:27%;background:var(--green)"></div></div>
+              <div class="li-pct" style="color:var(--green)">27%</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- BOTTOM ROW: 4 PANELS -->
+      <div class="bottom-row">
+
+        <!-- MISSION COMMAND -->
+        <div class="bp">
+          <div class="bp-head">
+            Mission Command
+            <div class="bp-tabs">
+              <div class="bp-tab on" onclick="switchTab(this)">Hierarchy</div>
+              <div class="bp-tab" onclick="switchTab(this)">Dependencies</div>
+            </div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">⚡</div>
+            <div class="bp-name">Core Security</div>
+            <div class="bp-bar-wrap"><div class="bp-bar" style="width:78%;background:var(--teal)"></div></div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">◈</div>
+            <div class="bp-name">Wealth Engine</div>
+            <div class="bp-bar-wrap"><div class="bp-bar" style="width:55%;background:var(--amber)"></div></div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">◎</div>
+            <div class="bp-name">Knowledge Stack</div>
+            <div class="bp-bar-wrap"><div class="bp-bar" style="width:40%;background:var(--blue)"></div></div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">♥</div>
+            <div class="bp-name">Health Protocol</div>
+            <div class="bp-bar-wrap"><div class="bp-bar" style="width:62%;background:var(--coral)"></div></div>
+          </div>
+        </div>
+
+        <!-- VISION COMMAND -->
+        <div class="bp">
+          <div class="bp-head">
+            Vision Command
+            <div class="bp-tabs">
+              <div class="bp-tab on" onclick="switchTab(this)">Option Paths</div>
+            </div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">✦</div>
+            <div class="bp-name">Build Optionality</div>
+            <div class="bp-bar-wrap"><div class="bp-bar" style="width:70%;background:var(--teal)"></div></div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">⬡</div>
+            <div class="bp-name">Expand Networks</div>
+            <div class="bp-bar-wrap"><div class="bp-bar" style="width:45%;background:var(--teal)"></div></div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">◉</div>
+            <div class="bp-name">Lab Experiments</div>
+            <div class="bp-bar-wrap"><div class="bp-bar" style="width:30%;background:var(--purple)"></div></div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">◈</div>
+            <div class="bp-name">Exploit Edges</div>
+            <div class="bp-bar-wrap"><div class="bp-bar" style="width:55%;background:var(--amber)"></div></div>
+          </div>
+        </div>
+
+        <!-- SURGICAL EXECUTION -->
+        <div class="bp">
+          <div class="bp-head">
+            Surgical Execution
+            <div style="display:flex;gap:16px;font-family:var(--r);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;">
+              <span>Task</span><span style="margin-left:16px">Status</span><span style="margin-left:20px">Horizon</span>
+            </div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">☐</div>
+            <div class="bp-name">Negotiate Alliance</div>
+            <div class="bp-status active">Active</div>
+            <div class="bp-horizon">7d</div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">☐</div>
+            <div class="bp-name">Sleep Protocol v2</div>
+            <div class="bp-status queued">Queued</div>
+            <div class="bp-horizon">3d</div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">☐</div>
+            <div class="bp-name">Design Hedge</div>
+            <div class="bp-status blocked">Blocked</div>
+            <div class="bp-horizon">14d</div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">☐</div>
+            <div class="bp-name">Run Scenario: Economy</div>
+            <div class="bp-status active">Active</div>
+            <div class="bp-horizon">2d</div>
+          </div>
+        </div>
+
+        <!-- WAR GAMING / SOURCE preview -->
+        <div class="bp" style="cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#131316'" onmouseleave="this.style.background=''">
+          <div class="bp-head">
+            War Gaming / Source
+            <span style="font-family:var(--r);font-size:9px;color:var(--amber);letter-spacing:.06em">Open →</span>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">🌐</div>
+            <div class="bp-name">Geopolitics</div>
+            <div style="font-family:var(--r);font-size:9px;color:var(--text3)">→ Power, State</div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">📈</div>
+            <div class="bp-name">Economy</div>
+            <div style="font-family:var(--r);font-size:9px;color:var(--text3)">→ Wealth, Power</div>
+          </div>
+          <div class="bp-item">
+            <div class="bp-icon">⚙</div>
+            <div class="bp-name">Tech Shift</div>
+            <div style="font-family:var(--r);font-size:9px;color:var(--text3)">→ Knowledge</div>
+          </div>
+          <div style="margin-top:auto;padding-top:8px;border-top:1px solid var(--border)">
+            <div style="font-family:var(--r);font-size:9px;color:var(--text3);letter-spacing:.06em">
+              3 sources active · 2 affairs pending
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function switchTab(el) {
+  const tabs = el.parentElement.querySelectorAll('.bp-tab');
+  tabs.forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function selectSource(id) {
+  document.querySelectorAll('#col-sources .node-row').forEach(r => r.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');
+}
+
+// Subtle node pulse on hover
+document.querySelectorAll('.node-row').forEach(row => {
+  row.addEventListener('mouseenter', function() {
+    const dot = this.querySelector('.node-dot');
+    if (dot) { dot.style.transform = 'translateY(-50%) scale(1.8)'; dot.style.transition = 'transform .15s'; }
+  });
+  row.addEventListener('mouseleave', function() {
+    const dot = this.querySelector('.node-dot');
+    if (dot) { dot.style.transform = 'translateY(-50%) scale(1)'; }
+  });
+});
+
+// Animate connection lines on load
+function animateConnections() {
+  const paths = document.querySelectorAll('#conn-svg path');
+  paths.forEach((p, i) => {
+    const len = p.getTotalLength ? p.getTotalLength() : 200;
+    p.style.strokeDasharray = len;
+    p.style.strokeDashoffset = len;
+    p.style.transition = `stroke-dashoffset ${0.6 + i * 0.08}s cubic-bezier(0.4,0,0.2,1)`;
+    setTimeout(() => { p.style.strokeDashoffset = 0; }, 100);
+  });
+  // Re-add animated class after draw completes
+  setTimeout(() => {
+    document.querySelectorAll('#conn-svg path.conn-active').forEach(p => {
+      p.style.strokeDasharray = '4 6';
+      p.style.strokeDashoffset = '';
+      p.style.transition = '';
+    });
+  }, 1800);
+}
+animateConnections();
+</script>
+</body>
+</html>

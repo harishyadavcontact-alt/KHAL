@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KHAL — War Gaming / Source</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0e0c;
+    --ink-2: #3a3830;
+    --ink-3: #7a7669;
+    --ink-4: #b8b4a8;
+    --paper: #f7f5f0;
+    --paper-2: #efece5;
+    --paper-3: #e4e0d5;
+    --rule: #d5d0c4;
+    --red: #b5341c;
+    --red-bg: #fdf1ee;
+    --amber: #8a5c0a;
+    --amber-bg: #fdf6e8;
+    --teal: #1a5c52;
+    --teal-bg: #eaf4f2;
+    --blue: #1a3d6b;
+    --blue-bg: #edf2f9;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --body: 'Newsreader', Georgia, serif;
+    --mono: 'DM Mono', 'Courier New', monospace;
+    --nav-w: 220px;
+    --step-h: 56px;
+  }
+
+  html, body { height: 100%; background: var(--paper); color: var(--ink); }
+
+  body {
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ─── TOP BAR ─── */
+  .topbar {
+    height: 44px;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 0;
+    flex-shrink: 0;
+    background: var(--paper);
+  }
+  .topbar-brand {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-right: 28px;
+  }
+  .topbar-nav {
+    display: flex;
+    gap: 0;
+    flex: 1;
+  }
+  .topbar-nav a {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    text-decoration: none;
+    padding: 0 16px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    cursor: pointer;
+  }
+  .topbar-nav a:hover { color: var(--ink); }
+  .topbar-nav a.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+  .topbar-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+  }
+
+  /* ─── MAIN LAYOUT ─── */
+  .workspace {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ─── LEFT RAIL ─── */
+  .rail {
+    width: var(--nav-w);
+    border-right: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+  .rail-section {
+    padding: 16px 0 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .rail-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    padding: 0 16px 8px;
+  }
+  .rail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-left: 2px solid transparent;
+  }
+  .rail-item:hover { background: var(--paper-2); }
+  .rail-item.active {
+    background: var(--paper-2);
+    border-left-color: var(--ink);
+  }
+  .rail-item-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--ink-4);
+    margin-top: 6px;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .rail-item.active .rail-item-dot { background: var(--red); }
+  .rail-item-text { font-size: 13px; color: var(--ink-2); line-height: 1.4; }
+  .rail-item.active .rail-item-text { color: var(--ink); }
+  .rail-item-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-4);
+    letter-spacing: 0.04em;
+  }
+
+  .rail-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    margin-top: 3px;
+  }
+  .rail-tag.red { background: var(--red-bg); color: var(--red); }
+  .rail-tag.amber { background: var(--amber-bg); color: var(--amber); }
+  .rail-tag.teal { background: var(--teal-bg); color: var(--teal); }
+
+  /* ─── MAIN CONTENT ─── */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── CHAMBER HEADER ─── */
+  .chamber-header {
+    padding: 28px 40px 20px;
+    border-bottom: 1px solid var(--rule);
+    flex-shrink: 0;
+  }
+  .chamber-crumb {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-4);
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .chamber-crumb span { color: var(--ink-3); }
+  .chamber-title {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+  .chamber-meta {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-top: 10px;
+  }
+  .meta-pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 10px;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    color: var(--ink-3);
+    letter-spacing: 0.06em;
+  }
+  .meta-pill.red { border-color: var(--red); color: var(--red); background: var(--red-bg); }
+  .meta-pill.amber { border-color: var(--amber); color: var(--amber); background: var(--amber-bg); }
+  .meta-pill.teal { border-color: var(--teal); color: var(--teal); background: var(--teal-bg); }
+
+  /* ─── STEP FLOW ─── */
+  .step-flow {
+    display: flex;
+    gap: 0;
+    padding: 0 40px;
+    border-bottom: 1px solid var(--rule);
+    flex-shrink: 0;
+    overflow-x: auto;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px 12px 0;
+    cursor: pointer;
+    position: relative;
+    white-space: nowrap;
+  }
+  .step + .step::before {
+    content: '→';
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-4);
+    margin-right: 20px;
+  }
+  .step-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--ink-4);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-4);
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .step.active .step-num {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+  .step.done .step-num {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+  }
+  .step-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--ink-4);
+    text-transform: uppercase;
+    transition: color 0.15s;
+  }
+  .step.active .step-label { color: var(--ink); }
+  .step.done .step-label { color: var(--teal); }
+
+  /* ─── CONTENT AREA ─── */
+  .content-area {
+    flex: 1;
+    padding: 32px 40px 48px;
+    display: flex;
+    gap: 32px;
+  }
+
+  .content-main { flex: 1; min-width: 0; }
+  .content-aside {
+    width: 240px;
+    flex-shrink: 0;
+  }
+
+  /* ─── DOCTRINE PANELS ─── */
+  .panel {
+    margin-bottom: 28px;
+  }
+  .panel-rule {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .panel-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    white-space: nowrap;
+  }
+  .panel-rule-line {
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  /* ─── CLASSIFICATION GRID ─── */
+  .class-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .class-cell {
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 12px 14px;
+  }
+  .class-cell-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin-bottom: 4px;
+  }
+  .class-cell-value {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .class-cell-value.red { color: var(--red); }
+  .class-cell-value.amber { color: var(--amber); }
+  .class-cell-value.teal { color: var(--teal); }
+
+  /* ─── STONE CARDS ─── */
+  .stone-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .stone-card {
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .stone-card-head {
+    background: var(--paper-2);
+    padding: 8px 14px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    border-bottom: 1px solid var(--rule);
+  }
+  .stone-card-body { padding: 12px 14px; }
+  .stone-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--paper-3);
+    gap: 8px;
+  }
+  .stone-row:last-child { border-bottom: none; }
+  .stone-key {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-4);
+    flex-shrink: 0;
+  }
+  .stone-val {
+    font-size: 13px;
+    color: var(--ink-2);
+    text-align: right;
+    line-height: 1.3;
+  }
+  .stone-val.red { color: var(--red); font-family: var(--mono); font-size: 12px; }
+  .stone-val.amber { color: var(--amber); font-family: var(--mono); font-size: 12px; }
+
+  /* ─── FRAGILITY METER ─── */
+  .frag-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+  }
+  .frag-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--paper-3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .frag-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--red);
+    transition: width 0.4s;
+  }
+  .frag-bar-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-4);
+    min-width: 28px;
+    text-align: right;
+  }
+
+  /* ─── ENDS: BARBELL ─── */
+  .barbell {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .barbell-end {
+    flex: 1;
+    border-radius: 3px;
+    padding: 14px 16px;
+  }
+  .barbell-end.hedge {
+    background: var(--red-bg);
+    border: 1px solid #e8c4bc;
+  }
+  .barbell-end.edge {
+    background: var(--teal-bg);
+    border: 1px solid #b8d8d4;
+  }
+  .barbell-head {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .hedge .barbell-head { color: var(--red); }
+  .edge .barbell-head { color: var(--teal); }
+  .barbell-text {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .hedge .barbell-text { color: var(--ink-2); }
+  .edge .barbell-text { color: var(--ink-2); }
+
+  /* ─── SCENARIO CARDS ─── */
+  .scenario-card {
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+  }
+  .scenario-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .scenario-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--rule);
+    cursor: pointer;
+  }
+  .scenario-type {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+  .scenario-type.threat { background: var(--red-bg); color: var(--red); border: 1px solid #e8c4bc; }
+  .scenario-type.scenario { background: var(--amber-bg); color: var(--amber); border: 1px solid #e8d0a8; }
+  .scenario-type.response { background: var(--teal-bg); color: var(--teal); border: 1px solid #b8d8d4; }
+  .scenario-title { font-size: 14px; font-weight: 400; color: var(--ink); flex: 1; }
+  .scenario-toggle {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-4);
+    cursor: pointer;
+  }
+  .scenario-body {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.6;
+    border-top: none;
+  }
+  .scenario-body .response-line {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    gap: 10px;
+  }
+  .response-arrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--teal);
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+
+  /* ─── ASIDE: CRAFT + HEURISTICS ─── */
+  .aside-block {
+    margin-bottom: 24px;
+  }
+  .aside-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 12px;
+  }
+  .craft-name {
+    font-family: var(--serif);
+    font-size: 17px;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .craft-desc {
+    font-size: 12px;
+    color: var(--ink-3);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .heuristic-item {
+    display: flex;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--paper-3);
+    font-size: 12px;
+    color: var(--ink-2);
+    line-height: 1.4;
+  }
+  .heuristic-item:last-child { border-bottom: none; }
+  .heuristic-marker {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-4);
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .avoid-item {
+    display: flex;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 12px;
+    color: var(--red);
+    border-bottom: 1px solid var(--paper-3);
+    line-height: 1.4;
+  }
+  .avoid-item:last-child { border-bottom: none; }
+  .avoid-marker {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--red);
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+
+  /* ─── GENERATE ACTIONS ─── */
+  .generate-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+  }
+  .gen-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .gen-btn.affair {
+    background: var(--red-bg);
+    border-color: #e8c4bc;
+    color: var(--red);
+  }
+  .gen-btn.affair:hover { background: #f8e4df; }
+  .gen-btn.interest {
+    background: var(--teal-bg);
+    border-color: #b8d8d4;
+    color: var(--teal);
+  }
+  .gen-btn.interest:hover { background: #daeee9; }
+  .gen-btn-sub {
+    font-family: var(--body);
+    font-size: 11px;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    display: block;
+    margin-top: 3px;
+    opacity: 0.75;
+  }
+
+  /* ─── DOMAIN SELECTOR ─── */
+  .domain-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .domain-tab {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 12px;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    color: var(--ink-3);
+    cursor: pointer;
+    transition: all 0.12s;
+    letter-spacing: 0.04em;
+  }
+  .domain-tab:hover { background: var(--paper-2); color: var(--ink); }
+  .domain-tab.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+
+  /* ─── NARRATIVE TEXT ─── */
+  .narrative {
+    font-family: var(--body);
+    font-size: 15px;
+    color: var(--ink-2);
+    line-height: 1.75;
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 2px; }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .panel { animation: fadeIn 0.3s ease both; }
+  .panel:nth-child(2) { animation-delay: 0.05s; }
+  .panel:nth-child(3) { animation-delay: 0.1s; }
+  .panel:nth-child(4) { animation-delay: 0.15s; }
+  .panel:nth-child(5) { animation-delay: 0.2s; }
+
+  /* ─── STEP VISIBILITY ─── */
+  .step-content { display: none; }
+  .step-content.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">KHAL</div>
+  <nav class="topbar-nav">
+    <a>War Room</a>
+    <a class="active">War Gaming</a>
+    <a>Mission Command</a>
+    <a>Vision Command</a>
+    <a>Surgical Execution</a>
+    <a>Dashboard</a>
+  </nav>
+  <div class="topbar-status">
+    <div class="status-dot"></div>
+    <span>3 active sources</span>
+  </div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+  <!-- RAIL -->
+  <aside class="rail">
+    <div class="rail-section">
+      <div class="rail-label">Chamber</div>
+      <div class="rail-item done" onclick="setRailTab('source')">
+        <div class="rail-item-dot"></div>
+        <div class="rail-item-text">
+          Source
+          <div class="rail-item-sub">Volatility origin</div>
+        </div>
+      </div>
+      <div class="rail-item active" onclick="setRailTab('domain')">
+        <div class="rail-item-dot"></div>
+        <div class="rail-item-text">
+          Domain
+          <div class="rail-item-sub">Affected field</div>
+        </div>
+      </div>
+      <div class="rail-item" onclick="setRailTab('craft')">
+        <div class="rail-item-dot"></div>
+        <div class="rail-item-text">
+          Craft
+          <div class="rail-item-sub">Admissible means</div>
+        </div>
+      </div>
+      <div class="rail-item" onclick="setRailTab('scenario')">
+        <div class="rail-item-dot"></div>
+        <div class="rail-item-text">
+          Scenario / Threat
+          <div class="rail-item-sub">Pressure-test</div>
+        </div>
+      </div>
+      <div class="rail-item" onclick="setRailTab('generate')">
+        <div class="rail-item-dot"></div>
+        <div class="rail-item-text">
+          Generate
+          <div class="rail-item-sub">Affairs &amp; Interests</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rail-section">
+      <div class="rail-label">Volatility Sources</div>
+      <div class="rail-item active">
+        <div class="rail-item-dot"></div>
+        <div class="rail-item-text">
+          Interest rate cycle
+          <div class="rail-tag red">Fat tail</div>
+        </div>
+      </div>
+      <div class="rail-item">
+        <div class="rail-item-dot"></div>
+        <div class="rail-item-text">
+          Regulatory shift
+          <div class="rail-tag amber">Slow burn</div>
+        </div>
+      </div>
+      <div class="rail-item">
+        <div class="rail-item-dot"></div>
+        <div class="rail-item-text">
+          Key-person dependency
+          <div class="rail-tag red">Fragile</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rail-section">
+      <div class="rail-label">Affected Domains</div>
+      <div class="rail-item active">
+        <div class="rail-item-dot"></div>
+        <div class="rail-item-text">Capital structure</div>
+      </div>
+      <div class="rail-item">
+        <div class="rail-item-dot"></div>
+        <div class="rail-item-text">Operating model</div>
+      </div>
+      <div class="rail-item">
+        <div class="rail-item-dot"></div>
+        <div class="rail-item-text">Liquidity reserve</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- CHAMBER HEADER -->
+    <div class="chamber-header">
+      <div class="chamber-crumb">
+        War Gaming <span>/ Source Chamber</span>
+      </div>
+      <div class="chamber-title">Interest rate cycle → Capital structure</div>
+      <div class="chamber-meta">
+        <div class="meta-pill red">Fat-tail</div>
+        <div class="meta-pill amber">Non-ergodic</div>
+        <div class="meta-pill">Quadrant IV</div>
+        <div class="meta-pill teal">Barbell posture</div>
+      </div>
+    </div>
+
+    <!-- STEP FLOW -->
+    <div class="step-flow">
+      <div class="step done" onclick="setStep(1)">
+        <div class="step-num">✓</div>
+        <div class="step-label">Source</div>
+      </div>
+      <div class="step done" onclick="setStep(2)">
+        <div class="step-num">✓</div>
+        <div class="step-label">Domains</div>
+      </div>
+      <div class="step active" onclick="setStep(3)" id="step-3-tab">
+        <div class="step-num">3</div>
+        <div class="step-label">State of the Art</div>
+      </div>
+      <div class="step" onclick="setStep(4)" id="step-4-tab">
+        <div class="step-num">4</div>
+        <div class="step-label">Scenario / Threat</div>
+      </div>
+      <div class="step" onclick="setStep(5)" id="step-5-tab">
+        <div class="step-num">5</div>
+        <div class="step-label">Generate</div>
+      </div>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="content-area">
+
+      <div class="content-main">
+
+        <!-- STEP 3: STATE OF THE ART -->
+        <div class="step-content active" id="step-3">
+
+          <!-- DOMAIN SELECTOR -->
+          <div class="panel">
+            <div class="panel-rule">
+              <div class="panel-label">Viewing domain</div>
+              <div class="panel-rule-line"></div>
+            </div>
+            <div class="domain-tabs">
+              <div class="domain-tab active" onclick="setDomain(this, 'capital')">Capital structure</div>
+              <div class="domain-tab" onclick="setDomain(this, 'operating')">Operating model</div>
+              <div class="domain-tab" onclick="setDomain(this, 'liquidity')">Liquidity reserve</div>
+            </div>
+            <p class="narrative">"A sustained high-rate environment hitting a leveraged capital structure is a fat-tail event with irreversible downside. The kill is not gradual — it comes from covenant breach or rollover failure."</p>
+          </div>
+
+          <!-- MAP -->
+          <div class="panel">
+            <div class="panel-rule">
+              <div class="panel-label">Map — field classification</div>
+              <div class="panel-rule-line"></div>
+            </div>
+            <div class="class-grid">
+              <div class="class-cell">
+                <div class="class-cell-label">Decision type</div>
+                <div class="class-cell-value">One-way door</div>
+              </div>
+              <div class="class-cell">
+                <div class="class-cell-label">Tail behavior</div>
+                <div class="class-cell-value red">Fat / irreversible</div>
+              </div>
+              <div class="class-cell">
+                <div class="class-cell-label">Quadrant</div>
+                <div class="class-cell-value">IV — Unknown unknowns</div>
+              </div>
+              <div class="class-cell">
+                <div class="class-cell-label">Admissible posture</div>
+                <div class="class-cell-value teal">Barbell + No-ruin first</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STONE -->
+          <div class="panel">
+            <div class="panel-rule">
+              <div class="panel-label">Stone — consequence structure</div>
+              <div class="panel-rule-line"></div>
+            </div>
+            <div class="stone-grid">
+              <div class="stone-card">
+                <div class="stone-card-head">Skin in the Game</div>
+                <div class="stone-card-body">
+                  <div class="stone-row">
+                    <span class="stone-key">Stakes</span>
+                    <span class="stone-val">Solvency of operating entity</span>
+                  </div>
+                  <div class="stone-row">
+                    <span class="stone-key">Risks</span>
+                    <span class="stone-val red">Covenant breach, rollover cliff</span>
+                  </div>
+                  <div class="stone-row">
+                    <span class="stone-key">Lineage</span>
+                    <span class="stone-val amber">Self → Family</span>
+                  </div>
+                  <div class="stone-row">
+                    <span class="stone-key">Fragilistas</span>
+                    <span class="stone-val">Lenders, fixed-rate counterparties</span>
+                  </div>
+                </div>
+              </div>
+              <div class="stone-card">
+                <div class="stone-card-head">Philosopher's Stone</div>
+                <div class="stone-card-body">
+                  <div class="stone-row">
+                    <span class="stone-key">Fragility</span>
+                    <span class="stone-val">
+                      <div class="frag-bar-wrap">
+                        <div class="frag-bar"><div class="frag-bar-fill" style="width:78%"></div></div>
+                        <div class="frag-bar-label red">High</div>
+                      </div>
+                    </span>
+                  </div>
+                  <div class="stone-row">
+                    <span class="stone-key">Vulnerabilities</span>
+                    <span class="stone-val red">Variable-rate debt, short maturities</span>
+                  </div>
+                  <div class="stone-row">
+                    <span class="stone-key">Non-linearity</span>
+                    <span class="stone-val amber">Convex loss above trigger rate</span>
+                  </div>
+                  <div class="stone-row">
+                    <span class="stone-key">Propagation</span>
+                    <span class="stone-val">Liquidity → operating → personnel</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ENDS -->
+          <div class="panel">
+            <div class="panel-rule">
+              <div class="panel-label">Ends — barbell posture</div>
+              <div class="panel-rule-line"></div>
+            </div>
+            <div class="barbell">
+              <div class="barbell-end hedge">
+                <div class="barbell-head">Hedge — downside protected</div>
+                <div class="barbell-text">Eliminate variable-rate exposure above 30% of total debt. Build 6-month cash runway outside operating accounts. No covenant exposure within 2× stress scenario.</div>
+              </div>
+              <div class="barbell-end edge">
+                <div class="barbell-head">Edge — convex upside</div>
+                <div class="barbell-text">Rate normalisation creates refinancing window. Position to lock fixed at peak if rates break. Optionality on distressed acquisition of over-leveraged peers.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- STEP 4: SCENARIO / THREAT -->
+        <div class="step-content" id="step-4">
+          <div class="panel">
+            <div class="panel-rule">
+              <div class="panel-label">Scenario / Threat / Response</div>
+              <div class="panel-rule-line"></div>
+            </div>
+
+            <div class="scenario-card">
+              <div class="scenario-head" onclick="toggleScenario(this)">
+                <div class="scenario-type threat">Threat</div>
+                <div class="scenario-title">Rates hold above 6% for 18+ months</div>
+                <div class="scenario-toggle">▾</div>
+              </div>
+              <div class="scenario-body">
+                Variable-rate tranche ($2.4M) reprices at 6.8%. Monthly debt service increases by $9,600. Runway compresses from 11 months to 7. Covenant test fails at month 9 under base case revenue.
+                <div class="response-line">
+                  <div class="response-arrow">→</div>
+                  <div>Immediate: swap variable tranche to fixed via rate cap. Trigger 90-day liquidity review. Freeze discretionary capex. Notify board of covenant risk horizon.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card">
+              <div class="scenario-head" onclick="toggleScenario(this)">
+                <div class="scenario-type threat">Threat</div>
+                <div class="scenario-title">Rollover cliff — lender pulls $800K facility</div>
+                <div class="scenario-toggle">▾</div>
+              </div>
+              <div class="scenario-body">
+                Primary lender declines renewal. Replacement facility requires 3–4 month lead time. Gap forces draw on operating reserves, exposing cash coverage ratio below 1.2×.
+                <div class="response-line">
+                  <div class="response-arrow">→</div>
+                  <div>Pre-emptive: begin secondary lender relationship now. Maintain clean covenant record. Keep facility at &lt;70% utilisation. No surprise draws in 90 days before rollover.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card">
+              <div class="scenario-head" onclick="toggleScenario(this)">
+                <div class="scenario-type scenario">Scenario</div>
+                <div class="scenario-title">Rate cut cycle begins Q2 — refinancing window</div>
+                <div class="scenario-toggle">▾</div>
+              </div>
+              <div class="scenario-body">
+                Central bank pivots. Fixed-rate window opens at 4.1%. Peers with variable exposure rush to refinance simultaneously, compressing spread and lead times.
+                <div class="response-line">
+                  <div class="response-arrow">→</div>
+                  <div>Pre-position: complete lender diligence packages in advance. Move fast when window opens — do not wait for rates to bottom. Lock 5-year fixed on primary tranche.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="scenario-card">
+              <div class="scenario-head" onclick="toggleScenario(this)">
+                <div class="scenario-type response">Response</div>
+                <div class="scenario-title">Barbell execution — runway and optionality</div>
+                <div class="scenario-toggle">▾</div>
+              </div>
+              <div class="scenario-body">
+                Left side: fix 70% of debt exposure at current rates, build 6-month cash reserve, reduce covenant exposure by refinancing short-dated tranche. Right side: hold 20% of liquidity in short-duration instruments available for distressed acquisition if peer pressure creates opportunity.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- STEP 5: GENERATE -->
+        <div class="step-content" id="step-5">
+          <div class="panel">
+            <div class="panel-rule">
+              <div class="panel-label">Generate — state of affairs</div>
+              <div class="panel-rule-line"></div>
+            </div>
+            <p class="narrative">The hedge and edge above justify two downstream branches. An Affair captures the obligation to remove fragility. An Interest captures the option to exploit the rate normalisation window.</p>
+
+            <div class="barbell">
+              <div class="barbell-end hedge">
+                <div class="barbell-head">→ Affair from Hedge</div>
+                <div class="barbell-text" style="margin-bottom:12px">Eliminate variable-rate exposure and establish 6-month cash reserve. No-ruin sequencing: covenant protection before growth allocation.</div>
+                <button class="gen-btn affair" onclick="showNotification('Affair created: Rate exposure elimination')">
+                  Create Affair
+                  <span class="gen-btn-sub">Obligation / reduces fragility</span>
+                </button>
+              </div>
+              <div class="barbell-end edge">
+                <div class="barbell-head">→ Interest from Edge</div>
+                <div class="barbell-text" style="margin-bottom:12px">Monitor rate normalisation signal. Pre-position lender docs and distressed peer watch. Expiry: 9 months. Kill: rates stable above 5.5% for 6 months.</div>
+                <button class="gen-btn interest" onclick="showNotification('Interest created: Rate cycle optionality')">
+                  Create Interest
+                  <span class="gen-btn-sub">Option / convex upside</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP NAV BUTTONS -->
+        <div style="display:flex; gap:10px; margin-top:8px;" id="step-nav">
+          <button id="prev-btn" onclick="prevStep()" style="font-family:var(--mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;padding:8px 18px;border:1px solid var(--rule);border-radius:2px;background:transparent;color:var(--ink-3);cursor:pointer;display:none;">← Previous</button>
+          <button id="next-btn" onclick="nextStep()" style="font-family:var(--mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;padding:8px 18px;border:1px solid var(--ink);border-radius:2px;background:var(--ink);color:var(--paper);cursor:pointer;margin-left:auto;">Next: Scenario / Threat →</button>
+        </div>
+
+      </div>
+
+      <!-- ASIDE -->
+      <aside class="content-aside">
+
+        <div class="aside-block">
+          <div class="aside-label">Active Craft</div>
+          <div class="craft-name">Barbell Strategy</div>
+          <div class="craft-desc">Separate exposure into two extremes: maximum safety on the left, convex upside on the right. Nothing in the middle.</div>
+        </div>
+
+        <div class="aside-block">
+          <div class="aside-label">Heuristics</div>
+          <div class="heuristic-item">
+            <div class="heuristic-marker">—</div>
+            <div>Never cross a river based on average depth. Simulate worst-case rollover with zero lender cooperation.</div>
+          </div>
+          <div class="heuristic-item">
+            <div class="heuristic-marker">—</div>
+            <div>Do not optimise for expected value in fat-tail environments. Optimise for survival first.</div>
+          </div>
+          <div class="heuristic-item">
+            <div class="heuristic-marker">—</div>
+            <div>If uncertain about rate direction, fix the debt and preserve the optionality in cash.</div>
+          </div>
+          <div class="heuristic-item">
+            <div class="heuristic-marker">—</div>
+            <div>A covenant breach is not a negotiation — it is a transfer of control. Treat it as a cliff.</div>
+          </div>
+        </div>
+
+        <div class="aside-block">
+          <div class="aside-label">Avoid</div>
+          <div class="avoid-item">
+            <div class="avoid-marker">✕</div>
+            <div>Averaging into variable exposure during a rising-rate cycle</div>
+          </div>
+          <div class="avoid-item">
+            <div class="avoid-marker">✕</div>
+            <div>Extending facility maturities without reviewing covenants under stress</div>
+          </div>
+          <div class="avoid-item">
+            <div class="avoid-marker">✕</div>
+            <div>Treating forecast revenue as cash for covenant purposes</div>
+          </div>
+          <div class="avoid-item">
+            <div class="avoid-marker">✕</div>
+            <div>Waiting for rate certainty before acting on the hedge</div>
+          </div>
+        </div>
+
+        <div class="aside-block">
+          <div class="aside-label">Lineage Exposure</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--ink-4);width:60px;">Self</div>
+              <div style="flex:1;height:3px;background:var(--red);border-radius:2px;opacity:0.9"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--ink-4);width:60px;">Family</div>
+              <div style="flex:1;height:3px;background:var(--red);border-radius:2px;opacity:0.55"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--ink-4);width:60px;">State</div>
+              <div style="flex:1;height:3px;background:var(--rule);border-radius:2px;"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--ink-4);width:60px;">Nation</div>
+              <div style="flex:1;height:3px;background:var(--rule);border-radius:2px;"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--ink-4);width:60px;">Humanity</div>
+              <div style="flex:1;height:3px;background:var(--rule);border-radius:2px;"></div>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+
+  </main>
+</div>
+
+<!-- NOTIFICATION TOAST -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:12px;padding:12px 20px;border-radius:3px;opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none;z-index:100;letter-spacing:0.06em;"></div>
+
+<script>
+  let currentStep = 3;
+  const totalSteps = 5;
+  const stepLabels = ['', '', '', 'Scenario / Threat', 'Generate'];
+
+  function setStep(n) {
+    document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.step').forEach((el, i) => {
+      el.classList.remove('active');
+      if (i + 1 < n) el.classList.add('done');
+      else el.classList.remove('done');
+    });
+    document.getElementById('step-' + n).classList.add('active');
+    document.querySelectorAll('.step')[n - 1].classList.add('active');
+    currentStep = n;
+
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    prevBtn.style.display = n > 3 ? 'block' : 'none';
+    if (n < totalSteps) {
+      nextBtn.style.display = 'block';
+      nextBtn.textContent = 'Next: ' + stepLabels[n] + ' →';
+    } else {
+      nextBtn.style.display = 'none';
+    }
+  }
+
+  function nextStep() { if (currentStep < totalSteps) setStep(currentStep + 1); }
+  function prevStep() { if (currentStep > 3) setStep(currentStep - 1); }
+
+  function toggleScenario(head) {
+    const body = head.nextElementSibling;
+    const toggle = head.querySelector('.scenario-toggle');
+    if (body.style.display === 'none') {
+      body.style.display = 'block';
+      toggle.textContent = '▾';
+    } else {
+      body.style.display = 'none';
+      toggle.textContent = '▸';
+    }
+  }
+
+  function setDomain(tab, domain) {
+    document.querySelectorAll('.domain-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const narratives = {
+      capital: '"A sustained high-rate environment hitting a leveraged capital structure is a fat-tail event with irreversible downside. The kill is not gradual — it comes from covenant breach or rollover failure."',
+      operating: '"Rate pressure on operating cost structures is ergodic — it adjusts slowly and telegraphs. The real risk is margin compression forcing a pricing decision with fragile customer relationships."',
+      liquidity: '"Liquidity is the immune system. A rate shock can make it fail at exactly the moment it is most needed — when lenders are tightening and counterparties are watching."'
+    };
+    document.querySelector('.narrative').textContent = narratives[domain];
+  }
+
+  function setRailTab(tab) {
+    document.querySelectorAll('.rail-item').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+  }
+
+  function showNotification(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = '✓ ' + msg;
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(8px)';
+    }, 2800);
+  }
+</script>
+</body>
+</html>

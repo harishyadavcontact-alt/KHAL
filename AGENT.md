@@ -14,14 +14,27 @@ Current product spine:
 - Runtime authority: operator-scoped SQLite
 - Doctrine order:
   - `State of the Art`
-    - `Map`
+    - `Skin in the Game`
     - `Philosopher's Stone`
     - `Ends`
     - `Means`
   - `State of Affairs`
     - `Affairs`
     - `Interests`
-  - `Mission`
+  - `Mission Command`
+  - `Vision Command`
+
+Simple product model:
+- `War Room` = think clearly about one domain
+- `War Gaming` = game the decision
+- `Mission Command` = aggregate Affairs into hierarchy
+- `Vision Command` = aggregate Interests into hierarchy
+- `Dashboard` = global system telemetry
+
+UI / UX principles:
+- `Form follows function`
+- `Show, don't tell`
+- `The medium is the message`
 
 Current rewrite focus:
 - make source-mode War Gaming consume extracted `scenario -> threat -> response` doctrine
@@ -51,6 +64,7 @@ Key planning docs:
 - `docs/architecture/war-gaming-rewrite-slice-2026-03-11.md`
 - `docs/repository-workstreams.md`
 - `docs/reports/state-of-the-art-alignment-2026-03-10.md`
+- `docs/product/reuse-inventory.md`
 
 Rule for this file:
 - keep it short
