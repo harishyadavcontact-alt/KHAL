@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import { decisionTypeLabel, methodPostureForQuadrant, quadrantNarrative, tailClassLabel } from "../../lib/war-room/source-map";
-import { Domain, LineageNodeDto, LineageRiskDto, SourceMapDecisionType, SourceMapProfileDto, SourceMapTailClass, StateOfArtStepId, VolatilitySourceDto } from "./types";
-import type { WarGameDoctrineChain } from "../../lib/war-room/bootstrap";
 import { buildSourceWarGameProtocol } from "../../lib/war-room/state-of-art";
+import { Domain, LineageNodeDto, LineageRiskDto, SourceMapDecisionType, SourceMapProfileDto, SourceMapTailClass, VolatilitySourceDto } from "./types";
+import type { WarGameDoctrineChain } from "../../lib/war-room/bootstrap";
 
 interface WarGameVolatilityProps {
   sourceId?: string;
@@ -16,61 +17,148 @@ interface WarGameVolatilityProps {
   onSourceMapSaved?: () => Promise<void> | void;
 }
 
-type SourceMapUpdate = Partial<Pick<
-  SourceMapProfileDto,
-  | "decisionType"
-  | "tailClass"
-  | "notes"
-  | "stakesText"
-  | "risksText"
-  | "playersText"
-  | "lineageThreatText"
-  | "fragilityPosture"
-  | "vulnerabilitiesText"
-  | "hedgeText"
-  | "edgeText"
-  | "primaryCraftId"
-  | "heuristicsText"
-  | "avoidText"
->>;
+type SourceMapUpdate = Partial<
+  Pick<
+    SourceMapProfileDto,
+    | "decisionType"
+    | "tailClass"
+    | "notes"
+    | "stakesText"
+    | "risksText"
+    | "playersText"
+    | "lineageThreatText"
+    | "fragilityPosture"
+    | "vulnerabilitiesText"
+    | "hedgeText"
+    | "edgeText"
+    | "primaryCraftId"
+    | "heuristicsText"
+    | "avoidText"
+  >
+>;
 
-export function WarGameVolatility({
-  sourceId,
-  sources,
-  domains,
-  lineages,
-  lineageRisks,
-  crafts = [],
-  responseLogic = [],
-  onSourceMapSaved
-}: WarGameVolatilityProps) {
+type SourceStepId = "source" | "domains" | "state" | "scenario" | "generate";
+
+const SOURCE_STEPS: Array<{ id: SourceStepId; label: string }> = [
+  { id: "source", label: "Source" },
+  { id: "domains", label: "Domains" },
+  { id: "state", label: "State of the Art" },
+  { id: "scenario", label: "Scenario / Threat" },
+  { id: "generate", label: "Generate" }
+];
+
+const isBlank = (value?: string | null) => !String(value ?? "").trim();
+
+const splitLines = (value?: string | null) =>
+  String(value ?? "")
+    .split(/\n|;|\u2022/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 4);
+
+const shortStateNarrative = (profile?: SourceMapProfileDto) => {
+  if (!profile) return "Map the source-domain pair first. Posture and means should follow the field, not intuition.";
+  const quadrant = profile.quadrant ?? "Q4";
+  const posture = profile.methodPosture ?? methodPostureForQuadrant(quadrant);
+  const stakes = profile.stakesText?.trim();
+  const risks = profile.risksText?.trim();
+  if (stakes && risks) return `${stakes}. The main break path is ${risks}. Current admissible posture: ${posture}.`;
+  return quadrantNarrative({ decisionType: profile.decisionType, tailClass: profile.tailClass, quadrant });
+};
+
+function Pill({ children, tone = "default" }: { children: React.ReactNode; tone?: "default" | "risk" | "watch" | "safe" }) {
+  const toneClass =
+    tone === "risk"
+      ? "border-[rgba(224,90,58,0.28)] bg-[rgba(224,90,58,0.08)] text-[var(--color-danger)]"
+      : tone === "watch"
+        ? "border-[rgba(240,168,50,0.28)] bg-[rgba(240,168,50,0.08)] text-[var(--color-warning)]"
+        : tone === "safe"
+          ? "border-[rgba(48,224,176,0.24)] bg-[rgba(48,224,176,0.08)] text-[var(--color-success)]"
+          : "border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] text-[var(--color-text-muted)]";
+  return <div className={`inline-flex rounded-sm border px-3 py-1 text-[11px] uppercase tracking-[0.08em] font-[var(--font-mono)] ${toneClass}`}>{children}</div>;
+}
+
+const PanelLabel = ({ children }: { children: React.ReactNode }) => (
+  <div className="mb-4 flex items-center gap-3">
+    <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">{children}</div>
+    <div className="h-px flex-1 bg-[var(--color-editor-rule)]" />
+  </div>
+);
+
+const AsidePanel = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div
+    className="khal-chamber p-5"
+    style={{
+      background: "linear-gradient(180deg, rgba(18,18,31,0.88), rgba(10,10,18,0.94))",
+      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 28px rgba(0,0,0,0.16)"
+    }}
+  >
+    <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">{title}</div>
+    {children}
+  </div>
+);
+
+const FieldBox = ({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "risk" | "watch" | "safe" }) => {
+  const toneClass =
+    tone === "risk" ? "text-[var(--color-danger)]" : tone === "watch" ? "text-[var(--color-warning)]" : tone === "safe" ? "text-[var(--color-success)]" : "text-[var(--color-text)]";
+  return (
+    <div className="khal-subtle-panel px-4 py-3">
+      <div className="text-[9px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">{label}</div>
+      <div className={`mt-1 text-sm ${toneClass}`}>{value}</div>
+    </div>
+  );
+};
+
+export function WarGameVolatility({ sourceId, sources, domains, lineages, lineageRisks, crafts = [], responseLogic = [], onSourceMapSaved }: WarGameVolatilityProps) {
   const router = useRouter();
   const source = sources.find((item) => item.id === sourceId);
   const [savingDomainId, setSavingDomainId] = useState<string | null>(null);
   const [creatingKind, setCreatingKind] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeStep, setActiveStep] = useState<StateOfArtStepId>("map");
+  const [activeStep, setActiveStep] = useState<SourceStepId>("state");
+  const [openScenarioIds, setOpenScenarioIds] = useState<Record<string, boolean>>({});
+
   const linkedDomainIds = useMemo(() => {
     const fromLinks = (source?.domains ?? []).map((link) => link.domainId);
     if (fromLinks.length > 0) return new Set(fromLinks);
     return new Set(domains.filter((domain) => domain.volatilitySourceId === sourceId).map((domain) => domain.id));
   }, [domains, source?.domains, sourceId]);
-  const linkedDomains = domains.filter((domain) => linkedDomainIds.has(domain.id));
-  const sourceRisks = lineageRisks.filter((risk) => risk.sourceId === sourceId);
+
+  const linkedDomains = useMemo(() => domains.filter((domain) => linkedDomainIds.has(domain.id)), [domains, linkedDomainIds]);
+  const [activeDomainId, setActiveDomainId] = useState<string>(linkedDomains[0]?.id ?? "");
   const mapProfilesByDomainId = new Map((source?.mapProfiles ?? []).map((profile) => [profile.domainId, profile]));
-  const protocol = useMemo(
-    () =>
-      buildSourceWarGameProtocol({
-        sourceId,
-        sources,
-        domains,
-        lineages,
-        lineageRisks,
-        crafts,
-        responseLogic
-      }),
-    [crafts, domains, lineages, lineageRisks, responseLogic, sourceId, sources]
-  );
+  const protocol = useMemo(() => buildSourceWarGameProtocol({ sourceId, sources, domains, lineages, lineageRisks, crafts, responseLogic }), [crafts, domains, lineages, lineageRisks, responseLogic, sourceId, sources]);
+
+  useEffect(() => {
+    if (activeDomainId && linkedDomains.some((domain) => domain.id === activeDomainId)) return;
+    setActiveDomainId(linkedDomains[0]?.id ?? "");
+  }, [activeDomainId, linkedDomains]);
+
+  const activeDomain = linkedDomains.find((domain) => domain.id === activeDomainId) ?? linkedDomains[0];
+  const profile = activeDomain ? mapProfilesByDomainId.get(activeDomain.id) : undefined;
+  const domainProtocol = activeDomain ? protocol.domains.find((item) => item.domainId === activeDomain.id) : undefined;
+  const doctrineChains = domainProtocol?.doctrineChains ?? [];
+  const methodPosture = profile?.methodPosture ?? methodPostureForQuadrant(profile?.quadrant ?? "Q4");
+  const activeCraft = crafts.find((craft) => craft.id === profile?.primaryCraftId);
+  const heuristics = splitLines(profile?.heuristicsText);
+  const avoid = splitLines(profile?.avoidText);
+  const stepCompletion = domainProtocol?.stepCompletion ?? { map: false, stone: false, ends: false, means: false };
+  const stepState: Record<SourceStepId, { done: boolean }> = {
+    source: { done: Boolean(source?.id) },
+    domains: { done: linkedDomains.length > 0 },
+    state: { done: stepCompletion.map && stepCompletion.stone && stepCompletion.ends && stepCompletion.means },
+    scenario: { done: doctrineChains.length > 0 },
+    generate: { done: Boolean(profile?.affairId || profile?.interestId) }
+  };
+
+  const lineageRows = (lineages ?? [])
+    .map((lineage) => {
+      const matching = lineageRisks.filter((risk) => risk.sourceId === sourceId && risk.domainId === activeDomain?.id && risk.lineageNodeId === lineage.id);
+      const exposure = matching.reduce((sum, risk) => sum + Number(risk.exposure ?? 0), 0);
+      return { id: lineage.id, label: lineage.name, exposure };
+    })
+    .filter((row) => row.exposure > 0)
+    .slice(0, 5);
 
   const saveProfile = async (domainId: string, updates: SourceMapUpdate) => {
     if (!sourceId) return;
@@ -111,27 +199,6 @@ export function WarGameVolatility({
     }
   };
 
-  const renderTextarea = (
-    domainId: string,
-    label: string,
-    placeholder: string,
-    value: string | undefined,
-    updateKey: keyof SourceMapUpdate,
-    minHeight = 88
-  ) => (
-    <label className="block text-xs text-[var(--color-text-muted)]">
-      <span className="mb-1 block uppercase tracking-[0.16em] text-[10px] text-[var(--color-text-faint)]">{label}</span>
-      <textarea
-        className="khal-textarea"
-        style={{ minHeight }}
-        defaultValue={value ?? ""}
-        placeholder={placeholder}
-        disabled={savingDomainId === domainId}
-        onBlur={(event) => void saveProfile(domainId, { [updateKey]: event.target.value } as SourceMapUpdate)}
-      />
-    </label>
-  );
-
   const deriveStateOfAffairs = async (domainId: string, kind: "affair" | "interest") => {
     if (!sourceId) return;
     setCreatingKind(`${domainId}:${kind}`);
@@ -156,378 +223,321 @@ export function WarGameVolatility({
     }
   };
 
-  const activeProtocolStep = protocol.steps.find((step) => step.id === activeStep);
+  const renderTextarea = (domainId: string, label: string, placeholder: string, value: string | undefined, updateKey: keyof SourceMapUpdate, minHeight = 92) => (
+    <label className="block space-y-2">
+      <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">{label}</span>
+      <textarea className="khal-textarea px-4 py-3 text-sm" style={{ minHeight }} defaultValue={value ?? ""} placeholder={placeholder} disabled={savingDomainId === domainId} onBlur={(event) => void saveProfile(domainId, { [updateKey]: event.target.value } as SourceMapUpdate)} />
+    </label>
+  );
+
+  if (!source || !activeDomain) {
+    return <section className="mx-auto max-w-7xl px-4 py-6"><div className="khal-chamber p-8 text-sm text-[var(--color-text-muted)]">Link this source to at least one domain before gaming posture.</div></section>;
+  }
 
   return (
-    <section className="glass p-5 rounded-xl border border-white/10 mb-6">
-      <div className="flex items-center justify-between gap-4 mb-3">
-        <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-300">Source WarGame Protocol</h3>
-        <span className="text-[10px] font-mono text-zinc-500 uppercase">State of the Art</span>
-      </div>
-      <div className="text-lg font-semibold mb-3">{source?.name ?? "Select a source"}</div>
-      <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-        <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Map Coverage</div>
-          <div className="text-zinc-200">{protocol.completedMapCount}/{protocol.linkedDomainCount || 0} linked domains classified</div>
+    <section className="mx-auto max-w-7xl px-4 py-6">
+      <div className="khal-chamber overflow-hidden" style={{ boxShadow: "0 18px 40px rgba(0,0,0,0.24)" }}>
+        <div className="border-b border-[var(--color-line)] px-8 py-7">
+          <div className="text-[11px] uppercase tracking-[0.08em] text-[var(--color-text-faint)] font-[var(--font-mono)]">
+            War Gaming / <span className="text-[var(--color-text-muted)]">Source Chamber</span>
+          </div>
+          <div className="mt-2 khal-serif-hero text-4xl text-[var(--color-text-strong)]">
+            {source.name} {"->"} {activeDomain.name}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Pill tone={profile?.tailClass === "fat" ? "risk" : "watch"}>{tailClassLabel(profile?.tailClass ?? "unknown")}</Pill>
+            <Pill tone={profile?.decisionType === "complex" ? "watch" : "default"}>{decisionTypeLabel(profile?.decisionType ?? "complex")}</Pill>
+            <Pill>{profile?.quadrant ?? "Q4"}</Pill>
+            <Pill tone="safe">{methodPosture}</Pill>
+          </div>
+          {error ? <div className="mt-4 text-sm text-[var(--color-danger)]">{error}</div> : null}
         </div>
-        <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Current Step</div>
-          <div className="text-zinc-200">{activeProtocolStep?.label}</div>
-          <div className="mt-1 text-zinc-400">{activeProtocolStep?.prompt}</div>
-        </div>
-        <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Means Rule</div>
-          <div className="text-zinc-200">{protocol.meansRule}</div>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-        <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Linked Domains</div>
-          <div className="text-zinc-200">{linkedDomains.map((item) => item.name).join(", ") || "None mapped"}</div>
-        </div>
-        <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Affected Lineages</div>
-          <div className="text-zinc-200">{protocol.affectedLineages.join(", ") || "None mapped"}</div>
-        </div>
-        <div className="p-3 rounded-lg bg-zinc-900/50 border border-white/5">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Risk Rows</div>
-          <div className="text-zinc-200">{protocol.riskCount}</div>
-        </div>
-      </div>
-      {error ? <div className="mt-4 text-sm text-red-300">{error}</div> : null}
-      <div className="mt-4 rounded-xl border border-white/10 bg-zinc-950/35 p-3">
-        <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">State of the Art Flow</div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-          {protocol.steps.map((step) => {
-            const active = step.id === activeStep;
-            return (
-              <button
-                key={step.id}
-                type="button"
-                onClick={() => setActiveStep(step.id)}
-                className={`rounded-lg border px-3 py-2 text-left transition ${
-                  active
-                    ? "border-blue-400/50 bg-blue-500/10"
-                    : step.complete
-                      ? "border-emerald-400/30 bg-emerald-500/8"
-                      : "border-white/10 bg-zinc-900/30 hover:bg-white/5"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-widest text-zinc-200">{step.label}</div>
-                  <div className="text-[10px] text-zinc-500">{step.coverageCount}/{step.totalCount || 0}</div>
-                </div>
-                <div className="mt-1 text-[11px] text-zinc-400">{step.prompt}</div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <div className="mt-5 space-y-4">
-        {linkedDomains.map((domain) => {
-          const profile = mapProfilesByDomainId.get(domain.id);
-          const domainProtocol = protocol.domains.find((item) => item.domainId === domain.id);
-          const methodPosture = profile?.methodPosture ?? methodPostureForQuadrant(profile?.quadrant ?? "Q4");
-          const doctrineChains = domainProtocol?.doctrineChains ?? [];
-          return (
-            <div key={domain.id} className="khal-editor-block p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-[10px] uppercase tracking-widest text-zinc-500">Semantic Domain</div>
-                  <div className="mt-1 text-sm font-semibold text-[var(--color-text-strong)]">{domain.name}</div>
-                </div>
-                {profile ? (
-                  <div className="rounded-full border border-[var(--color-line-strong)] px-2 py-1 text-[10px] uppercase tracking-widest text-[var(--color-text-faint)]">
-                    {profile.quadrant}
-                  </div>
-                ) : (
-                  <div className="rounded-full border border-amber-500/40 px-2 py-1 text-[10px] uppercase tracking-widest text-amber-300">unmapped</div>
-                )}
-              </div>
 
-              {activeStep === "map" ? (
-                <div className="mt-4 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <label className="text-xs text-[var(--color-text-muted)]">
-                      <span className="mb-1 block uppercase tracking-[0.16em] text-[10px] text-[var(--color-text-faint)]">Decision Type</span>
-                      <select
-                        className="khal-select"
-                        value={profile?.decisionType ?? "complex"}
-                        disabled={savingDomainId === domain.id}
-                        onChange={(event) => void saveProfile(domain.id, { decisionType: event.target.value as SourceMapDecisionType })}
+        <div className="border-b border-[var(--color-line)] px-8 overflow-x-auto">
+          <div className="flex min-w-max items-center gap-0">
+            {SOURCE_STEPS.map((step, index) => (
+              <div key={step.id} className="flex items-center">
+                {index > 0 ? <div className="px-5 text-[11px] text-[var(--color-text-faint)] font-[var(--font-mono)]">{"->"}</div> : null}
+                <button type="button" onClick={() => setActiveStep(step.id)} className={`khal-step-chip ${activeStep === step.id ? "text-[var(--color-text-strong)]" : ""}`}>
+                  <span
+                    className={`flex h-[18px] w-[18px] items-center justify-center rounded-full border text-[10px] ${
+                      stepState[step.id].done
+                        ? "border-[var(--color-success)] bg-[var(--color-success)] text-[var(--color-accent-contrast)]"
+                        : activeStep === step.id
+                          ? "border-[var(--color-text)] bg-[var(--color-text)] text-[var(--color-accent-contrast)]"
+                          : "border-[var(--color-line)] text-[var(--color-text-faint)]"
+                    }`}
+                  >
+                    {stepState[step.id].done ? <Check size={12} /> : index + 1}
+                  </span>
+                  <span>{step.label}</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-8 px-8 py-8 xl:grid-cols-[minmax(0,1fr)_250px]">
+          <div className="min-w-0">
+            {activeStep === "source" && (
+              <div className="space-y-5">
+                <PanelLabel>Source</PanelLabel>
+                <div className="khal-chamber p-5" style={{ background: "linear-gradient(180deg, rgba(18,18,31,0.84), rgba(10,10,18,0.92))" }}>
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Source of volatility</div>
+                  <div className="mt-2 text-2xl text-[var(--color-text-strong)]">{source.name}</div>
+                  <div className="mt-2 text-sm text-[var(--color-text-muted)]">
+                    {"Volatility source selected for doctrine and downstream generation."}
+                  </div>
+                  <div className="mt-5 grid gap-3 md:grid-cols-3">
+                    <FieldBox label="Domains" value={String(protocol.linkedDomainCount)} />
+                    <FieldBox label="Open risks" value={String(protocol.riskCount)} tone="watch" />
+                    <FieldBox label="Affected lineages" value={protocol.affectedLineages.join(", ") || "None"} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeStep === "domains" && (
+              <div className="space-y-5">
+                <PanelLabel>Affected domains</PanelLabel>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {linkedDomains.map((domain) => {
+                    const selected = domain.id === activeDomain.id;
+                    const itemProfile = mapProfilesByDomainId.get(domain.id);
+                    return (
+                      <button key={domain.id} onClick={() => setActiveDomainId(domain.id)} className={`rounded-sm border p-4 text-left transition ${selected ? "border-[var(--color-accent)] bg-[rgba(240,168,50,0.08)]" : "border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] hover:bg-white/5"}`} style={{ boxShadow: selected ? "0 8px 20px rgba(0,0,0,0.14)" : "inset 0 1px 0 rgba(255,255,255,0.03)" }}>
+                        <div className="text-base text-[var(--color-text-strong)]">{domain.name}</div>
+                        <div className="mt-1 text-xs text-[var(--color-text-muted)]">{itemProfile?.quadrant ?? "Quadrant not mapped"}</div>
+                        <div className="mt-3 text-sm text-[var(--color-text-muted)] line-clamp-2">{itemProfile?.stakesText ?? "Select this domain to inspect its doctrine surface."}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {activeStep === "state" && (
+              <div className="space-y-8">
+                <div>
+                  <PanelLabel>Viewing domain</PanelLabel>
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    {linkedDomains.map((domain) => (
+                      <button
+                        key={domain.id}
+                        onClick={() => setActiveDomainId(domain.id)}
+                        className={`rounded-sm border px-3 py-1.5 text-[11px] uppercase tracking-[0.06em] font-[var(--font-mono)] transition ${
+                          domain.id === activeDomain?.id
+                            ? "border-[var(--color-text-strong)] bg-[var(--color-text-strong)] text-[var(--color-accent-contrast)]"
+                            : "border-[var(--color-line)] text-[var(--color-text-faint)] hover:bg-[var(--color-editor-bg-soft)] hover:text-[var(--color-text)]"
+                        }`}
                       >
+                        {domain.name}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="max-w-3xl text-[15px] italic leading-7 text-[var(--color-text-muted)]">{shortStateNarrative(profile)}</p>
+                </div>
+
+                <div>
+                  <PanelLabel>Map - field classification</PanelLabel>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <FieldBox label="Decision type" value={profile ? decisionTypeLabel(profile.decisionType) : "Unmapped"} />
+                    <FieldBox label="Tail behavior" value={profile ? tailClassLabel(profile.tailClass) : "Unmapped"} tone={profile?.tailClass === "fat" ? "risk" : profile?.tailClass === "unknown" ? "watch" : "default"} />
+                    <FieldBox label="Quadrant" value={profile?.quadrant ?? "Unmapped"} />
+                    <FieldBox label="Posture" value={methodPosture} tone="safe" />
+                  </div>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <label className="space-y-2">
+                      <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Decision Type</span>
+                      <select className="khal-select px-4 py-3 text-sm" value={profile?.decisionType ?? "complex"} disabled={savingDomainId === activeDomain.id} onChange={(event) => void saveProfile(activeDomain.id, { decisionType: event.target.value as SourceMapDecisionType })}>
                         <option value="simple">Clear structure</option>
                         <option value="complex">Opaque structure</option>
                       </select>
                     </label>
-                    <label className="text-xs text-[var(--color-text-muted)]">
-                      <span className="mb-1 block uppercase tracking-[0.16em] text-[10px] text-[var(--color-text-faint)]">Tail Behavior</span>
-                      <select
-                        className="khal-select"
-                        value={profile?.tailClass ?? "unknown"}
-                        disabled={savingDomainId === domain.id}
-                        onChange={(event) => void saveProfile(domain.id, { tailClass: event.target.value as SourceMapTailClass })}
-                      >
+                    <label className="space-y-2">
+                      <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Tail Behavior</span>
+                      <select className="khal-select px-4 py-3 text-sm" value={profile?.tailClass ?? "unknown"} disabled={savingDomainId === activeDomain.id} onChange={(event) => void saveProfile(activeDomain.id, { tailClass: event.target.value as SourceMapTailClass })}>
                         <option value="thin">Stable variation</option>
                         <option value="fat">Explosive variation</option>
                         <option value="unknown">Unclear, treat cautiously</option>
                       </select>
                     </label>
                   </div>
-                  {renderTextarea(
-                    domain.id,
-                    "Map Notes",
-                    "Why is this domain clear or opaque? Why does the tail behave this way?",
-                    profile?.notes,
-                    "notes",
-                    96
-                  )}
-                  <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-4 text-xs">
-                    {profile ? (
-                      <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] p-3">
-                        <div className="uppercase tracking-widest text-[10px] text-[var(--color-text-faint)]">Quadrant Reading</div>
-                        <div className="mt-1 text-[var(--color-text-strong)]">
-                          {quadrantNarrative({ decisionType: profile.decisionType, tailClass: profile.tailClass, quadrant: profile.quadrant })}
-                        </div>
-                        <div className="mt-1 text-[var(--color-text-muted)]">
-                          {decisionTypeLabel(profile.decisionType)} | {tailClassLabel(profile.tailClass)}
-                        </div>
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                          {[
-                            { id: "Q1", title: "Q1", detail: "clear + stable" },
-                            { id: "Q2", title: "Q2", detail: "clear + explosive" },
-                            { id: "Q3", title: "Q3", detail: "opaque + stable" },
-                            { id: "Q4", title: "Q4", detail: "opaque + explosive" }
-                          ].map((quadrant) => (
-                            <div
-                              key={quadrant.id}
-                              className={`rounded-lg border px-3 py-2 ${
-                                profile.quadrant === quadrant.id ? "border-blue-400/50 bg-blue-500/10 text-blue-100" : "border-white/10 bg-zinc-950/30 text-zinc-400"
-                              }`}
-                            >
-                              <div className="text-[11px] font-semibold uppercase tracking-widest">{quadrant.title}</div>
-                              <div className="mt-1 text-[11px]">{quadrant.detail}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="rounded-lg border border-dashed border-amber-500/35 bg-amber-500/5 p-3 text-amber-200">
-                        Complete decision type and tail behavior to derive the quadrant.
-                      </div>
-                    )}
-                    <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] p-3">
-                      <div className="uppercase tracking-widest text-[10px] text-[var(--color-text-faint)]">Admissible Means</div>
-                      <div className="mt-1 text-[var(--color-text-strong)]">{methodPosture}</div>
-                      <div className="mt-3 text-[11px] text-[var(--color-text-muted)]">
-                        This posture governs what kinds of methods are prudent before you move into stakes, hedge, and craft.
-                      </div>
-                    </div>
-                  </div>
+                  <div className="mt-4">{renderTextarea(activeDomain.id, "Map Notes", "Why is this source-domain pair clear or opaque? Why does the tail behave this way?", profile?.notes, "notes", 100)}</div>
                 </div>
-              ) : null}
 
-              {activeStep === "stone" ? (
-                <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] p-3">
-                    <div className="mb-3 text-[10px] uppercase tracking-widest text-[var(--color-text-faint)]">Asymmetry / Skin in the Game</div>
-                    <div className="space-y-3">
-                      {renderTextarea(domain.id, "Stakes", "What is at risk in this source-domain pair?", profile?.stakesText, "stakesText")}
-                      {renderTextarea(domain.id, "Risks", "What can go wrong, and how does it propagate?", profile?.risksText, "risksText")}
-                      {renderTextarea(domain.id, "Players / Fragilistas", "Who can worsen fragility through incentives, interventions, or naive action?", profile?.playersText, "playersText")}
-                      {renderTextarea(domain.id, "Lineage at Threat", "Which lineage levels absorb the damage first if this breaks?", profile?.lineageThreatText, "lineageThreatText")}
+                <div>
+                  <PanelLabel>Stone - consequence structure</PanelLabel>
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    <div className="khal-chamber p-5">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Skin in the Game</div>
+                      <div className="mt-4 space-y-4">
+                        {renderTextarea(activeDomain.id, "Stakes", "What is at risk here?", profile?.stakesText, "stakesText")}
+                        {renderTextarea(activeDomain.id, "Risks", "How can this break or spread?", profile?.risksText, "risksText")}
+                        {renderTextarea(activeDomain.id, "Lineage", "Which lineage layer is threatened?", profile?.lineageThreatText, "lineageThreatText")}
+                        {renderTextarea(activeDomain.id, "Players / Fragilistas", "Who can worsen fragility?", profile?.playersText, "playersText")}
+                      </div>
                     </div>
-                  </div>
-                  <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] p-3">
-                    <div className="mb-3 text-[10px] uppercase tracking-widest text-[var(--color-text-faint)]">Nonlinearity / Fragility</div>
-                    <div className="space-y-3">
-                      <label className="block text-xs text-[var(--color-text-muted)]">
-                        <span className="mb-1 block uppercase tracking-[0.16em] text-[10px] text-[var(--color-text-faint)]">Fragility Posture</span>
-                        <select
-                          className="khal-select"
-                          value={profile?.fragilityPosture ?? ""}
-                          disabled={savingDomainId === domain.id}
-                          onChange={(event) => void saveProfile(domain.id, { fragilityPosture: event.target.value })}
-                        >
-                          <option value="">Select posture</option>
-                          <option value="fragile">Fragile / short volatility</option>
-                          <option value="robust">Robust / bounded</option>
-                          <option value="antifragile">Antifragile / long volatility</option>
-                        </select>
-                      </label>
-                      {renderTextarea(domain.id, "Vulnerabilities", "Where is the system concave, exposed, or brittle?", profile?.vulnerabilitiesText, "vulnerabilitiesText")}
+                    <div className="khal-chamber p-5">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Philosopher&apos;s Stone</div>
+                      <div className="mt-4 space-y-4">
+                        <label className="space-y-2">
+                          <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Fragility posture</span>
+                          <select className="khal-select px-4 py-3 text-sm" value={profile?.fragilityPosture ?? ""} disabled={savingDomainId === activeDomain.id} onChange={(event) => void saveProfile(activeDomain.id, { fragilityPosture: event.target.value })}>
+                            <option value="">Select posture</option>
+                            <option value="fragile">Fragile / short volatility</option>
+                            <option value="robust">Robust / bounded</option>
+                            <option value="antifragile">Antifragile / long volatility</option>
+                          </select>
+                        </label>
+                        {renderTextarea(activeDomain.id, "Vulnerabilities", "Where is the system brittle, concave, or exposed?", profile?.vulnerabilitiesText, "vulnerabilitiesText", 180)}
+                      </div>
                     </div>
                   </div>
                 </div>
-              ) : null}
 
-              {activeStep === "ends" ? (
-                <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] p-3">
-                    <div className="mb-3 text-[10px] uppercase tracking-widest text-[var(--color-text-faint)]">Barbell Ends</div>
-                    <div className="space-y-3">
-                      {renderTextarea(domain.id, "Hedge", "What obligation or robust baseline protects downside here?", profile?.hedgeText, "hedgeText")}
-                      {renderTextarea(domain.id, "Edge", "What option or asymmetric upside is worth keeping alive?", profile?.edgeText, "edgeText")}
+                <div>
+                  <PanelLabel>Ends - barbell posture</PanelLabel>
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    <div className="rounded-sm border border-[rgba(224,90,58,0.22)] bg-[rgba(224,90,58,0.08)] p-5">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-danger)] font-[var(--font-mono)]">Hedge - downside protected</div>
+                      <div className="mt-4">{renderTextarea(activeDomain.id, "Hedge", "What protects downside here?", profile?.hedgeText, "hedgeText", 170)}</div>
                     </div>
-                  </div>
-                  <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] p-3">
-                    <div className="mb-3 text-[10px] uppercase tracking-widest text-[var(--color-text-faint)]">State of Affairs Bridge</div>
-                    <div className="space-y-3 text-xs text-[var(--color-text-muted)]">
-                      <div className="rounded-lg border border-white/10 bg-zinc-950/30 px-3 py-2">
-                        <div className="uppercase tracking-widest text-[10px] text-[var(--color-text-faint)]">Affair Signal</div>
-                        <div className="mt-1 text-[var(--color-text-strong)]">Hedge outputs become obligations that remove fragility and move toward robustness.</div>
-                      </div>
-                      <div className="rounded-lg border border-white/10 bg-zinc-950/30 px-3 py-2">
-                        <div className="uppercase tracking-widest text-[10px] text-[var(--color-text-faint)]">Interest Signal</div>
-                        <div className="mt-1 text-[var(--color-text-strong)]">Edge outputs become options that preserve convex upside beyond robustness.</div>
-                      </div>
-                      <div className="rounded-lg border border-dashed border-amber-500/35 bg-amber-500/5 px-3 py-2 text-amber-200">
-                        State of Affairs comes after Ends. Do not open Affairs or Interests until the hedge and edge are explicit.
-                      </div>
+                    <div className="rounded-sm border border-[rgba(48,224,176,0.22)] bg-[rgba(48,224,176,0.08)] p-5">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-success)] font-[var(--font-mono)]">Edge - convex upside</div>
+                      <div className="mt-4">{renderTextarea(activeDomain.id, "Edge", "What optionality is worth keeping alive?", profile?.edgeText, "edgeText", 170)}</div>
                     </div>
                   </div>
                 </div>
-              ) : null}
 
-              {activeStep === "means" ? (
-                <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] p-3">
-                    <div className="mb-3 text-[10px] uppercase tracking-widest text-[var(--color-text-faint)]">Means Stack</div>
-                    <div className="space-y-3">
-                      <label className="block text-xs text-[var(--color-text-muted)]">
-                        <span className="mb-1 block uppercase tracking-[0.16em] text-[10px] text-[var(--color-text-faint)]">Primary Craft</span>
-                        <select
-                          className="khal-select"
-                          value={profile?.primaryCraftId ?? ""}
-                          disabled={savingDomainId === domain.id}
-                          onChange={(event) => void saveProfile(domain.id, { primaryCraftId: event.target.value })}
-                        >
-                          <option value="">Select craft</option>
-                          {crafts.map((craft) => (
-                            <option key={craft.id} value={craft.id}>
-                              {craft.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      {renderTextarea(domain.id, "Heuristics", "What judgment rules, protocols, or practical rules should dominate here?", profile?.heuristicsText, "heuristicsText")}
-                      {renderTextarea(domain.id, "Avoid", "Which methods, interventions, or bureaucratic habits should be avoided?", profile?.avoidText, "avoidText")}
-                    </div>
-                  </div>
-                  <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] p-3">
-                    <div className="mb-3 text-[10px] uppercase tracking-widest text-[var(--color-text-faint)]">Next Move</div>
-                    <div className="space-y-3 text-xs text-[var(--color-text-muted)]">
-                      <div className="rounded-lg border border-white/10 bg-zinc-950/30 px-3 py-2">
-                        <div className="uppercase tracking-widest text-[10px] text-[var(--color-text-faint)]">State of the Art Exit</div>
-                        <div className="mt-1 text-[var(--color-text-strong)]">Once means are explicit, convert hedge outputs into Affairs and edge outputs into Interests under State of Affairs.</div>
-                      </div>
-                      <div className="rounded-lg border border-white/10 bg-zinc-950/30 px-3 py-2">
-                        <div className="uppercase tracking-widest text-[10px] text-[var(--color-text-faint)]">Operator Rule</div>
-                        <div className="mt-1 text-[var(--color-text-strong)]">Be judicious about obligations and expeditious only where downside is capped.</div>
-                      </div>
-                      <div className="rounded-lg border border-white/10 bg-zinc-950/30 px-3 py-3">
-                        <div className="uppercase tracking-widest text-[10px] text-[var(--color-text-faint)]">Generate State of Affairs</div>
-                        <div className="mt-1 text-[var(--color-text-muted)]">
-                          Use the current hedge to seed an Affair and the current edge to seed an Interest. You can generate both from the same source-domain pair.
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => void deriveStateOfAffairs(domain.id, "affair")}
-                            disabled={creatingKind === `${domain.id}:affair` || !domainProtocol?.canCreateAffair}
-                            className="khal-button-accent px-3 py-2 text-xs font-semibold disabled:opacity-50"
-                          >
-                            {profile?.affairId ? "Refresh Affair" : "Create Affair"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void deriveStateOfAffairs(domain.id, "interest")}
-                            disabled={creatingKind === `${domain.id}:interest` || !domainProtocol?.canCreateInterest}
-                            className="rounded-lg border border-white/10 bg-zinc-900/40 px-3 py-2 text-xs font-semibold text-zinc-200 transition hover:bg-white/5 disabled:opacity-50"
-                          >
-                            {profile?.interestId ? "Refresh Interest" : "Create Interest"}
-                          </button>
-                        </div>
-                        <div className="mt-3 space-y-2">
-                          {profile?.affairId ? (
-                            <button
-                              type="button"
-                              onClick={() => router.push(`/war-gaming/affair?target=${encodeURIComponent(profile.affairId!)}`)}
-                              className="block text-left text-[11px] text-blue-300 hover:text-blue-200"
-                            >
-                              Open linked Affair
-                            </button>
-                          ) : null}
-                          {profile?.interestId ? (
-                            <button
-                              type="button"
-                              onClick={() => router.push(`/war-gaming/interest?target=${encodeURIComponent(profile.interestId!)}`)}
-                              className="block text-left text-[11px] text-emerald-300 hover:text-emerald-200"
-                            >
-                              Open linked Interest
-                            </button>
-                          ) : null}
-                        </div>
-                      </div>
+                <div>
+                  <PanelLabel>Means - admissible methods</PanelLabel>
+                  <div className="space-y-4">
+                    <label className="space-y-2">
+                      <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Primary Craft</span>
+                      <select className="khal-select px-4 py-3 text-sm" value={profile?.primaryCraftId ?? ""} disabled={savingDomainId === activeDomain.id} onChange={(event) => void saveProfile(activeDomain.id, { primaryCraftId: event.target.value })}>
+                        <option value="">Select craft</option>
+                        {crafts.map((craft) => (
+                          <option key={craft.id} value={craft.id}>
+                            {craft.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="grid gap-4 xl:grid-cols-2">
+                      {renderTextarea(activeDomain.id, "Heuristics", "What judgment rules should dominate here?", profile?.heuristicsText, "heuristicsText", 180)}
+                      {renderTextarea(activeDomain.id, "Avoid", "Which methods should be excluded here?", profile?.avoidText, "avoidText", 180)}
                     </div>
                   </div>
                 </div>
-              ) : null}
+              </div>
+            )}
 
-              <div className="mt-4 rounded-lg border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] p-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="text-[10px] uppercase tracking-widest text-[var(--color-text-faint)]">Scenario / Threat / Response Guidance</div>
-                    <div className="mt-1 text-xs text-[var(--color-text-muted)]">{activeProtocolStep?.doctrinePrompt}</div>
-                  </div>
-                  <div className="rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase tracking-widest text-zinc-400">
-                    {doctrineChains.length} chain{doctrineChains.length === 1 ? "" : "s"}
-                  </div>
-                </div>
-                {doctrineChains.length ? (
-                  <div className="mt-3 grid grid-cols-1 xl:grid-cols-2 gap-3">
-                    {doctrineChains.slice(0, 2).map((chain) => (
-                      <div key={chain.id} className="rounded-lg border border-white/10 bg-zinc-950/25 p-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <div className="text-[10px] uppercase tracking-widest text-zinc-500">{chain.craftName}</div>
-                            <div className="mt-1 text-sm font-semibold text-zinc-200">{chain.name}</div>
-                          </div>
-                          <div className="text-[10px] text-zinc-500 uppercase">{chain.scenarioCount} scenarios</div>
-                        </div>
-                        {chain.objective ? <div className="mt-2 text-xs text-zinc-400">{chain.objective}</div> : null}
-                        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                          <div className="rounded-lg border border-white/10 bg-black/10 px-3 py-2">
-                            <div className="text-[10px] uppercase tracking-widest text-zinc-500">Scenarios</div>
-                            <div className="mt-1 font-semibold text-zinc-200">{chain.scenarioCount}</div>
-                          </div>
-                          <div className="rounded-lg border border-white/10 bg-black/10 px-3 py-2">
-                            <div className="text-[10px] uppercase tracking-widest text-zinc-500">Threats</div>
-                            <div className="mt-1 font-semibold text-zinc-200">{chain.threatCount}</div>
-                          </div>
-                          <div className="rounded-lg border border-white/10 bg-black/10 px-3 py-2">
-                            <div className="text-[10px] uppercase tracking-widest text-zinc-500">Responses</div>
-                            <div className="mt-1 font-semibold text-zinc-200">{chain.responseCount}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+            {activeStep === "scenario" && (
+              <div className="space-y-4">
+                <PanelLabel>Scenario / Threat / Response</PanelLabel>
+                {!doctrineChains.length ? (
+                  <div className="rounded-sm border border-dashed border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] px-4 py-4 text-sm text-[var(--color-text-muted)]">
+                    No doctrine chains are mapped yet for this source-domain pair. Add scenarios, threats, and responses under the relevant craft.
                   </div>
                 ) : (
-                  <div className="mt-3 rounded-lg border border-dashed border-amber-500/35 bg-amber-500/5 px-3 py-3 text-xs text-amber-200">
-                    No doctrine chains are mapped yet. Add scenario, threat, and response knowledge under Crafts to improve source-mode guidance.
-                  </div>
+                  doctrineChains.slice(0, 4).map((chain) => {
+                    const open = openScenarioIds[chain.id] ?? true;
+                    return (
+                      <div key={chain.id} className="rounded-sm border border-[var(--color-line)] bg-[var(--color-editor-bg)]" style={{ boxShadow: open ? "0 10px 24px rgba(0,0,0,0.16)" : "none" }}>
+                        <button type="button" onClick={() => setOpenScenarioIds((prev) => ({ ...prev, [chain.id]: !open }))} className="flex w-full items-center gap-3 border-b border-[var(--color-line)] px-4 py-3 text-left">
+                          <div className="rounded-sm border border-[rgba(240,168,50,0.3)] bg-[rgba(240,168,50,0.08)] px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-[var(--color-warning)] font-[var(--font-mono)]">{chain.craftName}</div>
+                          <div className="flex-1 text-sm text-[var(--color-text)]">{chain.name}</div>
+                          <ChevronDown size={14} className={`text-[var(--color-text-faint)] transition-transform ${open ? "rotate-180" : ""}`} />
+                        </button>
+                        {open ? (
+                          <div className="space-y-3 px-4 py-4 text-sm text-[var(--color-text-muted)]">
+                            {chain.objective ? <div>{"->"}</div> : null}
+                            <div className="grid gap-3 md:grid-cols-3">
+                              <FieldBox label="Scenarios" value={String(chain.scenarioCount)} />
+                              <FieldBox label="Threats" value={String(chain.threatCount)} tone="risk" />
+                              <FieldBox label="Responses" value={String(chain.responseCount)} tone="safe" />
+                            </div>
+                            <div className="flex items-start gap-3 border-t border-[var(--color-line)] pt-3">
+                              <ArrowRight size={14} className="mt-1 text-[var(--color-success)]" />
+                              <div>Pressure-test this source-domain posture through the mapped craft chain before generating downstream branches.</div>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })
                 )}
               </div>
-            </div>
-          );
-        })}
-        {!linkedDomains.length ? (
-          <div className="khal-editor-block p-4 text-sm text-[var(--color-text-muted)]">
-            Link this source to at least one semantic domain before mapping the quadrant.
+            )}
+
+            {activeStep === "generate" && (
+              <div className="space-y-4">
+                <PanelLabel>Generate - State of Affairs</PanelLabel>
+                <p className="max-w-3xl text-[15px] italic leading-7 text-[var(--color-text-muted)]">
+                  The hEdge - convex upside.
+                </p>
+                <div className="grid gap-4 xl:grid-cols-2">
+                  <div className="rounded-sm border border-[rgba(224,90,58,0.22)] bg-[rgba(224,90,58,0.08)] p-5" style={{ boxShadow: "0 10px 24px rgba(0,0,0,0.12)" }}>
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-danger)] font-[var(--font-mono)]">Affair from Hedge</div>
+                    <div className="mt-3 text-sm text-[var(--color-text-muted)]">{profile?.hedgeText?.trim() || "Write the hedge first to generate an obligation."}</div>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      <button type="button" onClick={() => void deriveStateOfAffairs(activeDomain.id, "affair")} disabled={creatingKind === `${activeDomain.id}:affair` || isBlank(profile?.hedgeText)} className="rounded-sm border border-[rgba(224,90,58,0.26)] bg-[var(--color-danger)] px-4 py-2 text-[11px] uppercase tracking-[0.08em] text-white font-[var(--font-mono)] transition hover:opacity-90 disabled:opacity-50">
+                        {profile?.affairId ? "Refresh Affair" : "Create Affair"}
+                      </button>
+                      {profile?.affairId ? <button type="button" onClick={() => router.push(`/war-gaming/affair?target=${encodeURIComponent(profile.affairId!)}`)} className="rounded-sm border border-[var(--color-line)] bg-[var(--color-editor-bg)] px-4 py-2 text-[11px] uppercase tracking-[0.08em] text-[var(--color-text)] font-[var(--font-mono)]">Open Affair</button> : null}
+                    </div>
+                  </div>
+                  <div className="rounded-sm border border-[rgba(48,224,176,0.22)] bg-[rgba(48,224,176,0.08)] p-5" style={{ boxShadow: "0 10px 24px rgba(0,0,0,0.12)" }}>
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-success)] font-[var(--font-mono)]">Interest from Edge</div>
+                    <div className="mt-3 text-sm text-[var(--color-text-muted)]">{profile?.edgeText?.trim() || "Write the edge first to generate an option."}</div>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      <button type="button" onClick={() => void deriveStateOfAffairs(activeDomain.id, "interest")} disabled={creatingKind === `${activeDomain.id}:interest` || isBlank(profile?.edgeText)} className="rounded-sm border border-[rgba(48,224,176,0.26)] bg-[var(--color-success)] px-4 py-2 text-[11px] uppercase tracking-[0.08em] text-[var(--color-accent-contrast)] font-[var(--font-mono)] transition hover:opacity-90 disabled:opacity-50">
+                        {profile?.interestId ? "Refresh Interest" : "Create Interest"}
+                      </button>
+                      {profile?.interestId ? <button type="button" onClick={() => router.push(`/war-gaming/interest?target=${encodeURIComponent(profile.interestId!)}`)} className="rounded-sm border border-[var(--color-line)] bg-[var(--color-editor-bg)] px-4 py-2 text-[11px] uppercase tracking-[0.08em] text-[var(--color-text)] font-[var(--font-mono)]">Open Interest</button> : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        ) : null}
+
+          <aside className="space-y-4">
+            <AsidePanel title="Active craft">
+              <div className="mt-2 text-xl text-[var(--color-text-strong)]">{activeCraft?.name ?? "No craft selected"}</div>
+              <div className="mt-2 text-sm text-[var(--color-text-muted)]">{activeCraft ? "Selected means for this source-domain regime." : "Choose a craft under Means to make doctrine chains explicit."}</div>
+            </AsidePanel>
+
+            <AsidePanel title="Heuristics">
+              <div className="mt-3 space-y-2">
+                {heuristics.length ? heuristics.map((item, index) => <div key={`${item}-${index}`} className="flex gap-2 text-sm text-[var(--color-text-muted)]"><div className="mt-[6px] text-[10px] text-[var(--color-text-faint)] font-[var(--font-mono)]">-</div><div>{item}</div></div>) : <div className="text-sm text-[var(--color-text-muted)]">No heuristics written yet.</div>}
+              </div>
+            </AsidePanel>
+
+            <AsidePanel title="Avoid">
+              <div className="mt-3 space-y-2">
+                {avoid.length ? avoid.map((item, index) => <div key={`${item}-${index}`} className="flex gap-2 text-sm text-[var(--color-danger)]"><div className="mt-[4px] text-[11px] font-[var(--font-mono)]">x</div><div>{item}</div></div>) : <div className="text-sm text-[var(--color-text-muted)]">No avoid list written yet.</div>}
+              </div>
+            </AsidePanel>
+
+            <AsidePanel title="Lineage exposure">
+              <div className="mt-3 space-y-2">
+                {lineageRows.length ? lineageRows.map((row) => (
+                  <div key={row.id} className="flex items-center gap-3">
+                    <div className="w-16 text-[10px] uppercase tracking-[0.08em] text-[var(--color-text-faint)] font-[var(--font-mono)]">{row.label}</div>
+                    <div className="h-[3px] flex-1 rounded bg-[var(--color-line)]">
+                      <div className="h-[3px] rounded bg-[var(--color-danger)]" style={{ width: `${Math.min(100, row.exposure)}%` }} />
+                    </div>
+                  </div>
+                )) : <div className="text-sm text-[var(--color-text-muted)]">No lineage exposure recorded for this source-domain pair.</div>}
+              </div>
+            </AsidePanel>
+          </aside>
+        </div>
       </div>
     </section>
   );
 }
+
+

@@ -1,7 +1,38 @@
 import React, { useMemo } from "react";
-import { Plus } from "lucide-react";
+import { AlertTriangle, ArrowRight, Plus, Shield } from "lucide-react";
 import { AppData } from "./types";
-import { cn } from "./utils";
+
+function DeepPanel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="khal-chamber p-5"
+      style={{
+        background: "linear-gradient(180deg, rgba(18,18,31,0.88), rgba(10,10,18,0.94))",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 12px 30px rgba(0,0,0,0.18)"
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function AffairRow({ children, tone = "default" }: { children: React.ReactNode; tone?: "default" | "watch" }) {
+  return (
+    <div
+      className="rounded-sm border p-4"
+      style={{
+        borderColor: tone === "watch" ? "rgba(240,168,50,0.22)" : "var(--color-line)",
+        background:
+          tone === "watch"
+            ? "rgba(240,168,50,0.08)"
+            : "linear-gradient(180deg, rgba(18,18,31,0.82), rgba(10,10,18,0.9))",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 24px rgba(0,0,0,0.12)"
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 interface AffairsViewProps {
   data: AppData;
@@ -16,117 +47,83 @@ export function AffairsView({ data, onSelectAffair, onCreateAffair, onWarGame }:
   const [domainId, setDomainId] = React.useState(data.domains[0]?.id ?? "general");
   const [saving, setSaving] = React.useState(false);
 
-  const [domainFilter, setDomainFilter] = React.useState("all");
-  const [sourceFilter, setSourceFilter] = React.useState("all");
-  const [lineageFilter, setLineageFilter] = React.useState("all");
-  const [scopeFilter, setScopeFilter] = React.useState("all");
+  const domainById = useMemo(() => new Map(data.domains.map((domain) => [domain.id, domain])), [data.domains]);
 
-  const domainsById = useMemo(() => new Map(data.domains.map((domain) => [domain.id, domain])), [data.domains]);
-  const sourceOptions = useMemo(() => {
-    if (data.sources?.length) return data.sources.map((source) => ({ id: source.id, label: source.name }));
-    const fallback = new Map<string, string>();
-    for (const domain of data.domains) {
-      const key = domain.volatilitySourceId ?? domain.volatilitySourceName ?? domain.volatilitySource ?? "unmapped";
-      const label = domain.volatilitySourceName ?? domain.volatilitySource ?? key;
-      fallback.set(key, label);
-    }
-    return Array.from(fallback.entries()).map(([id, label]) => ({ id, label }));
-  }, [data.domains, data.sources]);
+  const groupedAffairs = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        domainId: string;
+        domainName: string;
+        sourceName: string;
+        affairs: typeof data.affairs;
+      }
+    >();
 
-  const scopeOptions = useMemo(() => {
-    const set = new Set<string>(["all", "personal", "private", "public", "family"]);
     for (const affair of data.affairs) {
-      if (affair.perspective) set.add(String(affair.perspective).toLowerCase());
+      const domain = domainById.get(affair.domainId);
+      if (!domain) continue;
+      const key = domain.id;
+      const existing = groups.get(key) ?? {
+        domainId: domain.id,
+        domainName: domain.name,
+        sourceName: domain.volatilitySourceName ?? domain.volatilitySource ?? domain.volatility ?? "No mapped source",
+        affairs: []
+      };
+      existing.affairs.push(affair);
+      groups.set(key, existing);
     }
-    return Array.from(set);
-  }, [data.affairs]);
 
-  const filteredAffairs = useMemo(() => {
-    const lineageRisks = data.lineageRisks ?? [];
-    return data.affairs.filter((affair) => {
-      const associatedDomains = affair.context?.associatedDomains ?? [];
-      const allDomains = new Set([affair.domainId, ...associatedDomains]);
+    return [...groups.values()].sort((left, right) => right.affairs.length - left.affairs.length || left.domainName.localeCompare(right.domainName));
+  }, [data.affairs, domainById]);
 
-      if (domainFilter !== "all" && !allDomains.has(domainFilter)) return false;
-
-      if (sourceFilter !== "all") {
-        const hasSource = Array.from(allDomains).some((dId) => {
-          const domain = domainsById.get(dId);
-          const candidate = domain?.volatilitySourceId ?? domain?.volatilitySourceName ?? domain?.volatilitySource ?? "";
-          return candidate === sourceFilter;
-        });
-        if (!hasSource) return false;
-      }
-
-      if (lineageFilter !== "all") {
-        const hasLineage = lineageRisks.some((risk) => risk.lineageNodeId === lineageFilter && allDomains.has(risk.domainId));
-        if (!hasLineage) return false;
-      }
-
-      if (scopeFilter !== "all") {
-        const perspective = String(affair.perspective ?? "").toLowerCase();
-        if (perspective !== scopeFilter) return false;
-      }
-
-      return true;
-    });
-  }, [data.affairs, data.lineageRisks, domainFilter, domainsById, lineageFilter, scopeFilter, sourceFilter]);
+  const incompleteAffairs = useMemo(
+    () =>
+      data.affairs.filter((affair) => {
+        const hasObjectives = (affair.plan?.objectives ?? []).length > 0;
+        const hasCraft = Boolean(affair.means?.craftId);
+        return !(hasObjectives && hasCraft);
+      }),
+    [data.affairs]
+  );
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto px-4 py-5">
-      <div className="flex flex-wrap justify-between items-center gap-3">
-        <h2 className="text-xl font-bold">Active Affairs</h2>
-        <button onClick={() => setOpen(true)} className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 rounded text-xs font-bold text-white">
-          <Plus size={14} /> New Affair
-        </button>
-      </div>
-
-      <div className="glass p-3 rounded-lg border border-white/10">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
-          <select className="bg-zinc-900 border border-white/10 rounded px-2 py-1.5 text-xs" value={domainFilter} onChange={(e) => setDomainFilter(e.target.value)}>
-            <option value="all">All Domains</option>
-            {data.domains.map((domain) => (
-              <option key={domain.id} value={domain.id}>
-                {domain.name}
-              </option>
-            ))}
-          </select>
-          <select className="bg-zinc-900 border border-white/10 rounded px-2 py-1.5 text-xs" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
-            <option value="all">All Volatility Sources</option>
-            {sourceOptions.map((source) => (
-              <option key={source.id} value={source.id}>
-                {source.label}
-              </option>
-            ))}
-          </select>
-          <select className="bg-zinc-900 border border-white/10 rounded px-2 py-1.5 text-xs" value={lineageFilter} onChange={(e) => setLineageFilter(e.target.value)}>
-            <option value="all">All Lineages</option>
-            {(data.lineages?.nodes ?? []).map((node) => (
-              <option key={node.id} value={node.id}>
-                {node.name}
-              </option>
-            ))}
-          </select>
-          <select className="bg-zinc-900 border border-white/10 rounded px-2 py-1.5 text-xs" value={scopeFilter} onChange={(e) => setScopeFilter(e.target.value)}>
-            {scopeOptions.map((scope) => (
-              <option key={scope} value={scope}>
-                {scope === "all" ? "All Scopes" : scope}
-              </option>
-            ))}
-          </select>
+    <div className="mx-auto max-w-7xl px-4 py-6">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-5 border-b border-[var(--color-line)] pb-5">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.24em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Affairs</div>
+          <h2 className="khal-serif-hero mt-2 text-4xl text-[var(--color-text-strong)]">Obligation register</h2>
+          <p className="mt-3 max-w-3xl text-sm text-[var(--color-text-muted)]">
+            This is the operational register of affairs. It should make current obligations legible by domain and expose which ones are still structurally incomplete.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="khal-subtle-panel px-4 py-3">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Affairs</div>
+            <div className="mt-1 text-lg text-[var(--color-text)]">{data.affairs.length}</div>
+          </div>
+          <div className="khal-subtle-panel px-4 py-3">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Incomplete</div>
+            <div className="mt-1 text-lg text-[var(--color-text)]">{incompleteAffairs.length}</div>
+          </div>
+          <button onClick={() => setOpen(true)} className="khal-button-accent px-4 py-2 text-[11px] font-bold uppercase tracking-[0.12em]">
+            <span className="inline-flex items-center gap-2">
+              <Plus size={14} /> New Affair
+            </span>
+          </button>
         </div>
       </div>
 
-      {open && (
-        <div className="glass p-4 rounded-lg border border-white/10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {open ? (
+        <div className="khal-chamber mb-5 p-5">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <input
-              className="bg-zinc-900 border border-white/10 rounded px-3 py-2 text-sm"
+              className="khal-input px-4 py-3 text-sm"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Affair title"
             />
-            <select className="bg-zinc-900 border border-white/10 rounded px-3 py-2 text-sm" value={domainId} onChange={(e) => setDomainId(e.target.value)}>
+            <select className="khal-select px-4 py-3 text-sm" value={domainId} onChange={(e) => setDomainId(e.target.value)}>
               {data.domains.map((domain) => (
                 <option key={domain.id} value={domain.id}>
                   {domain.name}
@@ -135,7 +132,7 @@ export function AffairsView({ data, onSelectAffair, onCreateAffair, onWarGame }:
             </select>
             <div className="flex gap-2">
               <button
-                className="px-3 py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm font-semibold text-white disabled:bg-zinc-700"
+                className="khal-button-accent flex-1 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.12em] disabled:opacity-50"
                 disabled={!title.trim() || saving}
                 onClick={async () => {
                   setSaving(true);
@@ -150,51 +147,122 @@ export function AffairsView({ data, onSelectAffair, onCreateAffair, onWarGame }:
               >
                 Save
               </button>
-              <button className="px-3 py-2 bg-zinc-700 hover:bg-zinc-600 rounded text-sm font-semibold text-white" onClick={() => setOpen(false)}>
+              <button className="rounded-sm border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] px-4 py-3 text-[11px] uppercase tracking-[0.12em] font-[var(--font-mono)] text-[var(--color-text)]" onClick={() => setOpen(false)}>
                 Cancel
               </button>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        {filteredAffairs.map((affair) => (
-          <div
-            key={affair.id}
-            onClick={() => onSelectAffair(affair.id)}
-            className="glass p-4 rounded-lg border border-white/5 hover:border-blue-500/30 transition-all cursor-pointer group"
-          >
-            <div className="flex justify-between items-start mb-3">
-              <div
-                className={cn(
-                  "px-2 py-0.5 rounded text-[10px] font-mono uppercase",
-                  affair.status === "execution" ? "bg-red-500/10 text-red-400" : "bg-blue-500/10 text-blue-400"
-                )}
-              >
-                {affair.status}
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <section className="space-y-4">
+          {groupedAffairs.length ? (
+            groupedAffairs.map((group) => (
+              <DeepPanel key={group.domainId}>
+                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--color-line)] pb-4">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Domain</div>
+                    <div className="mt-1 text-2xl text-[var(--color-text-strong)]">{group.domainName}</div>
+                    <div className="mt-2 text-sm text-[var(--color-text-muted)]">{group.sourceName}</div>
+                  </div>
+                  <div className="inline-flex rounded-sm border border-[rgba(224,90,58,0.22)] bg-[rgba(224,90,58,0.08)] px-3 py-1 text-[11px] uppercase tracking-[0.08em] font-[var(--font-mono)] text-[var(--color-danger)]">
+                    Obligations {group.affairs.length}
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {group.affairs.map((affair) => {
+                    const incomplete = !(affair.means?.craftId && (affair.plan?.objectives ?? []).length > 0);
+                    return (
+                      <AffairRow key={affair.id}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-base text-[var(--color-text-strong)]">{affair.title}</div>
+                            <div className="mt-1 text-xs text-[var(--color-text-muted)]">
+                              {affair.status ?? "unknown"} | {affair.perspective ?? "scope undefined"}
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {incomplete ? (
+                              <span className="inline-flex rounded-sm border border-[rgba(240,168,50,0.22)] bg-[rgba(240,168,50,0.08)] px-2 py-1 text-[10px] uppercase tracking-[0.12em] font-[var(--font-mono)] text-[var(--color-warning)]">
+                                Incomplete
+                              </span>
+                            ) : null}
+                            <button
+                              onClick={() => onSelectAffair(affair.id)}
+                              className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.12em] text-[var(--color-accent)] font-[var(--font-mono)]"
+                            >
+                              Open <ArrowRight size={12} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 grid gap-3 md:grid-cols-3 text-sm text-[var(--color-text-muted)]">
+                          <div>
+                            <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Objectives</div>
+                            <div className="mt-1">{(affair.plan?.objectives ?? []).length || "None"}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Craft</div>
+                            <div className="mt-1">{affair.means?.craftId ?? "Unassigned"}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Heuristics</div>
+                            <div className="mt-1">{affair.means?.selectedHeuristicIds?.length ?? 0}</div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex justify-end">
+                          <button
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onWarGame(affair.id);
+                            }}
+                            className="rounded-sm border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] px-3 py-2 text-[11px] uppercase tracking-[0.1em] font-[var(--font-mono)] text-[var(--color-text)]"
+                          >
+                            WarGame
+                          </button>
+                        </div>
+                      </AffairRow>
+                    );
+                  })}
+                </div>
+              </DeepPanel>
+            ))
+          ) : (
+            <div className="khal-chamber p-8 text-sm text-[var(--color-text-muted)]">No affairs are registered yet.</div>
+          )}
+        </section>
+
+        <aside className="space-y-4">
+          <DeepPanel>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Affair rule</div>
+            <div className="mt-3 space-y-3 text-sm text-[var(--color-text-muted)]">
+              <div className="flex items-start gap-3">
+                <Shield size={14} className="mt-1 text-[var(--color-danger)]" />
+                <span>Affairs are obligations to remove fragility, not generic tasks.</span>
               </div>
-              <div className="text-[10px] font-mono text-zinc-500 uppercase">{affair.perspective}</div>
+              <div className="flex items-start gap-3">
+                <AlertTriangle size={14} className="mt-1 text-[var(--color-warning)]" />
+                <span>If means or objectives are missing, the obligation is not ready for confident execution.</span>
+              </div>
             </div>
-            <h3 className="text-base font-bold mb-2 group-hover:text-blue-400 transition-colors">{affair.title}</h3>
-            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
-              <span>Domains: {(affair.context?.associatedDomains ?? []).length || 1}</span>
-              <span>Heuristics: {affair.means?.selectedHeuristicIds?.length ?? 0}</span>
+          </DeepPanel>
+
+          <DeepPanel>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Incomplete register</div>
+            <div className="mt-3 space-y-3">
+              {incompleteAffairs.slice(0, 6).map((affair) => (
+                <AffairRow key={affair.id} tone="watch">
+                  <div className="text-sm text-[var(--color-text-strong)]">{affair.title}</div>
+                  <div className="mt-1 text-xs text-[var(--color-text-muted)]">Missing one or more of: craft, objectives.</div>
+                </AffairRow>
+              ))}
+              {!incompleteAffairs.length ? <div className="text-sm text-[var(--color-text-muted)]">All current affairs have basic doctrine structure.</div> : null}
             </div>
-            <div className="mt-3 flex justify-end">
-              <button
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onWarGame(affair.id);
-                }}
-                className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-[10px] font-bold uppercase tracking-widest text-white"
-              >
-                WarGame
-              </button>
-            </div>
-          </div>
-        ))}
-        {!filteredAffairs.length && <div className="text-sm text-zinc-500">No affairs match current filters.</div>}
+          </DeepPanel>
+        </aside>
       </div>
     </div>
   );

@@ -1,58 +1,63 @@
-@import url("https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@900&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap");
 
 :root {
-  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
-  --color-bg: #090b0f;
-  --color-bg-elevated: #12161c;
-  --color-panel: #151a21;
-  --color-panel-strong: #1a2028;
-  --color-panel-soft: rgba(21, 26, 33, 0.82);
-  --color-border: rgba(214, 188, 139, 0.16);
-  --color-border-strong: rgba(214, 188, 139, 0.28);
-  --color-text: #e4dccf;
-  --color-text-muted: #9f978a;
-  --color-text-faint: #6f6b62;
-  --color-accent: #c89a57;
-  --color-accent-strong: #e0b97a;
-  --color-accent-cool: #7c8c9d;
-  --color-danger: #ef4444;
-  --color-warning: #c89a57;
-  --color-success: #37a67a;
-  --color-antifragile: #37a67a;
-  --color-fragile: #ef4444;
-  --color-robust: #7c8c9d;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --color-bg: #040406;
+  --color-bg-elevated: #0d0d18;
+  --color-panel: #12121f;
+  --color-panel-strong: #181826;
+  --color-panel-soft: rgba(18, 18, 31, 0.88);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
+  --color-text: #f2efe8;
+  --color-text-muted: #c8c4b8;
+  --color-text-faint: #8a8678;
+  --color-accent: #f0a832;
+  --color-accent-strong: #d48820;
+  --color-accent-cool: #6d7b88;
+  --color-danger: #e05a3a;
+  --color-warning: #f0a832;
+  --color-success: #30e0b0;
+  --color-antifragile: #30e0b0;
+  --color-fragile: #e05a3a;
+  --color-robust: #6d7b88;
   --khal-compact-font-size: 13px;
   --khal-compact-radius: 6px;
   --khal-compact-pad: 8px;
-  --viz-risk: #ef4444;
-  --viz-watch: #c89a57;
-  --viz-safe: #37a67a;
-  --viz-hedge: #7c8c9d;
+  --viz-risk: #e05a3a;
+  --viz-watch: #f0a832;
+  --viz-safe: #30e0b0;
+  --viz-hedge: #6d7b88;
   --viz-edge: #b47445;
-  --viz-grid: rgba(214, 188, 139, 0.08);
-  --color-accent-contrast: #111318;
-  --color-line: rgba(214, 188, 139, 0.14);
-  --color-line-strong: rgba(214, 188, 139, 0.26);
+  --viz-grid: rgba(240, 168, 50, 0.08);
+  --color-accent-contrast: #070709;
+  --color-line: rgba(255, 255, 255, 0.08);
+  --color-line-strong: rgba(255, 255, 255, 0.16);
   --color-line-hairline: rgba(255, 255, 255, 0.06);
-  --color-editor-bg: rgba(11, 14, 18, 0.94);
-  --color-editor-bg-soft: rgba(16, 20, 26, 0.88);
-  --color-editor-rule: rgba(214, 188, 139, 0.18);
-  --color-text-strong: #f5efe5;
+  --color-editor-bg: rgba(8, 8, 16, 0.94);
+  --color-editor-bg-soft: rgba(12, 12, 23, 0.88);
+  --color-editor-rule: rgba(255, 255, 255, 0.14);
+  --color-text-strong: #f4f1e8;
   --shell-bg:
-    radial-gradient(circle at top left, rgba(200, 154, 87, 0.08), transparent 28%),
-    radial-gradient(circle at top right, rgba(124, 140, 157, 0.12), transparent 22%),
-    linear-gradient(180deg, #0d1015 0%, #090b0f 100%);
+    radial-gradient(circle at top left, rgba(240, 168, 50, 0.12), transparent 26%),
+    radial-gradient(circle at top right, rgba(48, 224, 176, 0.06), transparent 24%),
+    linear-gradient(180deg, #080810 0%, #040406 100%);
   --shell-hero:
-    radial-gradient(circle at top left, rgba(200,154,87,0.08), transparent 24%),
-    linear-gradient(180deg,#0f1319,#090b0f);
-  --glass-bg: linear-gradient(180deg, rgba(24, 29, 37, 0.9), rgba(17, 21, 28, 0.84));
-  --card-bg: linear-gradient(180deg, rgba(25, 31, 39, 0.96), rgba(18, 22, 29, 0.96));
-  --topbar-bg: rgba(10, 13, 18, 0.92);
-  --leftnav-bg: linear-gradient(180deg, rgba(12, 15, 20, 0.94), rgba(16, 20, 27, 0.94));
+    radial-gradient(circle at top left, rgba(240,168,50,0.1), transparent 24%),
+    linear-gradient(180deg,#0d0d18,#040406);
+  --glass-bg: linear-gradient(180deg, rgba(18, 18, 31, 0.9), rgba(13, 13, 24, 0.84));
+  --card-bg: linear-gradient(180deg, rgba(24, 24, 38, 0.96), rgba(13, 13, 24, 0.96));
+  --topbar-bg: rgba(7, 7, 18, 0.92);
+  --leftnav-bg: linear-gradient(180deg, rgba(8, 8, 16, 0.96), rgba(13, 13, 24, 0.94));
   --nav-item-bg: rgba(255, 255, 255, 0.01);
   --nav-hover-bg: rgba(255, 255, 255, 0.05);
-  --input-bg: rgba(15, 19, 25, 0.96);
+  --nav-active-bg: rgba(240, 168, 50, 0.08);
+  --nav-active-border: rgba(240, 168, 50, 0.8);
+  --shell-shadow: 0 12px 32px rgba(0, 0, 0, 0.36);
+  --grain-opacity: 0.045;
+  --input-bg: rgba(15, 15, 25, 0.96);
   --theme-transition: 180ms ease;
 }
 
@@ -92,6 +97,10 @@
   --leftnav-bg: linear-gradient(180deg, rgba(250, 246, 238, 0.97), rgba(243, 235, 223, 0.96));
   --nav-item-bg: rgba(122, 92, 49, 0.04);
   --nav-hover-bg: rgba(122, 92, 49, 0.08);
+  --nav-active-bg: rgba(155, 106, 47, 0.1);
+  --nav-active-border: rgba(155, 106, 47, 0.72);
+  --shell-shadow: 0 10px 28px rgba(86, 63, 30, 0.12);
+  --grain-opacity: 0.028;
   --input-bg: rgba(255, 251, 244, 0.94);
 }
 
@@ -121,6 +130,17 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
 }
 
 .khal-compact {
@@ -214,12 +234,14 @@ a {
 .khal-title {
   color: var(--color-text-strong);
   letter-spacing: -0.02em;
+  font-family: var(--font-serif);
 }
 
 .khal-meta {
   color: var(--color-text-faint);
   text-transform: uppercase;
   letter-spacing: 0.18em;
+  font-family: var(--font-mono);
 }
 
 .khal-editor-block {
@@ -318,6 +340,38 @@ a {
   outline: none;
 }
 
+.khal-chamber {
+  background: var(--card-bg);
+  border: 1px solid var(--color-line);
+  border-radius: 20px;
+  box-shadow:
+    inset 0 1px 0 var(--color-line-hairline),
+    0 20px 44px rgba(0, 0, 0, 0.22);
+}
+
+.khal-subtle-panel {
+  background: color-mix(in srgb, var(--color-editor-bg-soft) 82%, transparent);
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+}
+
+.khal-serif-hero {
+  font-family: var(--font-serif);
+  letter-spacing: -0.03em;
+}
+
+.khal-step-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  color: var(--color-text-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .khal-input,
 .khal-select {
   min-height: 44px;
@@ -372,6 +426,8 @@ a {
   display: flex;
   flex-direction: column;
   background: transparent;
+  position: relative;
+  isolation: isolate;
 }
 
 .app-topbar {
@@ -380,7 +436,10 @@ a {
   border-right: 0;
   border-bottom: 1px solid var(--color-border);
   background: var(--topbar-bg);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    inset 0 1px 0 var(--color-line-hairline),
+    0 6px 24px rgba(0, 0, 0, 0.2);
 }
 
 .app-main {
@@ -402,22 +461,24 @@ a {
   flex-direction: column;
   padding: 10px;
   gap: 6px;
+  box-shadow: var(--shell-shadow);
 }
 
 .app-leftnav a {
-  border: 1px solid var(--color-line);
+  border: 1px solid transparent;
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 13px;
   color: var(--color-text-muted);
   text-decoration: none;
   background: var(--nav-item-bg);
+  position: relative;
 }
 
 .app-leftnav a.active {
-  border-color: var(--color-border-strong);
-  color: var(--color-accent-contrast);
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-strong) 100%);
+  border-color: var(--nav-active-border);
+  color: var(--color-text-strong);
+  background: linear-gradient(90deg, var(--nav-active-bg) 0%, rgba(255, 255, 255, 0.02) 100%);
 }
 
 .time-hud-card {

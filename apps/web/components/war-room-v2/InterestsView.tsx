@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Plus } from "lucide-react";
+import { ArrowRight, Plus, Sparkles } from "lucide-react";
 import { AppData, Interest, SourceMapProfileDto } from "./types";
 import { InterestDetail } from "./InterestDetail";
 
@@ -29,31 +29,45 @@ type InterestDoctrineContext = {
   domainName?: string;
 };
 
+function DeepPanel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="khal-chamber p-5"
+      style={{
+        background: "linear-gradient(180deg, rgba(18,18,31,0.88), rgba(10,10,18,0.94))",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 12px 30px rgba(0,0,0,0.18)"
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function InterestRow({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-sm border p-4"
+      style={{
+        borderColor: "rgba(48,224,176,0.18)",
+        background: "linear-gradient(180deg, rgba(18,18,31,0.82), rgba(10,10,18,0.9))",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 24px rgba(0,0,0,0.12)"
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function InterestsView({ data, selectedInterestId, onSelectInterest, onSelectAffair, onCreateInterest, onWarGame, onOpenLab, onOpenPortfolio }: InterestsViewProps) {
   const [open, setOpen] = React.useState(false);
   const [title, setTitle] = React.useState("");
   const [domainId, setDomainId] = React.useState(data.domains[0]?.id ?? "general");
   const [saving, setSaving] = React.useState(false);
 
-  const [domainFilter, setDomainFilter] = React.useState("all");
-  const [sourceFilter, setSourceFilter] = React.useState("all");
-  const [lineageFilter, setLineageFilter] = React.useState("all");
-  const [scopeFilter, setScopeFilter] = React.useState("all");
-
-  const sourceOptions = useMemo(() => {
-    if (data.sources?.length) return data.sources.map((source) => ({ id: source.id, label: source.name }));
-    const fallback = new Map<string, string>();
-    for (const domain of data.domains) {
-      const key = domain.volatilitySourceId ?? domain.volatilitySourceName ?? domain.volatilitySource ?? "unmapped";
-      const label = domain.volatilitySourceName ?? domain.volatilitySource ?? key;
-      fallback.set(key, label);
-    }
-    return Array.from(fallback.entries()).map(([id, label]) => ({ id, label }));
-  }, [data.domains, data.sources]);
-
   const visualInterests = useMemo(() => (data.interests.length ? data.interests : buildDummyInterests(data)), [data]);
+  const domainById = useMemo(() => new Map(data.domains.map((domain) => [domain.id, domain])), [data.domains]);
+
   const doctrineByInterestId = useMemo(() => {
-    const domainById = new Map(data.domains.map((domain) => [domain.id, domain]));
     const lookup = new Map<string, InterestDoctrineContext>();
     for (const source of data.sources ?? []) {
       for (const profile of source.mapProfiles ?? []) {
@@ -66,33 +80,25 @@ export function InterestsView({ data, selectedInterestId, onSelectInterest, onSe
       }
     }
     return lookup;
-  }, [data.domains, data.sources]);
+  }, [data.sources, domainById]);
 
-  const filteredInterests = useMemo(() => {
-    const lineageRisks = data.lineageRisks ?? [];
-    const domainsById = new Map(data.domains.map((domain) => [domain.id, domain]));
-    return visualInterests.filter((interest) => {
-      if (domainFilter !== "all" && interest.domainId !== domainFilter) return false;
-
-      if (sourceFilter !== "all") {
-        const domain = domainsById.get(interest.domainId);
-        const candidate = domain?.volatilitySourceId ?? domain?.volatilitySourceName ?? domain?.volatilitySource ?? "";
-        if (candidate !== sourceFilter) return false;
-      }
-
-      if (lineageFilter !== "all") {
-        const hasLineage = lineageRisks.some((risk) => risk.lineageNodeId === lineageFilter && risk.domainId === interest.domainId);
-        if (!hasLineage) return false;
-      }
-
-      if (scopeFilter !== "all") {
-        const perspective = String(interest.perspective ?? "").toLowerCase();
-        if (perspective !== scopeFilter) return false;
-      }
-
-      return true;
-    });
-  }, [data.domains, data.lineageRisks, domainFilter, lineageFilter, scopeFilter, sourceFilter, visualInterests]);
+  const groupedInterests = useMemo(() => {
+    const groups = new Map<string, { domainName: string; sourceName?: string; items: Interest[] }>();
+    for (const interest of visualInterests) {
+      const domain = domainById.get(interest.domainId);
+      const doctrine = doctrineByInterestId.get(interest.id);
+      const key = domain?.id ?? interest.domainId;
+      const existing = groups.get(key) ?? {
+        domainName: domain?.name ?? interest.domainId,
+        sourceName: doctrine?.sourceName,
+        items: []
+      };
+      existing.items.push(interest);
+      if (!existing.sourceName && doctrine?.sourceName) existing.sourceName = doctrine.sourceName;
+      groups.set(key, existing);
+    }
+    return [...groups.values()].sort((left, right) => right.items.length - left.items.length || left.domainName.localeCompare(right.domainName));
+  }, [doctrineByInterestId, domainById, visualInterests]);
 
   if (selectedInterestId) {
     const activeInterestId = selectedInterestId;
@@ -114,55 +120,33 @@ export function InterestsView({ data, selectedInterestId, onSelectInterest, onSe
   }
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto px-4 py-5">
-      <div className="flex flex-wrap justify-between items-center gap-3">
-        <h2 className="text-xl font-bold">Long-term Interests</h2>
-        <button onClick={() => setOpen(true)} className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 rounded text-xs font-bold text-white">
-          <Plus size={14} /> New Interest
-        </button>
-      </div>
-
-      <div className="glass p-3 rounded-lg border border-white/10">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
-          <select className="bg-zinc-900 border border-white/10 rounded px-2 py-1.5 text-xs" value={domainFilter} onChange={(e) => setDomainFilter(e.target.value)}>
-            <option value="all">All Domains</option>
-            {data.domains.map((domain) => (
-              <option key={domain.id} value={domain.id}>
-                {domain.name}
-              </option>
-            ))}
-          </select>
-          <select className="bg-zinc-900 border border-white/10 rounded px-2 py-1.5 text-xs" value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
-            <option value="all">All Volatility Sources</option>
-            {sourceOptions.map((source) => (
-              <option key={source.id} value={source.id}>
-                {source.label}
-              </option>
-            ))}
-          </select>
-          <select className="bg-zinc-900 border border-white/10 rounded px-2 py-1.5 text-xs" value={lineageFilter} onChange={(e) => setLineageFilter(e.target.value)}>
-            <option value="all">All Lineages</option>
-            {(data.lineages?.nodes ?? []).map((node) => (
-              <option key={node.id} value={node.id}>
-                {node.name}
-              </option>
-            ))}
-          </select>
-          <select className="bg-zinc-900 border border-white/10 rounded px-2 py-1.5 text-xs" value={scopeFilter} onChange={(e) => setScopeFilter(e.target.value)}>
-            <option value="all">All Scopes</option>
-            <option value="personal">personal</option>
-            <option value="private">private</option>
-            <option value="public">public</option>
-            <option value="family">family</option>
-          </select>
+    <div className="mx-auto max-w-7xl px-4 py-6">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-5 border-b border-[var(--color-line)] pb-5">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.24em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Vision Command</div>
+          <h2 className="khal-serif-hero mt-2 text-4xl text-[var(--color-text-strong)]">Organize interests</h2>
+          <p className="mt-3 max-w-3xl text-sm text-[var(--color-text-muted)]">
+            Vision Command is the hierarchy of options. It should show where convexity lives, how it is scoped, and what can be explored safely.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="khal-subtle-panel px-4 py-3">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Interests</div>
+            <div className="mt-1 text-lg text-[var(--color-text)]">{visualInterests.length}</div>
+          </div>
+          <button onClick={() => setOpen(true)} className="khal-button-accent px-4 py-2 text-[11px] font-bold uppercase tracking-[0.12em]">
+            <span className="inline-flex items-center gap-2">
+              <Plus size={14} /> New Interest
+            </span>
+          </button>
         </div>
       </div>
 
-      {open && (
-        <div className="glass p-4 rounded-lg border border-white/10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <input className="bg-zinc-900 border border-white/10 rounded px-3 py-2 text-sm" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Interest title" />
-            <select className="bg-zinc-900 border border-white/10 rounded px-3 py-2 text-sm" value={domainId} onChange={(e) => setDomainId(e.target.value)}>
+      {open ? (
+        <div className="khal-chamber mb-5 p-5">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <input className="khal-input px-4 py-3 text-sm" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Interest title" />
+            <select className="khal-select px-4 py-3 text-sm" value={domainId} onChange={(e) => setDomainId(e.target.value)}>
               {data.domains.map((domain) => (
                 <option key={domain.id} value={domain.id}>
                   {domain.name}
@@ -171,7 +155,7 @@ export function InterestsView({ data, selectedInterestId, onSelectInterest, onSe
             </select>
             <div className="flex gap-2">
               <button
-                className="px-3 py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm font-semibold text-white disabled:bg-zinc-700"
+                className="khal-button-accent flex-1 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.12em] disabled:opacity-50"
                 disabled={!title.trim() || saving}
                 onClick={async () => {
                   setSaving(true);
@@ -186,89 +170,139 @@ export function InterestsView({ data, selectedInterestId, onSelectInterest, onSe
               >
                 Save
               </button>
-              <button className="px-3 py-2 bg-zinc-700 hover:bg-zinc-600 rounded text-sm font-semibold text-white" onClick={() => setOpen(false)}>
+              <button className="rounded-sm border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] px-4 py-3 text-[11px] uppercase tracking-[0.12em] font-[var(--font-mono)] text-[var(--color-text)]" onClick={() => setOpen(false)}>
                 Cancel
               </button>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        {filteredInterests.map((interest) => (
-          <div key={interest.id} onClick={() => onSelectInterest(interest.id)} className="glass p-4 rounded-lg border border-white/5 hover:border-blue-500/30 transition-all cursor-pointer group">
-            {(() => {
-              const doctrine = doctrineByInterestId.get(interest.id);
-              return (
-                <>
-            <div className="flex justify-between items-start mb-3">
-              <div className="px-2 py-0.5 bg-zinc-800 rounded text-[10px] font-mono text-zinc-400 uppercase">{interest.perspective}</div>
-              <span className="text-[10px] font-mono text-zinc-500 uppercase">{interest.domainId}</span>
-            </div>
-            <h3 className="text-base font-bold mb-2 group-hover:text-blue-400 transition-colors">{interest.title}</h3>
-            <div className="text-xs text-zinc-400 mb-2">
-              Stakes: <span className="text-zinc-200">{interest.stakes}</span>
-            </div>
-            <div className="space-y-1">
-              {(interest.objectives ?? []).slice(0, 2).map((objective, index) => (
-                <div key={`${interest.id}-${index}`} className="flex items-center gap-2 text-[11px] text-zinc-500">
-                  <div className="w-1 h-1 bg-blue-500 rounded-full" />
-                  {objective}
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <section className="space-y-4">
+          {groupedInterests.length ? (
+            groupedInterests.map((group) => (
+              <DeepPanel key={group.domainName}>
+                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--color-line)] pb-4">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Domain</div>
+                    <div className="mt-1 text-2xl text-[var(--color-text-strong)]">{group.domainName}</div>
+                    <div className="mt-2 text-sm text-[var(--color-text-muted)]">{group.sourceName ?? "No mapped source"}</div>
+                  </div>
+                  <div className="inline-flex rounded-sm border border-[rgba(48,224,176,0.22)] bg-[rgba(48,224,176,0.08)] px-3 py-1 text-[11px] uppercase tracking-[0.08em] font-[var(--font-mono)] text-[var(--color-success)]">
+                    Options {group.items.length}
+                  </div>
                 </div>
-              ))}
-            </div>
-            {doctrine?.profile ? (
-              <div className="mt-3 rounded-lg border border-white/10 bg-zinc-900/40 p-3 text-[11px] text-zinc-300">
-                <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-widest text-zinc-500">
-                  <span>{doctrine.sourceName ?? "Source mapped"}</span>
-                  <span>{doctrine.profile.quadrant}</span>
-                  <span>{doctrine.domainName ?? doctrine.profile.domainId}</span>
+
+                <div className="mt-4 space-y-3">
+                  {group.items.map((interest) => {
+                    const doctrine = doctrineByInterestId.get(interest.id);
+                    return (
+                      <InterestRow key={interest.id}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-base text-[var(--color-text-strong)]">{interest.title}</div>
+                            <div className="mt-1 text-xs text-[var(--color-text-muted)]">
+                              {interest.perspective ?? "scope undefined"} | {doctrine?.profile?.quadrant ?? "quadrant unmapped"}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => onSelectInterest(interest.id)}
+                            className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.12em] text-[var(--color-accent)] font-[var(--font-mono)]"
+                          >
+                            Open <ArrowRight size={12} />
+                          </button>
+                        </div>
+
+                        <div className="mt-3 grid gap-3 md:grid-cols-3 text-sm text-[var(--color-text-muted)]">
+                          <div>
+                            <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Stakes</div>
+                            <div className="mt-1">{String(interest.stakes ?? "Undefined")}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Edge</div>
+                            <div className="mt-1 line-clamp-2">{doctrine?.profile?.edgeText ?? "Undefined"}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Avoid</div>
+                            <div className="mt-1 line-clamp-2">{doctrine?.profile?.avoidText ?? "Undefined"}</div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap justify-end gap-2">
+                          {onOpenPortfolio ? (
+                            <button
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onOpenPortfolio(interest.id);
+                              }}
+                              className="rounded-sm border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] px-3 py-2 text-[11px] uppercase tracking-[0.1em] font-[var(--font-mono)] text-[var(--color-text)]"
+                            >
+                              Portfolio
+                            </button>
+                          ) : null}
+                          {onOpenLab ? (
+                            <button
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onOpenLab(interest.id);
+                              }}
+                              className="rounded-sm border border-[rgba(48,224,176,0.22)] bg-[rgba(48,224,176,0.08)] px-3 py-2 text-[11px] uppercase tracking-[0.1em] font-[var(--font-mono)] text-[var(--color-success)]"
+                            >
+                              Open Lab
+                            </button>
+                          ) : null}
+                          <button
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onWarGame(interest.id);
+                            }}
+                            className="rounded-sm border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] px-3 py-2 text-[11px] uppercase tracking-[0.1em] font-[var(--font-mono)] text-[var(--color-text)]"
+                          >
+                            WarGame
+                          </button>
+                        </div>
+                      </InterestRow>
+                    );
+                  })}
                 </div>
-                <div className="mt-2">
-                  <span className="text-zinc-500">Edge:</span> {doctrine.profile.edgeText ?? "Undefined"}
-                </div>
-                <div className="mt-1">
-                  <span className="text-zinc-500">Avoid:</span> {doctrine.profile.avoidText ?? "Undefined"}
-                </div>
+              </DeepPanel>
+            ))
+          ) : (
+            <div className="khal-chamber p-8 text-sm text-[var(--color-text-muted)]">No interests are available to organize yet.</div>
+          )}
+        </section>
+
+        <aside className="space-y-4">
+          <DeepPanel>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Vision rule</div>
+            <div className="mt-3 space-y-3 text-sm text-[var(--color-text-muted)]">
+              <div className="flex items-start gap-3">
+                <Sparkles size={14} className="mt-1 text-[var(--color-success)]" />
+                <span>Interests should express convexity, not disguised obligations.</span>
               </div>
-            ) : null}
-            <div className="mt-3 flex justify-end gap-2">
-              {onOpenPortfolio ? (
-                <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onOpenPortfolio(interest.id);
-                  }}
-                  className="px-2.5 py-1 rounded border border-white/10 hover:bg-white/5 text-[10px] font-bold uppercase tracking-widest text-zinc-200"
-                >
-                  Portfolio
-                </button>
-              ) : null}
-              <button
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onOpenLab?.(interest.id);
-                }}
-                className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold uppercase tracking-widest text-white"
-              >
-                Open Lab
-              </button>
-              <button
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onWarGame(interest.id);
-                }}
-                className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-[10px] font-bold uppercase tracking-widest text-white"
-              >
-                WarGame
-              </button>
+              <div className="flex items-start gap-3">
+                <ArrowRight size={14} className="mt-1 text-[var(--color-accent)]" />
+                <span>Keep the option hierarchy grouped by the domain where upside actually lives.</span>
+              </div>
             </div>
-                </>
-              );
-            })()}
-          </div>
-        ))}
-        {!filteredInterests.length && <div className="text-sm text-zinc-500">No interests match current filters.</div>}
+          </DeepPanel>
+
+          <DeepPanel>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Mapped doctrine</div>
+            <div className="mt-3 space-y-3">
+              {[...doctrineByInterestId.entries()].slice(0, 5).map(([interestId, doctrine]) => (
+                <InterestRow key={interestId}>
+                  <div className="text-sm text-[var(--color-text-strong)]">{visualInterests.find((interest) => interest.id === interestId)?.title ?? interestId}</div>
+                  <div className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    {doctrine.sourceName ?? "Source"} | {doctrine.domainName ?? doctrine.profile?.domainId ?? "Domain"}
+                  </div>
+                </InterestRow>
+              ))}
+              {!doctrineByInterestId.size ? <div className="text-sm text-[var(--color-text-muted)]">No source-domain doctrine is linked to interests yet.</div> : null}
+            </div>
+          </DeepPanel>
+        </aside>
       </div>
     </div>
   );

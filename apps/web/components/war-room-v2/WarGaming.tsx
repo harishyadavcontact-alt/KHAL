@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Zap } from "lucide-react";
+import { Briefcase, Compass, Eye, Layers, Plus, Shield, Swords, Target, Zap } from "lucide-react";
 import { DecisionModal } from "./DecisionModal";
 import {
   BlastRadiusSnapshot,
@@ -114,6 +114,21 @@ const MODE_GROUPS: Array<{ label: string; modes: WarGameMode[] }> = [
   { label: "State of the Art", modes: ["source", "domain", "craft"] },
   { label: "State of Affairs", modes: ["affair", "interest"] },
   { label: "Mission", modes: ["lineage", "mission"] }
+];
+
+const CHAMBER_CARDS: Array<{
+  id: WarGameMode;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}> = [
+  { id: "source", label: "Source", description: "Game a source of volatility.", icon: Zap },
+  { id: "domain", label: "Domain", description: "Inspect one domain through doctrine.", icon: Compass },
+  { id: "craft", label: "Craft", description: "Inspect admissible methods.", icon: Swords },
+  { id: "affair", label: "Affair", description: "Game one obligation.", icon: Briefcase },
+  { id: "interest", label: "Interest", description: "Game one option.", icon: Eye },
+  { id: "lineage", label: "Lineage", description: "Inspect survival-scale exposure.", icon: Layers },
+  { id: "mission", label: "Mission", description: "Inspect hierarchy and sequencing.", icon: Target }
 ];
 
 function readinessPenaltySegments(penalties: {
@@ -342,6 +357,13 @@ export const WarGaming = ({
   const domainById = new Map(domains.map((domain) => [domain.id, domain]));
   const modeDefinition = DECISION_TREE_MODE_BY_ID.get(mode);
   const sectionMeta = warGameSectionMeta(mode);
+  const isFocusedChamberMode = ["source", "domain", "affair", "interest", "craft"].includes(mode);
+  const showGlobalDiagnostics = !isFocusedChamberMode;
+  const selectChamberMode = (nextMode: WarGameMode) => {
+    setMode(nextMode);
+    const nextTargets = modeTargetOptions(nextMode, { sources, domains, affairs, interests, crafts, lineages, missionGraph });
+    setModeTargetId(nextTargets[0]?.id ?? "");
+  };
 
   const filteredRisks = useMemo(
     () =>
@@ -762,78 +784,113 @@ export const WarGaming = ({
           </button>
         </div>
       </div>
-      {(modeEvaluation.blockedActions || decisionEval?.blocked) && (
+      <section className="mb-8 rounded-2xl border border-white/10 bg-zinc-900/35 p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Shield size={14} className="text-blue-400" />
+          <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">Chambers</div>
+        </div>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+          {CHAMBER_CARDS.map((chamber) => {
+            const Icon = chamber.icon;
+            const active = chamber.id === mode;
+            return (
+              <button
+                key={chamber.id}
+                onClick={() => selectChamberMode(chamber.id)}
+                className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                  active
+                    ? "border-blue-500/40 bg-blue-500/10 text-white"
+                    : "border-white/8 bg-zinc-950/35 text-zinc-300 hover:border-blue-500/25 hover:bg-white/5"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold">{chamber.label}</div>
+                    <div className="mt-1 text-[11px] text-zinc-400">{chamber.description}</div>
+                  </div>
+                  <Icon size={16} className={active ? "text-blue-300" : "text-zinc-500"} />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+      {!isFocusedChamberMode && (modeEvaluation.blockedActions || decisionEval?.blocked) && (
         <div className="mb-3 text-xs text-amber-300">
           Execution actions blocked for current role/gates. Resolve dependencies or required grammar fields.
         </div>
       )}
-      {actionNotice ? <div className="mb-3 text-xs text-blue-300">{actionNotice}</div> : null}
-      {v03Flags.hud && <HudStatusStrip data={hudData} compact />}
-      <TriageActionPanel triage={triageEval} onApplyAction={handleApplyTriageSuggestion} />
-      <FractalFlowRail
-        mode={mode}
-        role={role}
-        onRoleChange={setRole}
-        onModeSelect={setMode}
-        evaluation={modeEvaluation}
-        completedModes={completedModes}
-      />
-      <DependencyWarningsCard evaluation={modeEvaluation} />
-      {decisionEval ? (
-        <div className="rounded-xl border border-white/15 bg-zinc-900/40 p-3 mb-4">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Decision Funnel</div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
-            {decisionEval.stages.map((stage) => (
-              <div key={stage.id} className={`rounded border px-2 py-1.5 text-[11px] ${stage.passed ? "border-emerald-500/35 bg-emerald-500/10" : "border-red-500/35 bg-red-500/10"}`}>
-                <div className="uppercase tracking-widest">{stage.id}</div>
-                <div className={stage.passed ? "text-emerald-200" : "text-red-200"}>{stage.message}</div>
+      {!isFocusedChamberMode && actionNotice ? <div className="mb-3 text-xs text-blue-300">{actionNotice}</div> : null}
+      {!isFocusedChamberMode && (
+        <>
+          {v03Flags.hud && <HudStatusStrip data={hudData} compact />}
+          <TriageActionPanel triage={triageEval} onApplyAction={handleApplyTriageSuggestion} />
+          <FractalFlowRail
+            mode={mode}
+            role={role}
+            onRoleChange={setRole}
+            onModeSelect={setMode}
+            evaluation={modeEvaluation}
+            completedModes={completedModes}
+          />
+          <DependencyWarningsCard evaluation={modeEvaluation} />
+          {decisionEval ? (
+            <div className="rounded-xl border border-white/15 bg-zinc-900/40 p-3 mb-4">
+              <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Decision Funnel</div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
+                {decisionEval.stages.map((stage) => (
+                  <div key={stage.id} className={`rounded border px-2 py-1.5 text-[11px] ${stage.passed ? "border-emerald-500/35 bg-emerald-500/10" : "border-red-500/35 bg-red-500/10"}`}>
+                    <div className="uppercase tracking-widest">{stage.id}</div>
+                    <div className={stage.passed ? "text-emerald-200" : "text-red-200"}>{stage.message}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          {decisionEval.blockReasons.length ? (
-            <div className="space-y-1">
-              {decisionEval.blockReasons.map((reason) => (
-                <div key={`${reason.code}-${reason.guardId ?? "none"}`} className="rounded border border-red-500/25 bg-red-500/10 px-2 py-1.5 text-xs">
-                  <div className="font-semibold text-red-200">{reason.code}</div>
-                  <div className="text-red-100/90">{reason.message}</div>
-                  {reason.missingItems.length ? <div className="text-red-200/80">Missing: {reason.missingItems.join(", ")}</div> : null}
+              {decisionEval.blockReasons.length ? (
+                <div className="space-y-1">
+                  {decisionEval.blockReasons.map((reason) => (
+                    <div key={`${reason.code}-${reason.guardId ?? "none"}`} className="rounded border border-red-500/25 bg-red-500/10 px-2 py-1.5 text-xs">
+                      <div className="font-semibold text-red-200">{reason.code}</div>
+                      <div className="text-red-100/90">{reason.message}</div>
+                      {reason.missingItems.length ? <div className="text-red-200/80">Missing: {reason.missingItems.join(", ")}</div> : null}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="text-xs text-emerald-300">No doctrine blocks in current context.</div>
+              )}
+              <DoctrineFixButtons suggestions={triageEval?.suggestions ?? []} onApply={handleApplyTriageSuggestion} />
             </div>
-          ) : (
-            <div className="text-xs text-emerald-300">No doctrine blocks in current context.</div>
-          )}
-          <DoctrineFixButtons suggestions={triageEval?.suggestions ?? []} onApply={handleApplyTriageSuggestion} />
-        </div>
-      ) : null}
-      <div className="rounded-xl border border-white/10 bg-zinc-900/30 p-3 mb-4">
-        <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Mode Grammar</div>
-        <div className="text-xs text-zinc-300 mb-2">{WAR_GAME_GRAMMAR_REGISTRY[mode].narrative}</div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
-          <div className="rounded border border-white/10 bg-zinc-950/50 px-2 py-1.5 text-[11px]">
-            <div className="uppercase tracking-widest text-zinc-400">Primary Question</div>
-            <div className="mt-1 text-zinc-200">{modeDefinition?.primaryQuestion ?? "Mode question unavailable."}</div>
-          </div>
-          <div className="rounded border border-white/10 bg-zinc-950/50 px-2 py-1.5 text-[11px]">
-            <div className="uppercase tracking-widest text-zinc-400">Decision Lens</div>
-            <div className="mt-1 text-zinc-200">{modeDefinition?.decisionLens ?? "Mode lens unavailable."}</div>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {WAR_GAME_GRAMMAR_REGISTRY[mode].fields.map((field) => {
-            const filled = currentFilledFieldKeys.includes(field.key);
-            return (
-              <div key={field.key} className="rounded border border-white/10 bg-zinc-950/50 px-2 py-1.5 text-[11px]">
-                <div className="flex items-center justify-between">
-                  <span className="uppercase tracking-widest text-zinc-400">{field.label}</span>
-                  <span className={filled ? "text-emerald-300" : "text-amber-300"}>{filled ? "present" : field.required ? "missing" : "optional"}</span>
-                </div>
-                <div className="text-zinc-500 mt-1">{field.description}</div>
+          ) : null}
+          <div className="rounded-xl border border-white/10 bg-zinc-900/30 p-3 mb-4">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Mode Grammar</div>
+            <div className="text-xs text-zinc-300 mb-2">{WAR_GAME_GRAMMAR_REGISTRY[mode].narrative}</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+              <div className="rounded border border-white/10 bg-zinc-950/50 px-2 py-1.5 text-[11px]">
+                <div className="uppercase tracking-widest text-zinc-400">Primary Question</div>
+                <div className="mt-1 text-zinc-200">{modeDefinition?.primaryQuestion ?? "Mode question unavailable."}</div>
               </div>
-            );
-          })}
-        </div>
-      </div>
+              <div className="rounded border border-white/10 bg-zinc-950/50 px-2 py-1.5 text-[11px]">
+                <div className="uppercase tracking-widest text-zinc-400">Decision Lens</div>
+                <div className="mt-1 text-zinc-200">{modeDefinition?.decisionLens ?? "Mode lens unavailable."}</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {WAR_GAME_GRAMMAR_REGISTRY[mode].fields.map((field) => {
+                const filled = currentFilledFieldKeys.includes(field.key);
+                return (
+                  <div key={field.key} className="rounded border border-white/10 bg-zinc-950/50 px-2 py-1.5 text-[11px]">
+                    <div className="flex items-center justify-between">
+                      <span className="uppercase tracking-widest text-zinc-400">{field.label}</span>
+                      <span className={filled ? "text-emerald-300" : "text-amber-300"}>{filled ? "present" : field.required ? "missing" : "optional"}</span>
+                    </div>
+                    <div className="text-zinc-500 mt-1">{field.description}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
       {selectedInterest && (
         <div className="mb-4 text-xs text-zinc-300">
           Interest protocol:{" "}
@@ -843,6 +900,7 @@ export const WarGaming = ({
         </div>
       )}
 
+      {!isFocusedChamberMode && (
       <div className="glass p-6 rounded-xl border border-white/10 mb-8">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
@@ -955,36 +1013,41 @@ export const WarGaming = ({
           ))}
         </div>
       </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4 mb-8">
-        <DualPathComparator scenario={dualPath} />
-        <FragilistaWatchlistPanel items={fragilistaItems} />
-      </div>
-      {v03Flags.hud && (
-        <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4 mb-8">
-          <section className="glass p-4 rounded-xl border border-white/10">
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Decision Surface</div>
-            <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-100 mb-2">Operational Filters</h3>
-            <p className="text-xs text-zinc-400">
-              Use source, domain, and lineage filters to constrain war-game blast context and execution priority.
-            </p>
-          </section>
-          <SystemAnatomyMiniMap data={hudData} />
-        </div>
       )}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-8">
-        <ViaNegativaPanel items={viaNegativaQueue} />
-        <BlackSwanReadinessPanel snapshot={blackSwanReadiness} />
-      </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-8">
-        {v03Flags.blastRadius && <DependencyBlastRadiusPanel snapshot={blastRadius} />}
-        <HedgeCoverageMatrixPanel cells={hedgeCoverage} />
-        <DoctrineViolationFeedPanel events={mergedViolationFeed} />
-      </div>
-      <div className="mb-8">
-        <CorrelationRiskCard concentrationPct={concentrationPct} />
-      </div>
+      {showGlobalDiagnostics && (
+        <>
+          <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4 mb-8">
+            <DualPathComparator scenario={dualPath} />
+            <FragilistaWatchlistPanel items={fragilistaItems} />
+          </div>
+          {v03Flags.hud && (
+            <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4 mb-8">
+              <section className="glass p-4 rounded-xl border border-white/10">
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Decision Surface</div>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-100 mb-2">Operational Filters</h3>
+                <p className="text-xs text-zinc-400">
+                  Use source, domain, and lineage filters to constrain war-game blast context and execution priority.
+                </p>
+              </section>
+              <SystemAnatomyMiniMap data={hudData} />
+            </div>
+          )}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-8">
+            <ViaNegativaPanel items={viaNegativaQueue} />
+            <BlackSwanReadinessPanel snapshot={blackSwanReadiness} />
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-8">
+            {v03Flags.blastRadius && <DependencyBlastRadiusPanel snapshot={blastRadius} />}
+            <HedgeCoverageMatrixPanel cells={hedgeCoverage} />
+            <DoctrineViolationFeedPanel events={mergedViolationFeed} />
+          </div>
+          <div className="mb-8">
+            <CorrelationRiskCard concentrationPct={concentrationPct} />
+          </div>
+        </>
+      )}
 
       {mode === "source" && (
         <WarGameVolatility
@@ -1014,136 +1077,139 @@ export const WarGaming = ({
         />
       )}
       {mode === "lineage" && <WarGameLineage lineageNodeId={modeTargetId} lineages={lineages} lineageRisks={lineageRisks} />}
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-        <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm">
-          <option value="all">All Sources</option>
-          {sourceRows.map((source) => (
-            <option key={source.id} value={source.id}>
-              {source.name}
-            </option>
-          ))}
-        </select>
-        <select value={domainFilter} onChange={(event) => setDomainFilter(event.target.value)} className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm">
-          <option value="all">All Domains</option>
-          {domains.map((domain) => (
-            <option key={domain.id} value={domain.id}>
-              {domain.name}
-            </option>
-          ))}
-        </select>
-        <select value={lineageFilter} onChange={(event) => setLineageFilter(event.target.value)} className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm">
-          <option value="all">All Lineages</option>
-          {lineages.map((lineage) => (
-            <option key={lineage.id} value={lineage.id}>
-              {lineage.level} - {lineage.name}
-            </option>
-          ))}
-        </select>
-        <div className="glass rounded-lg px-3 py-2 border border-white/10 text-xs">
-          <div className="uppercase tracking-widest text-zinc-500">Operator Time Axis</div>
-          <div className="font-semibold">{user.name}</div>
-          <div className="text-zinc-400">
-            {user.birthDate.slice(0, 10)} {"->"} horizon deployment
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-        <div className="glass p-6 rounded-xl border border-white/10">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <h3 className="text-lg font-bold">Quadrant HeatGrid</h3>
-              <p className="text-xs text-zinc-400 mt-1">Randomness x impact from open risks.</p>
-            </div>
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono">{filteredRisks.length} open risks</div>
-          </div>
-          <HeatGrid
-            columns={visualSnapshot.quadrantColumns}
-            rows={visualSnapshot.quadrantRows}
-            cells={visualSnapshot.quadrantCells}
-            emptyText="No open risks to map."
-          />
-        </div>
-        <div className="glass p-6 rounded-xl border border-white/10">
-          <div className="mb-4">
-            <h3 className="text-lg font-bold">Source Volatility Flow</h3>
-            <p className="text-xs text-zinc-400 mt-1">Current source lanes into CAVE vs CONVEX.</p>
-          </div>
-          <FlowLanes
-            nodes={visualSnapshot.sourceNodes}
-            lanes={visualSnapshot.sourceLanes}
-            links={visualSnapshot.sourceLinks}
-            height={230}
-            emptyText="No source flow available."
-          />
-          <div className="mt-4">
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Readiness Penalty Profile</div>
-            <StackedBalanceBar segments={penaltySegments.length ? penaltySegments : visualSnapshot.penaltySegments} />
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <FragilityRadar domains={filteredDomains.length ? filteredDomains : domains} affairs={filteredAffairs.length ? filteredAffairs : affairs} />
-        <TaskKillChain tasks={filteredTasks.length ? filteredTasks : tasks} />
-        <div className="glass p-6 rounded-xl border border-white/10">
-          <h3 className="text-lg font-bold mb-4">Risk Logic Continuum</h3>
-          <div className="space-y-4 text-sm">
-            <StackedBalanceBar
-              segments={[
-                { id: "hedge", label: `Obligations ${hedgeCount}`, value: hedgeCount, tone: "hedge" },
-                { id: "edge", label: `Options ${edgeCount}`, value: edgeCount, tone: "edge" }
-              ]}
-            />
-            <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-              <div className="text-[10px] uppercase text-zinc-500 mb-1">Convexity Bias</div>
-              <div className="font-semibold">Antifragile potential {antifragilePotential}</div>
-              <div className="text-xs text-zinc-400 mt-1">
-                {operationalSnapshot.fragileMiddle ? "Reduce middle concentration." : "Barbell posture is polarized."}
-              </div>
-            </div>
-            <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
-              <div className="text-[10px] uppercase text-zinc-500 mb-1">Asymmetry</div>
-              <div className="font-semibold">
-                {asymmetrySnapshot.band} | balance {asymmetrySnapshot.balance}
+      {showGlobalDiagnostics && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+            <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm">
+              <option value="all">All Sources</option>
+              {sourceRows.map((source) => (
+                <option key={source.id} value={source.id}>
+                  {source.name}
+                </option>
+              ))}
+            </select>
+            <select value={domainFilter} onChange={(event) => setDomainFilter(event.target.value)} className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm">
+              <option value="all">All Domains</option>
+              {domains.map((domain) => (
+                <option key={domain.id} value={domain.id}>
+                  {domain.name}
+                </option>
+              ))}
+            </select>
+            <select value={lineageFilter} onChange={(event) => setLineageFilter(event.target.value)} className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm">
+              <option value="all">All Lineages</option>
+              {lineages.map((lineage) => (
+                <option key={lineage.id} value={lineage.id}>
+                  {lineage.level} - {lineage.name}
+                </option>
+              ))}
+            </select>
+            <div className="glass rounded-lg px-3 py-2 border border-white/10 text-xs">
+              <div className="uppercase tracking-widest text-zinc-500">Operator Time Axis</div>
+              <div className="font-semibold">{user.name}</div>
+              <div className="text-zinc-400">
+                {user.birthDate.slice(0, 10)} {"->"} horizon deployment
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {v03Flags.optionality && (
-        <div className="mb-8">
-          <OptionalityBudgetPanel state={optionalityBudget} />
-        </div>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+            <div className="glass p-6 rounded-xl border border-white/10">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-bold">Quadrant HeatGrid</h3>
+                  <p className="text-xs text-zinc-400 mt-1">Randomness x impact from open risks.</p>
+                </div>
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-mono">{filteredRisks.length} open risks</div>
+              </div>
+              <HeatGrid
+                columns={visualSnapshot.quadrantColumns}
+                rows={visualSnapshot.quadrantRows}
+                cells={visualSnapshot.quadrantCells}
+                emptyText="No open risks to map."
+              />
+            </div>
+            <div className="glass p-6 rounded-xl border border-white/10">
+              <div className="mb-4">
+                <h3 className="text-lg font-bold">Source Volatility Flow</h3>
+                <p className="text-xs text-zinc-400 mt-1">Current source lanes into CAVE vs CONVEX.</p>
+              </div>
+              <FlowLanes
+                nodes={visualSnapshot.sourceNodes}
+                lanes={visualSnapshot.sourceLanes}
+                links={visualSnapshot.sourceLinks}
+                height={230}
+                emptyText="No source flow available."
+              />
+              <div className="mt-4">
+                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Readiness Penalty Profile</div>
+                <StackedBalanceBar segments={penaltySegments.length ? penaltySegments : visualSnapshot.penaltySegments} />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <FragilityRadar domains={filteredDomains.length ? filteredDomains : domains} affairs={filteredAffairs.length ? filteredAffairs : affairs} />
+            <TaskKillChain tasks={filteredTasks.length ? filteredTasks : tasks} />
+            <div className="glass p-6 rounded-xl border border-white/10">
+              <h3 className="text-lg font-bold mb-4">Risk Logic Continuum</h3>
+              <div className="space-y-4 text-sm">
+                <StackedBalanceBar
+                  segments={[
+                    { id: "hedge", label: `Obligations ${hedgeCount}`, value: hedgeCount, tone: "hedge" },
+                    { id: "edge", label: `Options ${edgeCount}`, value: edgeCount, tone: "edge" }
+                  ]}
+                />
+                <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+                  <div className="text-[10px] uppercase text-zinc-500 mb-1">Convexity Bias</div>
+                  <div className="font-semibold">Antifragile potential {antifragilePotential}</div>
+                  <div className="text-xs text-zinc-400 mt-1">
+                    {operationalSnapshot.fragileMiddle ? "Reduce middle concentration." : "Barbell posture is polarized."}
+                  </div>
+                </div>
+                <div className="p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+                  <div className="text-[10px] uppercase text-zinc-500 mb-1">Asymmetry</div>
+                  <div className="font-semibold">
+                    {asymmetrySnapshot.band} | balance {asymmetrySnapshot.balance}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {v03Flags.optionality && (
+            <div className="mb-8">
+              <OptionalityBudgetPanel state={optionalityBudget} />
+            </div>
+          )}
+
+          <div className="glass p-6 rounded-xl border border-white/10 mb-8">
+            <h3 className="text-lg font-bold mb-4">Source of Volatility Register</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {sourceRows.map((source) => (
+                <button
+                  key={source.id}
+                  onClick={() => setSourceFilter(source.id)}
+                  className={`text-left p-3 rounded-lg border transition-colors ${
+                    sourceFilter === source.id ? "bg-blue-500/15 border-blue-500/40" : "bg-zinc-900/50 border-white/5 hover:border-blue-500/30"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold">{source.name}</div>
+                    <div className="text-[10px] font-mono text-zinc-500">{source.riskCount} risks</div>
+                  </div>
+                  <div className="text-xs text-zinc-400 mt-1">
+                    {(source.domains ?? [])
+                      .map((link) => domainById.get(link.domainId)?.name ?? link.domainId)
+                      .slice(0, 3)
+                      .join(", ") || "No linked domains"}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
       )}
-
-      <div className="glass p-6 rounded-xl border border-white/10 mb-8">
-        <h3 className="text-lg font-bold mb-4">Source of Volatility Register</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {sourceRows.map((source) => (
-            <button
-              key={source.id}
-              onClick={() => setSourceFilter(source.id)}
-              className={`text-left p-3 rounded-lg border transition-colors ${
-                sourceFilter === source.id ? "bg-blue-500/15 border-blue-500/40" : "bg-zinc-900/50 border-white/5 hover:border-blue-500/30"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="font-semibold">{source.name}</div>
-                <div className="text-[10px] font-mono text-zinc-500">{source.riskCount} risks</div>
-              </div>
-              <div className="text-xs text-zinc-400 mt-1">
-                {(source.domains ?? [])
-                  .map((link) => domainById.get(link.domainId)?.name ?? link.domainId)
-                  .slice(0, 3)
-                  .join(", ") || "No linked domains"}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };
