@@ -3,6 +3,12 @@
   "generated_from": "docs tree",
   "items": [
     {
+      "file": "PROJECT_CONTEXT.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "keep"
+    },
+    {
       "file": "docs/agent-log/2026-03.md",
       "format": ".md",
       "entropy": "high",
@@ -127,6 +133,12 @@
       "format": ".md",
       "entropy": "high",
       "action": "migrate"
+    },
+    {
+      "file": "docs/product/reuse-inventory.md",
+      "format": ".md",
+      "entropy": "high",
+      "action": "keep"
     },
     {
       "file": "docs/product/taleb-feature-heuristics.md",
