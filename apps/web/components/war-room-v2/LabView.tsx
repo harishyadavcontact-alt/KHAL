@@ -8,6 +8,13 @@ import { computeInterestProtocolChecks, computeLabSummary, withLabDerivedFields 
 
 type Stage = "FORGE" | "WIELD" | "TINKER";
 
+function deepPanelStyle() {
+  return {
+    background: "linear-gradient(180deg, rgba(18,18,31,0.88), rgba(10,10,18,0.94))",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 12px 30px rgba(0,0,0,0.18)"
+  } as const;
+}
+
 function stageTone(stage: Stage) {
   if (stage === "FORGE") return "border-blue-400/30 bg-blue-500/10 text-blue-200";
   if (stage === "WIELD") return "border-amber-400/30 bg-amber-500/10 text-amber-200";
@@ -288,71 +295,81 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-5 space-y-4">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-        <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500">Protocol Integrity</div>
-          <div className="text-xl font-bold text-zinc-100">{summary.protocolIntegrity}%</div>
+    <div className="mx-auto max-w-7xl px-4 py-6 space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-5 border-b border-[var(--color-line)] pb-5">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.24em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Lab</div>
+          <h2 className="khal-serif-hero mt-2 text-4xl text-[var(--color-text-strong)]">Forge, wield, tinker</h2>
+          <p className="mt-3 max-w-3xl text-sm text-[var(--color-text-muted)]">
+            Lab is the controlled workflow for interests. Use it to shape protocol, move into execution, then iterate with evidence.
+          </p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500">Blocked Experiments</div>
-          <div className="text-xl font-bold text-red-300">{summary.blockedExperiments}</div>
-        </div>
-        <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500">Avg Asymmetry</div>
-          <div className="text-xl font-bold text-emerald-300">{summary.averageAsymmetryScore}</div>
-        </div>
-        <div className="rounded-lg border border-white/10 bg-zinc-900/60 p-3">
-          <div className="text-[10px] uppercase tracking-widest text-zinc-500">Stale Optionality</div>
-          <div className="text-xl font-bold text-amber-300">{summary.staleOptionalityCount}</div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="khal-subtle-panel px-4 py-3">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Protocol</div>
+            <div className="mt-1 text-lg text-[var(--color-text)]">{summary.protocolIntegrity}%</div>
+          </div>
+          <div className="khal-subtle-panel px-4 py-3">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Blocked</div>
+            <div className="mt-1 text-lg text-[var(--color-danger)]">{summary.blockedExperiments}</div>
+          </div>
+          <div className="khal-subtle-panel px-4 py-3">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Asymmetry</div>
+            <div className="mt-1 text-lg text-[var(--color-success)]">{summary.averageAsymmetryScore}</div>
+          </div>
+          <div className="khal-subtle-panel px-4 py-3">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Stale</div>
+            <div className="mt-1 text-lg text-[var(--color-warning)]">{summary.staleOptionalityCount}</div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-        <div className="xl:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
+        <div className="xl:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
           {(["FORGE", "WIELD", "TINKER"] as Stage[]).map((stage) => (
-            <div key={stage} className="rounded-xl border border-white/10 bg-zinc-900/40 p-3">
-              <div className="text-xs uppercase tracking-widest text-zinc-400 mb-2">{stage}</div>
+            <div key={stage} className="khal-chamber p-4" style={deepPanelStyle()}>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)] mb-3">{stage}</div>
               <div className="space-y-2">
                 {lanes[stage].map((interest) => (
                   <button
                     type="button"
                     key={interest.id}
                     onClick={() => setSelected(interest)}
-                    className={`w-full text-left rounded-lg border px-2.5 py-2 transition ${
-                      interest.id === selectedId ? "border-blue-400/60 bg-blue-500/10" : "border-white/10 hover:border-white/25 bg-zinc-950/40"
+                    className={`w-full text-left rounded-sm border px-3 py-3 transition ${
+                      interest.id === selectedId ? "border-[var(--color-accent)] bg-[color-mix(in_srgb,var(--color-accent)_12%,var(--color-editor-bg-soft))]" : "border-[var(--color-line)] bg-[var(--color-editor-bg-soft)]"
                     }`}
+                    style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 22px rgba(0,0,0,0.12)" }}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm font-semibold text-zinc-100">{interest.title}</div>
+                      <div className="text-sm font-semibold text-[var(--color-text-strong)]">{interest.title}</div>
                       <span className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-widest ${stageTone(stage)}`}>{stage}</span>
                     </div>
-                    <div className="mt-1 text-[11px] text-zinc-400">
+                    <div className="mt-1 text-[11px] text-[var(--color-text-muted)]">
                       Asymmetry {interest.asymmetryScore ?? 0} | {interest.protocolReady ? "Protocol ready" : "Blocked"}
                     </div>
                   </button>
                 ))}
-                {!lanes[stage].length && <div className="text-xs text-zinc-500">No experiments in {stage}.</div>}
+                {!lanes[stage].length && <div className="text-xs text-[var(--color-text-muted)]">No experiments in {stage}.</div>}
               </div>
             </div>
           ))}
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-zinc-900/50 p-3 space-y-3">
-          <div className="rounded border border-white/10 bg-zinc-950/70 p-2.5 space-y-2">
+        <div className="khal-chamber p-4 space-y-4" style={deepPanelStyle()}>
+          <div className="khal-subtle-panel p-3 space-y-2" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 22px rgba(0,0,0,0.12)" }}>
             <div className="flex items-center justify-between">
-              <div className="text-[10px] uppercase tracking-widest text-zinc-500">Flow Navigator</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Flow Navigator</div>
               <button
                 type="button"
                 onClick={() => setFocusMode((prev) => !prev)}
-                className="rounded border border-white/10 px-2 py-0.5 text-[10px] text-zinc-300 hover:bg-white/5"
+                className="rounded-sm border border-[var(--color-line)] px-2 py-0.5 text-[10px] text-[var(--color-text)] hover:bg-white/5"
               >
                 {focusMode ? "Focus: On" : "Focus: Off"}
               </button>
             </div>
-            <div className="text-xs text-zinc-200">{flowHint}</div>
+            <div className="text-xs text-[var(--color-text)]">{flowHint}</div>
             {focus ? (
-              <div className="flex items-center justify-between text-[11px] text-zinc-400">
+              <div className="flex items-center justify-between text-[11px] text-[var(--color-text-muted)]">
                 <span>Checklist</span>
                 <span className={checklistRatio >= 100 ? "text-emerald-300" : "text-amber-300"}>{checklistRatio}%</span>
               </div>
@@ -362,7 +379,7 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
                 <button
                   type="button"
                   onClick={scaffoldProtocol}
-                  className="rounded border border-white/10 px-2 py-1 text-[11px] hover:bg-white/5"
+                  className="rounded-sm border border-[var(--color-line)] px-2 py-1 text-[11px] text-[var(--color-text)] hover:bg-white/5"
                 >
                   Scaffold Protocol
                 </button>
@@ -380,13 +397,13 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
             ) : null}
           </div>
           <div>
-            <div className="text-xs uppercase tracking-widest text-zinc-500">Selected Experiment</div>
-            <div className="text-sm font-semibold text-zinc-100">{focus?.title ?? "Select an interest from lanes"}</div>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Selected Experiment</div>
+            <div className="mt-1 text-sm font-semibold text-[var(--color-text-strong)]">{focus?.title ?? "Select an interest from lanes"}</div>
           </div>
           {!focus ? null : (
             <>
               {inheritedProfile ? (
-                <div className="rounded border border-blue-400/20 bg-blue-500/5 p-2.5 space-y-2">
+                <div className="rounded border border-blue-400/20 bg-blue-500/5 p-2.5 space-y-2" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 22px rgba(0,0,0,0.12)" }}>
                   <div className="flex items-center justify-between gap-2">
                     <div>
                       <div className="text-[10px] uppercase tracking-widest text-zinc-500">Inherited From State of the Art</div>
@@ -428,6 +445,7 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
                 <label className="block text-[10px] uppercase tracking-widest text-zinc-500">Hypothesis</label>
                 <textarea
                   className="w-full rounded border border-white/10 bg-zinc-950 px-2 py-1.5 text-xs"
+                  style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)" }}
                   value={String(focus.hypothesis ?? "")}
                   onChange={(event) => updateDraft("hypothesis", event.target.value)}
                 />
@@ -436,6 +454,7 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
                 <label className="block text-[10px] uppercase tracking-widest text-zinc-500">Evidence Note</label>
                 <textarea
                   className="w-full rounded border border-white/10 bg-zinc-950 px-2 py-1.5 text-xs"
+                  style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)" }}
                   value={String(focus.evidenceNote ?? "")}
                   onChange={(event) => updateDraft("evidenceNote", event.target.value)}
                 />
@@ -444,6 +463,7 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
                 <label className="block text-[10px] uppercase tracking-widest text-zinc-500">Downside / Avoid</label>
                 <textarea
                   className="w-full rounded border border-white/10 bg-zinc-950 px-2 py-1.5 text-xs"
+                  style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)" }}
                   value={String(focus.downside ?? "")}
                   onChange={(event) => updateDraft("downside", event.target.value)}
                 />
@@ -456,6 +476,7 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
                     min={0}
                     max={100}
                     className="w-full rounded border border-white/10 bg-zinc-950 px-2 py-1.5 text-xs"
+                    style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)" }}
                     value={Number(focus.maxLossPct ?? 0)}
                     onChange={(event) => updateDraft("maxLossPct", Number(event.target.value))}
                   />
@@ -465,6 +486,7 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
                   <input
                     type="date"
                     className="w-full rounded border border-white/10 bg-zinc-950 px-2 py-1.5 text-xs"
+                    style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)" }}
                     value={safeDateInput(focus.expiryDate)}
                     onChange={(event) => updateDraft("expiryDate", event.target.value)}
                   />
@@ -479,6 +501,7 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
                       min={0}
                       max={100}
                       className="w-full rounded border border-white/10 bg-zinc-950 px-2 py-1.5 text-xs"
+                      style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)" }}
                       value={Number(focus.hedgePct ?? 0)}
                       onChange={(event) => updateDraft("hedgePct", Number(event.target.value))}
                     />
@@ -490,6 +513,7 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
                       min={0}
                       max={100}
                       className="w-full rounded border border-white/10 bg-zinc-950 px-2 py-1.5 text-xs"
+                      style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)" }}
                       value={Number(focus.edgePct ?? 0)}
                       onChange={(event) => updateDraft("edgePct", Number(event.target.value))}
                     />
@@ -501,6 +525,7 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
                       min={0}
                       max={100}
                       className="w-full rounded border border-white/10 bg-zinc-950 px-2 py-1.5 text-xs"
+                      style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)" }}
                       value={Number(focus.irreversibility ?? 0)}
                       onChange={(event) => updateDraft("irreversibility", Number(event.target.value))}
                     />
@@ -521,6 +546,7 @@ export function LabView({ data, onRefresh, initialFocusId }: { data: AppData; on
                 <label className="block text-[10px] uppercase tracking-widest text-zinc-500">Kill Criteria (one per line)</label>
                 <textarea
                   className="w-full rounded border border-white/10 bg-zinc-950 px-2 py-1.5 text-xs"
+                  style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)" }}
                   value={(focus.killCriteria ?? []).join("\n")}
                   onChange={(event) => updateDraft("killCriteria", event.target.value.split("\n").map((v) => v.trim()).filter(Boolean))}
                 />

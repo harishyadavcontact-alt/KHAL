@@ -23,7 +23,16 @@ export default function WarRoomPage() {
         <div className="max-w-7xl mx-auto p-5 text-red-300">{error}</div>
       ) : (
         <>
-          <WarRoomView domains={data.domains} onDomainClick={setSelectedDomain} />
+          <WarRoomView
+            sources={data.sources ?? []}
+            domains={data.domains}
+            crafts={data.crafts}
+            affairs={data.affairs}
+            interests={data.interests}
+            onDomainClick={setSelectedDomain}
+            onOpenSource={() => router.push("/source-of-volatility")}
+            onOpenCraft={(craftId) => router.push(`/crafts-library?craftId=${encodeURIComponent(craftId)}`)}
+          />
           <DomainModal
             selectedDomain={selectedDomain}
             data={data}

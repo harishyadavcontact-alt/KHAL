@@ -131,19 +131,35 @@ const App = () => {
   }
 
   const navItems: Array<{ id: WarRoomViewState; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'war-room', label: 'War Room', icon: MapIcon },
-    { id: 'mission', label: 'Mission Command', icon: LayoutDashboard },
     { id: 'laws', label: 'Source of Volatility', icon: Globe },
-    { id: 'interests', label: 'Interests', icon: Anchor },
-    { id: 'lab', label: 'Lab', icon: Zap },
-    { id: 'affairs', label: 'Affairs', icon: Briefcase },
-    { id: 'war-gaming', label: 'War Gaming', icon: Zap },
-    { id: 'execution', label: 'Surgical Execution', icon: Crosshair },
     { id: 'crafts', label: 'Crafts Library', icon: Database },
-    { id: 'time-horizon', label: 'Time Horizon', icon: Clock },
-    { id: 'lineages', label: 'Lineage Map', icon: User }
+    { id: 'war-gaming', label: 'War Gaming', icon: Zap },
+    { id: 'lineages', label: 'Lineage Map', icon: User },
+    { id: 'mission', label: 'Mission Command', icon: LayoutDashboard },
+    { id: 'affairs', label: 'Affairs', icon: Briefcase },
+    { id: 'interests', label: 'Vision Command', icon: Anchor },
+    { id: 'lab', label: 'Lab', icon: Zap },
+    { id: 'execution', label: 'Surgical Execution', icon: Crosshair },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'time-horizon', label: 'Time Horizon', icon: Clock }
   ];
+  const navGroups: Array<{ label: string; items: typeof navItems }> = [
+    {
+      label: 'Strategic',
+      items: navItems.filter((item) => ['war-room', 'laws', 'crafts', 'war-gaming', 'lineages'].includes(item.id))
+    },
+    {
+      label: 'Command',
+      items: navItems.filter((item) => ['mission', 'affairs', 'interests', 'lab'].includes(item.id))
+    },
+    {
+      label: 'Tactical',
+      items: navItems.filter((item) => ['execution', 'dashboard', 'time-horizon'].includes(item.id))
+    }
+  ];
+  const activeNavItem = navItems.find((item) => item.id === activeView);
+  const activeNavGroup = navGroups.find((group) => group.items.some((item) => item.id === activeView));
 
   const navigateView = (nextView: WarRoomViewState) => {
     const route = routeForSectionView(nextView);
@@ -582,64 +598,139 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex">
+    <div
+      className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] flex relative"
+      style={{ background: 'var(--shell-bg)' }}
+    >
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 bg-zinc-900/50 backdrop-blur-xl border-r border-white/5 transition-all duration-300 flex flex-col',
+          'fixed inset-y-0 left-0 z-50 border-r transition-all duration-300 flex flex-col shadow-[var(--shell-shadow)]',
           sidebarOpen ? 'w-56' : 'w-16'
         )}
+        style={{ background: 'var(--leftnav-bg)', borderColor: 'var(--color-line)' }}
       >
-        <div className="p-4 flex items-center gap-3">
-          <div className="w-7 h-7 rounded-md flex items-center justify-center text-[#ff8c00] shrink-0">
+        <div className="p-5 flex items-center gap-3 border-b" style={{ borderColor: 'var(--color-line)' }}>
+          <div
+            className="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
+            style={{
+              background: 'linear-gradient(180deg, rgba(240,168,50,0.1), rgba(48,224,176,0.05))',
+              border: '1px solid var(--color-line)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)'
+            }}
+          >
             <KhalFinalMark size={28} />
           </div>
           {sidebarOpen && (
             <div className="leading-none">
               <KhalWordmark size={24} variant="muted" />
+              <div className="mt-1 text-[8px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">
+                Decision Operating System
+              </div>
             </div>
           )}
         </div>
 
-        <nav className="flex-1 px-3 space-y-1">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                navigateView(item.id);
-                resetSelections();
-              }}
-              className={cn(
-                'w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all group',
-                'text-sm',
-                activeView === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+        <nav className="flex-1 px-3 py-3 space-y-5 overflow-y-auto">
+          {navGroups.map((group) => (
+            <div key={group.label} className="space-y-1">
+              {sidebarOpen && (
+                <div className="px-2.5 pb-1 text-[10px] uppercase tracking-[0.22em] text-[var(--color-text-faint)] font-[var(--font-mono)]">
+                  {group.label}
+                </div>
               )}
-            >
-              <item.icon size={20} className="shrink-0" />
-              {sidebarOpen && <span className="font-medium">{item.label}</span>}
-            </button>
+              {group.items.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    navigateView(item.id);
+                    resetSelections();
+                  }}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg transition-all group text-sm border border-transparent text-left relative overflow-hidden',
+                    activeView === item.id
+                      ? 'text-[var(--color-text-strong)] shadow-lg'
+                      : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-strong)] hover:bg-white/5'
+                  )}
+                  style={
+                    activeView === item.id
+                      ? {
+                          background: 'linear-gradient(90deg, var(--nav-active-bg) 0%, rgba(255,255,255,0.02) 100%)',
+                          borderColor: 'var(--nav-active-border)',
+                          boxShadow: '0 10px 24px rgba(0,0,0,0.16), inset 2px 0 0 var(--color-accent)'
+                        }
+                      : {
+                          background: 'var(--nav-item-bg)'
+                        }
+                  }
+                  title={!sidebarOpen ? `${group.label}: ${item.label}` : undefined}
+                >
+                  <span className={cn('shrink-0 transition-opacity', activeView === item.id ? 'opacity-100' : 'opacity-70')}>
+                    <item.icon size={16} className="shrink-0" />
+                  </span>
+                  {sidebarOpen && <span className="font-medium tracking-[0.02em]">{item.label}</span>}
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-white/5">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="w-full flex items-center justify-center p-2 hover:bg-white/5 rounded-lg text-zinc-500">
+        <div className="p-4 border-t" style={{ borderColor: 'var(--color-line)' }}>
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="w-full flex items-center justify-center p-2 hover:bg-white/5 rounded-lg text-[var(--color-text-faint)] border border-transparent"
+            style={{ background: 'var(--nav-item-bg)' }}
+          >
             {sidebarOpen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
           </button>
         </div>
       </aside>
 
       <div className={cn('flex-1 transition-all duration-300', sidebarOpen ? 'ml-56' : 'ml-16')}>
-        <header className="h-12 border-b border-white/5 flex items-center justify-between px-5 sticky top-0 bg-zinc-950/50 backdrop-blur-xl z-40">
+        <header
+          className="h-12 border-b flex items-center justify-between px-5 sticky top-0 backdrop-blur-xl z-40"
+          style={{
+            background: 'var(--topbar-bg)',
+            borderColor: 'var(--color-line)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.18)'
+          }}
+        >
           <div className="flex items-center gap-4">
-            <div className="text-xs font-mono text-zinc-500 uppercase tracking-widest">{navItems.find((n) => n.id === activeView)?.label}</div>
+            <div className="hidden sm:flex items-center gap-2 rounded-md px-2.5 py-1" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--color-line)' }}>
+              <div className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--color-success)', boxShadow: '0 0 8px rgba(48,224,176,0.35)' }} />
+              <span className="text-[9px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">
+                Runtime Live
+              </span>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.22em] text-[var(--color-text-faint)] font-[var(--font-mono)]">
+                {activeNavGroup?.label ?? 'Surface'}
+              </div>
+              <div className="text-xs uppercase tracking-widest text-[var(--color-text)] font-[var(--font-mono)]">{activeNavItem?.label}</div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="text-right hidden sm:block">
-              <div className="text-[10px] text-zinc-500 uppercase font-mono tracking-widest">Operator</div>
-              <div className="text-xs font-bold">{data.user.name}</div>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 rounded-md px-3 py-1.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--color-line)' }}>
+              <Database size={12} className="text-[var(--color-text-faint)]" />
+              <span className="text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-faint)] font-[var(--font-mono)]">SQLite Runtime</span>
             </div>
-            <div className="w-10 h-10 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center">
-              <User size={20} className="text-zinc-400" />
+            <div className="text-right hidden sm:block">
+              <div className="text-[10px] uppercase tracking-widest text-[var(--color-text-faint)] font-[var(--font-mono)]">Operator</div>
+              <div className="text-xs font-semibold text-[var(--color-text)]">{data.user.name}</div>
+            </div>
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center"
+              style={{
+                background: 'conic-gradient(from 180deg, rgba(240,168,50,0.96), rgba(48,224,176,0.9), rgba(224,90,58,0.9), rgba(240,168,50,0.96))',
+                boxShadow: '0 0 14px rgba(240,168,50,0.14)'
+              }}
+            >
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: 'var(--color-editor-bg-soft)', border: '1px solid var(--color-line)' }}
+              >
+                <User size={16} className="text-[var(--color-text-faint)]" />
+              </div>
             </div>
           </div>
         </header>
@@ -660,7 +751,24 @@ const App = () => {
             ) : (
               <motion.div key={activeView} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="p-5">
                 {activeView === 'dashboard' && <DashboardView data={data} onOpenDomain={setSelectedDomain} />}
-                {activeView === 'war-room' && <WarRoomView domains={data.domains} onDomainClick={setSelectedDomain} />}
+                {activeView === 'war-room' && (
+                  <WarRoomView
+                    sources={data.sources ?? []}
+                    domains={data.domains}
+                    crafts={data.crafts}
+                    affairs={data.affairs}
+                    interests={data.interests}
+                    onDomainClick={setSelectedDomain}
+                    onOpenSource={(_sourceId) => {
+                      setSelectedLawId(null);
+                      setActiveView('laws');
+                    }}
+                    onOpenCraft={(craftId) => {
+                      setSelectedCraftId(craftId);
+                      setActiveView('crafts');
+                    }}
+                  />
+                )}
                 {activeView === 'mission' && <MissionCommand data={data} onDomainClick={setSelectedDomain} onWarGame={openWarGame} />}
                 {activeView === 'laws' && (
                   <LawsView

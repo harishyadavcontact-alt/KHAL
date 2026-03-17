@@ -1,9 +1,8 @@
 import React, { useMemo, useState } from "react";
-import { Activity } from "lucide-react";
+import { ArrowRight, Shield, Sparkles } from "lucide-react";
 import { AppData, Domain } from "./types";
 import { LawCard } from "./LawCard";
 import { LawDetail } from "./LawDetail";
-import { resolveMetric } from "./utils";
 import { canonicalSlotFromLabel, lawAliasForSlot, type CanonicalLawSlot } from "../../lib/war-room/law-aliases";
 
 type LawSlot = {
@@ -11,6 +10,7 @@ type LawSlot = {
   canonicalLabel: string;
   key: CanonicalLawSlot;
 };
+
 type SourceItem = NonNullable<AppData["sources"]>[number];
 
 const LAW_SLOTS: LawSlot[] = [
@@ -43,8 +43,8 @@ function slotDoctrineClass(slot: LawSlot): "hard" | "human" {
 }
 
 function doctrineChipClass(kind: "hard" | "human"): string {
-  if (kind === "hard") return "rounded-full border border-red-400/40 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-red-300";
-  return "rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-emerald-300";
+  if (kind === "hard") return "rounded-sm border border-[rgba(224,90,58,0.22)] bg-[rgba(224,90,58,0.08)] px-2 py-1 text-[10px] uppercase tracking-[0.12em] font-[var(--font-mono)] text-[var(--color-danger)]";
+  return "rounded-sm border border-[rgba(48,224,176,0.22)] bg-[rgba(48,224,176,0.08)] px-2 py-1 text-[10px] uppercase tracking-[0.12em] font-[var(--font-mono)] text-[var(--color-success)]";
 }
 
 interface LawsViewProps {
@@ -54,6 +54,35 @@ interface LawsViewProps {
   onSelectDomain: (domain: Domain) => void;
   onWarGameSource: (sourceId: string) => void;
   onOpenCraftFromLaw: (craftId: string, lawId: string) => void;
+}
+
+function DeepPanel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="khal-chamber p-5"
+      style={{
+        background: "linear-gradient(180deg, rgba(18,18,31,0.88), rgba(10,10,18,0.94))",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 12px 30px rgba(0,0,0,0.18)"
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function SurfaceRow({ children, accent = "var(--color-line)" }: { children: React.ReactNode; accent?: string }) {
+  return (
+    <div
+      className="rounded-sm border p-4"
+      style={{
+        borderColor: accent,
+        background: "linear-gradient(180deg, rgba(18,18,31,0.82), rgba(10,10,18,0.9))",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 24px rgba(0,0,0,0.12)"
+      }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function LawsView({ data, selectedLawId, onSelectLaw, onSelectDomain, onWarGameSource, onOpenCraftFromLaw }: LawsViewProps) {
@@ -115,153 +144,138 @@ export function LawsView({ data, selectedLawId, onSelectLaw, onSelectDomain, onW
   const humanLawCount = LAW_SLOTS.length - hardLawCount;
 
   return (
-    <div className="space-y-8">
-      <section>
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <h2 className="text-3xl font-bold">Source of Volatility</h2>
-          <div className="flex items-center gap-2">
-            <span className={doctrineChipClass("hard")}>Hard laws {hardLawCount}</span>
-            <span className={doctrineChipClass("human")}>Human laws {humanLawCount}</span>
-          </div>
+    <div className="mx-auto max-w-7xl px-4 py-6">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-5 border-b border-[var(--color-line)] pb-5">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.24em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Sources of Volatility</div>
+          <h2 className="khal-serif-hero mt-2 text-4xl text-[var(--color-text-strong)]">Volatility laws</h2>
+          <p className="mt-3 max-w-3xl text-sm text-[var(--color-text-muted)]">
+            This surface should answer one question: what class of volatility is this, and which domains currently live under it.
+          </p>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-5">
-          {LAW_SLOTS.map((slot) => {
-            const selected = slot.id === activeSlot.id;
-            const linkedDomains = domainsBySlot.get(slot.id)?.length ?? 0;
-            const doctrineClass = slotDoctrineClass(slot);
-            return (
-              <button
-                key={slot.id}
-                onClick={() => setActiveSlotId(slot.id)}
-                className={
-                  selected
-                    ? "glass p-4 rounded-xl border border-blue-500/60 text-left"
-                    : "glass p-4 rounded-xl border border-white/10 hover:border-blue-500/30 text-left"
-                }
-              >
-                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Volatility Law</div>
-                <div className="text-sm font-bold">{lawAliasForSlot(slot.key) ?? slot.canonicalLabel}</div>
-                <div className="mt-2">
-                  <span className={doctrineChipClass(doctrineClass)}>
-                    {doctrineClass === "hard" ? "Hard law" : "Human law"}
-                  </span>
-                </div>
-                <div className="text-[11px] text-zinc-400 mt-2">Linked domains: {linkedDomains}</div>
-                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mt-2">Click to open narrative + analytics</div>
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-2">
+          <span className={doctrineChipClass("hard")}>Hard laws {hardLawCount}</span>
+          <span className={doctrineChipClass("human")}>Human laws {humanLawCount}</span>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-5 p-5 rounded-xl border glass border-white/10">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-400">Source Narrative</h3>
-              <button
-                onClick={() => onWarGameSource(warGameTarget)}
-                className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-[10px] font-bold uppercase tracking-widest text-white"
-              >
-                WarGame Source
-              </button>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Subnodes</div>
-                <p className="text-zinc-300">
-                  {activeDomains.length ? `${activeDomains.length} domain subnodes currently mapped to this law.` : "No subnodes mapped yet."}
-                </p>
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Philosophy</div>
-                <p className="text-zinc-300 italic">Remove fragility before optimizing upside. Narrative drives allocation.</p>
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Strategies / State of Affairs</div>
-                <p className="text-zinc-300">Linked strategic state is available through domain cards and law detail drill-down.</p>
-              </div>
-              <div className="pt-2 border-t border-white/10">
-                <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Doctrine Split</div>
-                <div className="flex items-center gap-2">
-                  <span className={doctrineChipClass(activeSlotClass)}>
-                    Active slot: {activeSlotClass === "hard" ? "Hard law" : "Human law"}
-                  </span>
-                  <span className="text-[11px] text-zinc-500">Segmentation cue only, no schema change.</span>
-                </div>
-              </div>
-            </div>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <section className="space-y-5">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {LAW_SLOTS.map((slot) => {
+              const selected = slot.id === activeSlot.id;
+              const linkedDomains = domainsBySlot.get(slot.id)?.length ?? 0;
+              const doctrineClass = slotDoctrineClass(slot);
+              return (
+                <button
+                  key={slot.id}
+                  onClick={() => setActiveSlotId(slot.id)}
+                  className="text-left"
+                >
+                  <SurfaceRow accent={selected ? "var(--color-accent)" : "var(--color-line)"}>
+                    <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Volatility law</div>
+                    <div className="mt-1 text-lg text-[var(--color-text-strong)]">{lawAliasForSlot(slot.key) ?? slot.canonicalLabel}</div>
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className={doctrineChipClass(doctrineClass)}>
+                        {doctrineClass === "hard" ? "Hard law" : "Human law"}
+                      </span>
+                    </div>
+                    <div className="mt-3 text-xs text-[var(--color-text-muted)]">Linked domains: {linkedDomains}</div>
+                  </SurfaceRow>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="lg:col-span-4 p-5 rounded-xl border glass border-white/10">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-3">Linked Domains</h3>
-            <div className="space-y-2 max-h-[260px] overflow-y-auto custom-scrollbar pr-1">
+          <DeepPanel>
+            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--color-line)] pb-4">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Active law</div>
+                <div className="mt-1 text-2xl text-[var(--color-text-strong)]">{lawAliasForSlot(activeSlot.key) ?? activeSlot.canonicalLabel}</div>
+                <div className="mt-2 text-sm text-[var(--color-text-muted)]">{activeSource?.name ?? "No mapped runtime source yet"}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={doctrineChipClass(activeSlotClass)}>
+                  {activeSlotClass === "hard" ? "Hard law" : "Human law"}
+                </span>
+                <button
+                  onClick={() => onWarGameSource(warGameTarget)}
+                  className="rounded-sm border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] px-3 py-2 text-[11px] uppercase tracking-[0.1em] font-[var(--font-mono)] text-[var(--color-text)]"
+                >
+                  WarGame Source
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {activeDomains.map((domain) => (
                 <button
                   key={domain.id}
                   onClick={() => onSelectDomain(domain)}
-                  className="w-full text-left p-3 rounded-lg bg-zinc-900/60 border border-white/5 hover:border-blue-500/40 transition-colors"
+                  className="text-left"
                 >
-                  <div className="text-sm font-semibold">{domain.name}</div>
-                  <div className="text-[10px] mt-1 text-zinc-500 font-mono uppercase">Fragility: {domain.fragilityText ?? "Undefined"}</div>
+                  <SurfaceRow>
+                    <div className="text-base text-[var(--color-text-strong)]">{domain.name}</div>
+                    <div className="mt-1 text-xs text-[var(--color-text-muted)]">{domain.fragilityText ?? "Fragility undefined"}</div>
+                  </SurfaceRow>
                 </button>
               ))}
-              {!activeDomains.length && <div className="text-xs text-zinc-500">No linked domains.</div>}
+              {!activeDomains.length ? <div className="rounded-sm border border-dashed border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] px-4 py-4 text-sm text-[var(--color-text-muted)]">No linked domains.</div> : null}
             </div>
-          </div>
+          </DeepPanel>
 
-          <div className="lg:col-span-3 p-5 rounded-xl border glass border-white/10">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-3">Analytical Data</h3>
-            <div className="space-y-2">
-              <div className="p-2 rounded bg-zinc-900/60 border border-white/10 text-xs text-zinc-300">
-                Law Slot: {lawAliasForSlot(activeSlot.key) ?? activeSlot.canonicalLabel}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredLaws.map((law) => (
+              <LawCard
+                key={law.id}
+                law={law}
+                domains={data.domains.filter((domain) => domain.lawId === law.id)}
+                onClick={() => onSelectLaw(law.id)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <aside className="space-y-4">
+          <DeepPanel>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Source rule</div>
+            <div className="mt-3 space-y-3 text-sm text-[var(--color-text-muted)]">
+              <div className="flex items-start gap-3">
+                <Shield size={14} className="mt-1 text-[var(--color-danger)]" />
+                <span>Use this surface to classify volatility source families, not to work local doctrine.</span>
               </div>
-              <div className="p-2 rounded bg-zinc-900/60 border border-white/10 text-xs text-zinc-300">
-                Source ID: {activeSource?.id ?? "TBD slot"}
+              <div className="flex items-start gap-3">
+                <Sparkles size={14} className="mt-1 text-[var(--color-success)]" />
+                <span>Move into Domain or Source War Gaming once the family is clear.</span>
               </div>
-              <div className="p-2 rounded bg-zinc-900/60 border border-white/10 text-xs text-zinc-300">Domains: {activeDomains.length}</div>
             </div>
-          </div>
-        </div>
+          </DeepPanel>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-6">
-          {filteredLaws.map((law) => (
-            <LawCard
-              key={law.id}
-              law={law}
-              domains={data.domains.filter((domain) => domain.lawId === law.id)}
-              onClick={() => onSelectLaw(law.id)}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="glass p-6 rounded-xl border border-white/10">
-        <h3 className="text-xl font-bold mb-5 flex items-center gap-2">
-          <Activity className="text-red-500" />
-          Volatility Heatmap
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-          {activeDomains.map((domain) => {
-            const intensity = resolveMetric(undefined, { entityId: `${domain.id}:volatility`, min: 10, max: 95 });
-            return (
-              <div
-                key={domain.id}
-                onClick={() => onSelectDomain(domain)}
-                className="aspect-square rounded-xl border border-white/5 flex flex-col items-center justify-center p-2 cursor-pointer hover:scale-105 transition-all"
-                style={{ backgroundColor: `rgba(239, 68, 68, ${intensity / 200})` }}
-              >
-                <div className="text-[8px] font-mono text-zinc-400 uppercase text-center mb-1">{domain.name}</div>
-                <div className="text-sm font-bold">{intensity}%</div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="mt-5 flex justify-between text-[10px] font-mono text-zinc-500 uppercase">
-          <span>Stable</span>
-          <div className="flex-1 mx-4 h-1 bg-gradient-to-r from-emerald-500/20 via-yellow-500/20 to-red-500/50 rounded-full" />
-          <span>Volatile</span>
-        </div>
-      </section>
+          <DeepPanel>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Entry routes</div>
+            <div className="mt-3 space-y-3">
+              {activeDomains.slice(0, 5).map((domain) => (
+                <button
+                  key={domain.id}
+                  onClick={() => onSelectDomain(domain)}
+                  className="flex w-full items-center justify-between text-left"
+                >
+                  <SurfaceRow>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm text-[var(--color-text-strong)]">{domain.name}</div>
+                        <div className="mt-1 text-xs text-[var(--color-text-muted)]">{resolveDomainSource(domain, data.laws)}</div>
+                      </div>
+                      <ArrowRight size={13} className="text-[var(--color-accent)]" />
+                    </div>
+                  </SurfaceRow>
+                </button>
+              ))}
+              {!activeDomains.length ? <div className="text-sm text-[var(--color-text-muted)]">No domain entry routes yet.</div> : null}
+            </div>
+          </DeepPanel>
+        </aside>
+      </div>
     </div>
   );
 }
