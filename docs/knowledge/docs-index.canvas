@@ -136,37 +136,10 @@
       "height": 60
     },
     {
-      "id": "f17",
-      "type": "file",
-      "file": "docs/refactor-audit-2026-03-10.md",
-      "x": 0,
-      "y": 80,
-      "width": 340,
-      "height": 60
-    },
-    {
       "id": "f18",
       "type": "file",
       "file": "docs/repository-workstreams.md",
       "x": 0,
-      "y": 150,
-      "width": 340,
-      "height": 60
-    },
-    {
-      "id": "f19",
-      "type": "file",
-      "file": "docs/agent-log/2026-03.md",
-      "x": 380,
-      "y": 80,
-      "width": 340,
-      "height": 60
-    },
-    {
-      "id": "f20",
-      "type": "file",
-      "file": "docs/agent-log/README.md",
-      "x": 380,
       "y": 150,
       "width": 340,
       "height": 60
@@ -213,24 +186,6 @@
       "file": "docs/architecture/decision-framework.dot",
       "x": 760,
       "y": 860,
-      "width": 340,
-      "height": 60
-    },
-    {
-      "id": "f25",
-      "type": "file",
-      "file": "docs/architecture/v0.1-system-design.md",
-      "x": 760,
-      "y": 360,
-      "width": 340,
-      "height": 60
-    },
-    {
-      "id": "f26",
-      "type": "file",
-      "file": "docs/architecture/war-gaming-rewrite-slice-2026-03-11.md",
-      "x": 760,
-      "y": 430,
       "width": 340,
       "height": 60
     },
@@ -361,15 +316,6 @@
       "height": 60
     },
     {
-      "id": "f40",
-      "type": "file",
-      "file": "docs/release/v0.4.4-reliability-dominance.md",
-      "x": 1520,
-      "y": 440,
-      "width": 340,
-      "height": 60
-    },
-    {
       "id": "f41",
       "type": "file",
       "file": "docs/reports/khal-decision-compatibility-test-cases.md",
@@ -379,38 +325,11 @@
       "height": 60
     },
     {
-      "id": "f42",
-      "type": "file",
-      "file": "docs/reports/personal-operator-journey-2026-03-10.md",
-      "x": 0,
-      "y": 590,
-      "width": 340,
-      "height": 60
-    },
-    {
       "id": "f43",
       "type": "file",
       "file": "docs/reports/state-of-the-art-alignment-2026-03-10.md",
       "x": 0,
       "y": 660,
-      "width": 340,
-      "height": 60
-    },
-    {
-      "id": "f44",
-      "type": "file",
-      "file": "docs/reports/ui-usability-benchmark-2026-03-10.md",
-      "x": 0,
-      "y": 730,
-      "width": 340,
-      "height": 60
-    },
-    {
-      "id": "f45",
-      "type": "file",
-      "file": "docs/reports/v0.4.4-architecture-benchmark.md",
-      "x": 0,
-      "y": 800,
       "width": 340,
       "height": 60
     },
@@ -534,27 +453,9 @@
   ],
   "edges": [
     {
-      "id": "e1",
-      "fromNode": "d1",
-      "toNode": "f17",
-      "label": "contains"
-    },
-    {
       "id": "e2",
       "fromNode": "d1",
       "toNode": "f18",
-      "label": "contains"
-    },
-    {
-      "id": "e3",
-      "fromNode": "d2",
-      "toNode": "f19",
-      "label": "contains"
-    },
-    {
-      "id": "e4",
-      "fromNode": "d2",
-      "toNode": "f20",
       "label": "contains"
     },
     {
@@ -579,18 +480,6 @@
       "id": "e8",
       "fromNode": "d3",
       "toNode": "f24",
-      "label": "contains"
-    },
-    {
-      "id": "e9",
-      "fromNode": "d3",
-      "toNode": "f25",
-      "label": "contains"
-    },
-    {
-      "id": "e10",
-      "fromNode": "d3",
-      "toNode": "f26",
       "label": "contains"
     },
     {
@@ -666,39 +555,15 @@
       "label": "contains"
     },
     {
-      "id": "e24",
-      "fromNode": "d10",
-      "toNode": "f40",
-      "label": "contains"
-    },
-    {
       "id": "e25",
       "fromNode": "d11",
       "toNode": "f41",
       "label": "contains"
     },
     {
-      "id": "e26",
-      "fromNode": "d11",
-      "toNode": "f42",
-      "label": "contains"
-    },
-    {
       "id": "e27",
       "fromNode": "d11",
       "toNode": "f43",
-      "label": "contains"
-    },
-    {
-      "id": "e28",
-      "fromNode": "d11",
-      "toNode": "f44",
-      "label": "contains"
-    },
-    {
-      "id": "e29",
-      "fromNode": "d11",
-      "toNode": "f45",
       "label": "contains"
     },
     {

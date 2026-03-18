@@ -3,24 +3,6 @@
   "generated_from": "docs tree",
   "items": [
     {
-      "file": "PROJECT_CONTEXT.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "keep"
-    },
-    {
-      "file": "docs/agent-log/2026-03.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
-      "file": "docs/agent-log/README.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
       "file": "docs/architecture/api-contract.md",
       "format": ".md",
       "entropy": "high",
@@ -49,18 +31,6 @@
       "format": ".dot",
       "entropy": "low",
       "action": "keep"
-    },
-    {
-      "file": "docs/architecture/v0.1-system-design.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
-      "file": "docs/architecture/war-gaming-rewrite-slice-2026-03-11.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
     },
     {
       "file": "docs/architecture/war-gaming.dot",
@@ -153,12 +123,6 @@
       "action": "migrate"
     },
     {
-      "file": "docs/refactor-audit-2026-03-10.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
       "file": "docs/release/ci-gate-contract.md",
       "format": ".md",
       "entropy": "high",
@@ -171,37 +135,13 @@
       "action": "migrate"
     },
     {
-      "file": "docs/release/v0.4.4-reliability-dominance.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
       "file": "docs/reports/khal-decision-compatibility-test-cases.md",
       "format": ".md",
       "entropy": "high",
       "action": "migrate"
     },
     {
-      "file": "docs/reports/personal-operator-journey-2026-03-10.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
       "file": "docs/reports/state-of-the-art-alignment-2026-03-10.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
-      "file": "docs/reports/ui-usability-benchmark-2026-03-10.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
-      "file": "docs/reports/v0.4.4-architecture-benchmark.md",
       "format": ".md",
       "entropy": "high",
       "action": "migrate"
@@ -290,5 +230,7 @@
       "entropy": "low",
       "action": "keep"
     }
-  ]
+  ],
+  "canonical_doctrine": "docs/product/Khal_genesis.md",
+  "policy": "All other docs are downstream, operational, or generated artifacts."
 }

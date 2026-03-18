@@ -12,6 +12,8 @@ Use this as the single source of truth for:
 - Affairs / Interests branching logic
 - Drafts, Lab, Campaign, Portfolio, and Execution relationships
 
+All other repository docs are downstream, operational, or generated artifacts and must not override this doctrine.
+
 This file does **not** replace runtime authority.
 
 Runtime authority remains:
