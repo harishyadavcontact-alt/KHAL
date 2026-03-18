@@ -3,7 +3,7 @@
     "status": "derived",
     "confidence": "medium",
     "version": "v0.1.0",
-    "purpose": "Canonical source of truth for KHAL decision logic, hierarchy, progression, and dependency structure.",
+    "purpose": "Derived decision map for KHAL logic, hierarchy, progression, and dependency structure; canonical doctrine lives in docs/product/Khal_genesis.md.",
     "source_files": [
       "packages/domain/src/types.ts",
       "packages/domain/src/ontology.ts",

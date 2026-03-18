@@ -91,7 +91,7 @@ const COMPLETE_HIERARCHY = {
     { id: 'politics', level: 1, name: 'POLITICS - Law of Land', stakes: 8, risk: 7, fragility: 56, icon: '⚖️' },
     { id: 'nurture', level: 1, name: 'NURTURE - Laws of Nurture', stakes: 5, risk: 4, fragility: 20, icon: '🎭' },
   ],
-  
+
   // HIERARCHY SUBSECTIONS (Level 2-3)
   hierarchySections: [
     {
@@ -110,7 +110,7 @@ const COMPLETE_HIERARCHY = {
     { id: 'personal-health', level: 3, name: 'Health', parent: 'personal', children: [] },
     { id: 'personal-skills', level: 3, name: 'Skills', parent: 'personal', children: [] },
     { id: 'personal-mindset', level: 3, name: 'Mindset', parent: 'personal', children: [] },
-    
+
     {
       id: 'familial',
       level: 2,
@@ -125,7 +125,7 @@ const COMPLETE_HIERARCHY = {
     { id: 'familial-spouse', level: 3, name: 'Spouse', parent: 'familial', children: [] },
     { id: 'familial-children', level: 3, name: 'Children', parent: 'familial', children: [] },
     { id: 'familial-parents', level: 3, name: 'Parents', parent: 'familial', children: [] },
-    
+
     {
       id: 'economic',
       level: 2,
@@ -142,21 +142,21 @@ const COMPLETE_HIERARCHY = {
     { id: 'economic-income', level: 3, name: 'Income', parent: 'economic', children: [] },
     { id: 'economic-assets', level: 3, name: 'Assets', parent: 'economic', children: [] },
     { id: 'economic-investments', level: 3, name: 'Investments', parent: 'economic', children: [] },
-    
+
     { id: 'social', level: 2, name: 'SOCIAL', parent: null, children: ['social-friends', 'social-network', 'social-reputation'] },
     { id: 'social-friends', level: 3, name: 'Friends', parent: 'social', children: [] },
     { id: 'social-network', level: 3, name: 'Network', parent: 'social', children: [] },
     { id: 'social-reputation', level: 3, name: 'Reputation', parent: 'social', children: [] },
-    
+
     { id: 'political', level: 2, name: 'POLITICAL', parent: null, children: ['political-local', 'political-national', 'political-international'] },
     { id: 'political-local', level: 3, name: 'Local', parent: 'political', children: [] },
     { id: 'political-national', level: 3, name: 'National', parent: 'political', children: [] },
     { id: 'political-international', level: 3, name: 'International', parent: 'political', children: [] },
-    
+
     { id: 'private', level: 2, name: 'PRIVATE (Covert)', parent: null, children: ['private-hidden', 'private-contingencies'] },
     { id: 'private-hidden', level: 3, name: 'Hidden Assets', parent: 'private', children: [] },
     { id: 'private-contingencies', level: 3, name: 'Contingencies', parent: 'private', children: [] },
-    
+
     { id: 'public', level: 2, name: 'PUBLIC (Overt)', parent: null, children: ['public-brand', 'public-stated'] },
     { id: 'public-brand', level: 3, name: 'Brand', parent: 'public', children: [] },
     { id: 'public-stated', level: 3, name: 'Stated Positions', parent: 'public', children: [] },
@@ -218,20 +218,20 @@ const Dashboard = () => {
           <div className="text-lg font-mono text-white">{currentTime.toLocaleTimeString()}</div>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-4 gap-3">
         <div className="bg-gray-800 rounded p-3">
           <div className="text-gray-400 text-xs mb-1">Age</div>
           <div className="text-2xl font-bold text-blue-400">{age}y</div>
           <div className="text-xs text-gray-500">{daysLived.toLocaleString()} days</div>
         </div>
-        
+
         <div className="bg-gray-800 rounded p-3">
           <div className="text-gray-400 text-xs mb-1">Remaining</div>
           <div className="text-2xl font-bold text-orange-400">{lifeExpectancy - age}y</div>
           <div className="text-xs text-gray-500">{daysRemaining.toLocaleString()} days</div>
         </div>
-        
+
         <div className="bg-gray-800 rounded p-3">
           <div className="text-gray-400 text-xs mb-1">Life Progress</div>
           <div className="text-2xl font-bold text-purple-400">{lifeProgress.toFixed(1)}%</div>
@@ -239,7 +239,7 @@ const Dashboard = () => {
             <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${lifeProgress}%` }} />
           </div>
         </div>
-        
+
         <div className="bg-gray-800 rounded p-3">
           <div className="text-gray-400 text-xs mb-1">Location</div>
           <div className="text-lg font-bold text-green-400">Chennai, IN</div>
@@ -276,7 +276,7 @@ const Dashboard = () => {
           <Target className="w-5 h-5 text-blue-500" />
           Strategic Posture - 6 Fronts
         </h3>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <ResponsiveContainer width="100%" height={250}>
@@ -300,7 +300,7 @@ const Dashboard = () => {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          
+
           <div className="space-y-2">
             {STRATEGY_FRONTS.map(f => (
               <div key={f.front} className="bg-gray-900 rounded p-2 text-sm">
@@ -346,12 +346,12 @@ const Dashboard = () => {
             isExpanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />
           )}
           {!hasChildren && <div className="w-4" />}
-          
+
           <span className="text-lg">{item.icon}</span>
           <span className={`${level === 0 ? 'font-bold text-white' : level === 1 ? 'font-semibold text-gray-300' : 'text-gray-400'}`}>
             {item.name}
           </span>
-          
+
           {item.fragility !== undefined && (
             <span className={`ml-auto text-xs px-2 py-1 rounded ${
               item.fragility > 50 ? 'bg-red-900 text-red-300' :
@@ -361,7 +361,7 @@ const Dashboard = () => {
               F: {item.fragility}
             </span>
           )}
-          
+
           {item.status && (
             <span className="text-xs">{item.status}</span>
           )}
@@ -412,8 +412,8 @@ const Dashboard = () => {
   };
 
   const renderAggregatedHierarchy = () => {
-    const visibleItems = zoomLevel === 'macro' 
-      ? COMPLETE_HIERARCHY.macroDomains 
+    const visibleItems = zoomLevel === 'macro'
+      ? COMPLETE_HIERARCHY.macroDomains
       : zoomLevel === 'meso'
       ? [...COMPLETE_HIERARCHY.macroDomains, ...COMPLETE_HIERARCHY.hierarchySections.filter(h => h.level === 2)]
       : [...COMPLETE_HIERARCHY.macroDomains, ...COMPLETE_HIERARCHY.hierarchySections];
@@ -425,7 +425,7 @@ const Dashboard = () => {
             <Shield className="w-5 h-5 text-blue-500" />
             Aggregated Hierarchy - {zoomLevel.toUpperCase()} View
           </h3>
-          
+
           <div className="flex gap-2">
             <button
               onClick={() => setZoomLevel('macro')}
@@ -452,7 +452,7 @@ const Dashboard = () => {
 
         <div className="max-h-96 overflow-y-auto">
           {COMPLETE_HIERARCHY.macroDomains.map(domain => renderHierarchyItem(domain, 0))}
-          
+
           {(zoomLevel === 'meso' || zoomLevel === 'micro') && (
             <>
               <div className="my-4 border-t border-gray-700 pt-4">
@@ -494,7 +494,7 @@ const Dashboard = () => {
                 <label className="text-sm text-gray-400 block mb-1">Interest Name</label>
                 <input type="text" className="w-full bg-gray-900 text-white rounded px-3 py-2 border border-gray-700" placeholder="e.g., Bitcoin Position" />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-gray-400 block mb-1">Domain</label>
@@ -512,7 +512,7 @@ const Dashboard = () => {
                   <input type="number" className="w-full bg-gray-900 text-white rounded px-3 py-2 border border-gray-700" placeholder="Max 10%" />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-gray-400 block mb-1">Upside Potential</label>
@@ -530,7 +530,7 @@ const Dashboard = () => {
                 <Import className="w-5 h-5 text-blue-500" />
                 IMPORT STRUCTURE
               </h3>
-              
+
               <div className="space-y-3">
                 <label className="flex items-center gap-3 p-3 bg-gray-900 rounded cursor-pointer hover:bg-gray-850">
                   <input type="checkbox" className="w-4 h-4" />
@@ -539,7 +539,7 @@ const Dashboard = () => {
                     <div className="text-xs text-gray-400">Pulls: Hedge/Edge from selected domain</div>
                   </div>
                 </label>
-                
+
                 <label className="flex items-center gap-3 p-3 bg-gray-900 rounded cursor-pointer hover:bg-gray-850">
                   <input type="checkbox" className="w-4 h-4" />
                   <div>
@@ -547,7 +547,7 @@ const Dashboard = () => {
                     <div className="text-xs text-gray-400">Pulls: Heuristics library, techniques</div>
                   </div>
                 </label>
-                
+
                 <label className="flex items-center gap-3 p-3 bg-gray-900 rounded cursor-pointer hover:bg-gray-850">
                   <input type="checkbox" className="w-4 h-4" />
                   <div>
@@ -555,7 +555,7 @@ const Dashboard = () => {
                     <div className="text-xs text-gray-400">Links: Defensive tasks that support this</div>
                   </div>
                 </label>
-                
+
                 <label className="flex items-center gap-3 p-3 bg-gray-900 rounded cursor-pointer hover:bg-gray-850">
                   <input type="checkbox" className="w-4 h-4" />
                   <div>
@@ -568,23 +568,23 @@ const Dashboard = () => {
 
             <div className="border-t border-gray-700 pt-6 mb-6">
               <h3 className="text-lg font-bold text-white mb-4">PLANNING & LOGISTICS</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="text-sm text-gray-400 block mb-1">Define KPIs</label>
                   <textarea className="w-full bg-gray-900 text-white rounded px-3 py-2 border border-gray-700 h-20" placeholder="e.g., Bitcoin price $100k, Portfolio +50%" />
                 </div>
-                
+
                 <div>
                   <label className="text-sm text-gray-400 block mb-1">Objective</label>
                   <input type="text" className="w-full bg-gray-900 text-white rounded px-3 py-2 border border-gray-700" placeholder="e.g., Gain from BTC volatility" />
                 </div>
-                
+
                 <div>
                   <label className="text-sm text-gray-400 block mb-1">Key Results (ORKs)</label>
                   <textarea className="w-full bg-gray-900 text-white rounded px-3 py-2 border border-gray-700 h-20" placeholder="KR1: Accumulate 0.5 BTC by Q2&#10;KR2: Never exceed 10% allocation" />
                 </div>
-                
+
                 <div>
                   <label className="text-sm text-gray-400 block mb-1">Schedule & Milestones</label>
                   <div className="space-y-2">
@@ -597,7 +597,7 @@ const Dashboard = () => {
 
             <div className="border-t border-gray-700 pt-6 mb-6">
               <h3 className="text-lg font-bold text-white mb-4">DECISION FILTERS</h3>
-              
+
               <div className="space-y-4">
                 <div className="bg-yellow-900 bg-opacity-20 border border-yellow-700 rounded p-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -610,7 +610,7 @@ const Dashboard = () => {
                   </label>
                   <input type="text" className="w-full mt-2 bg-gray-900 text-white rounded px-3 py-2 border border-gray-700 text-sm" placeholder="Notes: Only 10% allocation, won't kill me..." />
                 </div>
-                
+
                 <div className="bg-blue-900 bg-opacity-20 border border-blue-700 rounded p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp className="w-5 h-5 text-blue-500" />
@@ -622,7 +622,7 @@ const Dashboard = () => {
                   </label>
                   <input type="text" className="w-full mt-2 bg-gray-900 text-white rounded px-3 py-2 border border-gray-700 text-sm" placeholder="Notes: More volatility = more upside, limited downside..." />
                 </div>
-                
+
                 <div className="bg-green-900 bg-opacity-20 border border-green-700 rounded p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Target className="w-5 h-5 text-green-500" />
@@ -663,7 +663,7 @@ const Dashboard = () => {
   const renderMissionCommand = () => (
     <div className="space-y-4">
       {renderHUD()}
-      
+
       <div className="grid grid-cols-2 gap-4">
         {renderStrategyCircle()}
         {renderAggregatedHierarchy()}
@@ -680,7 +680,7 @@ const Dashboard = () => {
             New Interest
           </button>
         </div>
-        
+
         <div className="grid grid-cols-3 gap-3">
           {COMPLETE_HIERARCHY.macroDomains.map(domain => (
             <button

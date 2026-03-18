@@ -143,7 +143,7 @@ const Dashboard = () => {
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [view, setView] = useState('mission-command'); // mission-command, war-gaming, surgical-execution
-  
+
   // VIRTUE SPIRAL STAGES
   const [virtueSpiral, setVirtueSpiral] = useState({
     stage1_fragile: 60, // % identifying vulnerabilities
@@ -186,47 +186,47 @@ const Dashboard = () => {
   // Non-ergodic = time average ≠ ensemble average (YOU can die even if average survives)
   // Ergodic = time average = ensemble average (safe to take repeated bets)
   const ergodicityData = [
-    { 
-      trial: 1, 
-      ensembleAvg: 50, 
-      path1: 55, 
-      path2: 45, 
+    {
+      trial: 1,
+      ensembleAvg: 50,
+      path1: 55,
+      path2: 45,
       path3: 52,
       yourPath: 55,
       bankruptcyLine: 0,
     },
-    { 
-      trial: 2, 
-      ensembleAvg: 50, 
-      path1: 60, 
-      path2: 30, 
+    {
+      trial: 2,
+      ensembleAvg: 50,
+      path1: 60,
+      path2: 30,
       path3: 65,
       yourPath: 62,
       bankruptcyLine: 0,
     },
-    { 
-      trial: 3, 
-      ensembleAvg: 50, 
-      path1: 70, 
+    {
+      trial: 3,
+      ensembleAvg: 50,
+      path1: 70,
       path2: 0, // BANKRUPTCY
       path3: 75,
       yourPath: 48,
       bankruptcyLine: 0,
     },
-    { 
-      trial: 4, 
-      ensembleAvg: 50, 
-      path1: 80, 
-      path2: 0, 
+    {
+      trial: 4,
+      ensembleAvg: 50,
+      path1: 80,
+      path2: 0,
       path3: 85,
       yourPath: 35,
       bankruptcyLine: 0,
     },
-    { 
-      trial: 5, 
-      ensembleAvg: 50, 
-      path1: 90, 
-      path2: 0, 
+    {
+      trial: 5,
+      ensembleAvg: 50,
+      path1: 90,
+      path2: 0,
       path3: 95,
       yourPath: 25,
       bankruptcyLine: 0,
@@ -305,31 +305,31 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-gray-800 rounded p-4">
             <div className="text-gray-400 text-sm mb-1">Age</div>
             <div className="text-3xl font-bold text-blue-400">{age}y</div>
             <div className="text-xs text-gray-500">{daysLived.toLocaleString()} days lived</div>
           </div>
-          
+
           <div className="bg-gray-800 rounded p-4">
             <div className="text-gray-400 text-sm mb-1">Time Remaining</div>
             <div className="text-3xl font-bold text-orange-400">{lifeExpectancy - age}y</div>
             <div className="text-xs text-gray-500">{daysRemaining.toLocaleString()} days left</div>
           </div>
-          
+
           <div className="bg-gray-800 rounded p-4">
             <div className="text-gray-400 text-sm mb-1">Life Progress</div>
             <div className="text-3xl font-bold text-purple-400">{lifeProgress.toFixed(1)}%</div>
             <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
-              <div 
+              <div
                 className="bg-purple-500 h-2 rounded-full transition-all duration-500"
                 style={{ width: `${lifeProgress}%` }}
               />
             </div>
           </div>
-          
+
           <div className="bg-gray-800 rounded p-4">
             <div className="text-gray-400 text-sm mb-1">Location</div>
             <div className="text-lg font-bold text-green-400">Chennai, IN</div>
@@ -352,7 +352,7 @@ const Dashboard = () => {
               <PolarAngleAxis dataKey="domain" tick={{ fill: '#9ca3af', fontSize: 12 }} />
               <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: '#9ca3af' }} />
               <Radar name="Fragility" dataKey="fragility" stroke="#ef4444" fill="#ef4444" fillOpacity={0.5} />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #4b5563', borderRadius: '8px' }}
                 labelStyle={{ color: '#fff' }}
               />
@@ -377,7 +377,7 @@ const Dashboard = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />
               <XAxis type="number" domain={[0, 100]} tick={{ fill: '#9ca3af' }} />
               <YAxis type="category" dataKey="category" tick={{ fill: '#9ca3af' }} width={100} />
-              <Tooltip 
+              <Tooltip
                 contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #4b5563', borderRadius: '8px' }}
               />
               <Bar dataKey="value" radius={[0, 8, 8, 0]}>
@@ -417,9 +417,9 @@ const Dashboard = () => {
                   <span className="text-sm font-bold" style={{ color: colors[idx] }}>{progress}%</span>
                 </div>
                 <div className="w-full bg-gray-700 rounded-full h-3">
-                  <div 
+                  <div
                     className="h-3 rounded-full transition-all duration-500"
-                    style={{ 
+                    style={{
                       width: `${progress}%`,
                       backgroundColor: colors[idx]
                     }}
@@ -489,7 +489,7 @@ const Dashboard = () => {
             <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />
             <XAxis dataKey="x" label={{ value: 'Volatility →', position: 'insideBottom', offset: -5, fill: '#9ca3af' }} tick={{ fill: '#9ca3af' }} />
             <YAxis label={{ value: '← Payoff', angle: -90, position: 'insideLeft', fill: '#9ca3af' }} tick={{ fill: '#9ca3af' }} />
-            <Tooltip 
+            <Tooltip
               contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #4b5563', borderRadius: '8px' }}
             />
             <Legend />
@@ -517,7 +517,7 @@ const Dashboard = () => {
             <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />
             <XAxis dataKey="trial" label={{ value: 'Time / Trials →', position: 'insideBottom', offset: -5, fill: '#9ca3af' }} tick={{ fill: '#9ca3af' }} />
             <YAxis label={{ value: '← Wealth', angle: -90, position: 'insideLeft', fill: '#9ca3af' }} tick={{ fill: '#9ca3af' }} />
-            <Tooltip 
+            <Tooltip
               contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #4b5563', borderRadius: '8px' }}
             />
             <Legend />
@@ -548,7 +548,7 @@ const Dashboard = () => {
             <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />
             <XAxis dataKey="x" label={{ value: 'Standard Deviations from Mean', position: 'insideBottom', offset: -5, fill: '#9ca3af' }} tick={{ fill: '#9ca3af' }} />
             <YAxis label={{ value: '← Probability', angle: -90, position: 'insideLeft', fill: '#9ca3af' }} tick={{ fill: '#9ca3af' }} />
-            <Tooltip 
+            <Tooltip
               contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #4b5563', borderRadius: '8px' }}
             />
             <Legend />
@@ -577,23 +577,23 @@ const Dashboard = () => {
         <ResponsiveContainer width="100%" height={400}>
           <ScatterChart>
             <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />
-            <XAxis 
-              type="number" 
-              dataKey="probability" 
-              name="Probability (%)" 
+            <XAxis
+              type="number"
+              dataKey="probability"
+              name="Probability (%)"
               label={{ value: 'Probability (Risk) →', position: 'insideBottom', offset: -5, fill: '#9ca3af' }}
               tick={{ fill: '#9ca3af' }}
               domain={[0, 100]}
             />
-            <YAxis 
-              type="number" 
-              dataKey="impact" 
-              name="Impact (Stakes)" 
+            <YAxis
+              type="number"
+              dataKey="impact"
+              name="Impact (Stakes)"
               label={{ value: '← Impact (Stakes)', angle: -90, position: 'insideLeft', fill: '#9ca3af' }}
               tick={{ fill: '#9ca3af' }}
               domain={[0, 100]}
             />
-            <Tooltip 
+            <Tooltip
               cursor={{ strokeDasharray: '3 3' }}
               contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #4b5563', borderRadius: '8px' }}
               formatter={(value, name, props) => {
@@ -626,7 +626,7 @@ const Dashboard = () => {
         <h3 className="text-xl font-bold text-white mb-4">Strategy Matrix - 8 Combinations</h3>
         <div className="grid grid-cols-2 gap-4">
           {STRATEGY_MATRIX.map(strat => (
-            <div 
+            <div
               key={strat.id}
               className={`rounded-lg p-4 border-2 ${
                 strat.offense ? 'bg-red-900/20 border-red-700' : 'bg-blue-900/20 border-blue-700'
@@ -634,7 +634,7 @@ const Dashboard = () => {
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  {strat.overt ? '👁️' : '🕵️'} 
+                  {strat.overt ? '👁️' : '🕵️'}
                   {strat.ally ? '🤝' : '⚔️'}
                   {strat.offense ? '⚡' : '🛡️'}
                 </div>
@@ -658,7 +658,7 @@ const Dashboard = () => {
     return (
       <div className="space-y-4">
         <div className="bg-gradient-to-r from-blue-900 to-blue-800 rounded-lg p-6 border border-blue-700">
-          <button 
+          <button
             onClick={() => setSelectedDomain(null)}
             className="text-blue-300 hover:text-white mb-4 flex items-center gap-2"
           >
@@ -681,8 +681,8 @@ const Dashboard = () => {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`flex-1 py-2 px-4 rounded transition-all ${
-                activeTab === tab 
-                  ? 'bg-blue-600 text-white font-bold' 
+                activeTab === tab
+                  ? 'bg-blue-600 text-white font-bold'
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
@@ -700,8 +700,8 @@ const Dashboard = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Stakes (What You Could Lose)</span>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       value={domain.stakes}
                       onChange={(e) => {
                         const newDomains = {...domains};
@@ -716,8 +716,8 @@ const Dashboard = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Risk (Probability)</span>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       value={domain.risk}
                       onChange={(e) => {
                         const newDomains = {...domains};
@@ -734,8 +734,8 @@ const Dashboard = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-300 font-bold">Fragility Score</span>
                       <span className={`text-2xl font-bold ${
-                        domain.currentFragility > 50 ? 'text-red-400' : 
-                        domain.currentFragility > 30 ? 'text-yellow-400' : 
+                        domain.currentFragility > 50 ? 'text-red-400' :
+                        domain.currentFragility > 30 ? 'text-yellow-400' :
                         'text-green-400'
                       }`}>
                         {domain.currentFragility}
@@ -775,7 +775,7 @@ const Dashboard = () => {
                     <span className="text-lg font-bold text-green-400">{domain.hedgeCompletion}%</span>
                   </div>
                   <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-green-500 h-2 rounded-full transition-all"
                       style={{ width: `${domain.hedgeCompletion}%` }}
                     />
@@ -887,17 +887,17 @@ const Dashboard = () => {
               placeholder="Write your strategic thinking here...
 
 What are the ENDS? (Barbell strategy)
-- Hedge (90%): 
-- Edge (10%): 
+- Hedge (90%):
+- Edge (10%):
 
 What are the MEANS? (Heuristics, methods, techniques)
-- 
+-
 
 What are the AFFAIRS? (Defensive tasks to remove fragility)
-- 
+-
 
 What are the INTERESTS? (Offensive bets for asymmetry)
-- 
+-
 
 War Gaming:
 - Best case scenario:
@@ -938,8 +938,8 @@ War Gaming:
                 setSelectedDomain(null);
               }}
               className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all ${
-                view === id 
-                  ? 'bg-blue-600 text-white' 
+                view === id
+                  ? 'bg-blue-600 text-white'
                   : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
               }`}
             >
@@ -950,8 +950,8 @@ War Gaming:
         </div>
 
         {/* Content Area */}
-        {selectedDomain ? renderDomainDetail() : 
-         view === 'mission-command' ? renderMissionCommand() : 
+        {selectedDomain ? renderDomainDetail() :
+         view === 'mission-command' ? renderMissionCommand() :
          renderWarGaming()}
       </div>
     </div>

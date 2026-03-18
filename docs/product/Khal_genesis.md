@@ -1,7 +1,7 @@
 # Khal_genesis
 
 ## Canonical status
-This file is the canonical product doctrine reference for KHAL.
+This file is the canonical product doctrine reference for KHAL and the single source of truth for this repository's product intent.
 
 Use this as the single source of truth for:
 - product structure
@@ -12,11 +12,14 @@ Use this as the single source of truth for:
 - Affairs / Interests branching logic
 - Drafts, Lab, Campaign, Portfolio, and Execution relationships
 
+All other repository docs are downstream, operational, or generated artifacts and must not override this doctrine.
+
 This file does **not** replace runtime authority.
 
 Runtime authority remains:
-- SQLite: `data/KHAL.sqlite`
-- Excel: `Genesis.xlsx` is archival/reference only
+- Operator-scoped SQLite: `data/operators/*.sqlite`
+- Template/bootstrap database: `data/KHAL.sqlite`
+- Excel: `Genesis.xlsx` is archival/reference only and must not be opened unless explicitly requested
 
 ## Core doctrine
 KHAL is a decision operating system.

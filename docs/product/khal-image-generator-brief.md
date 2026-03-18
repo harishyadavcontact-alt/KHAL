@@ -19,7 +19,7 @@ KHAL is not:
 KHAL is a decision operating system.
 
 ## Runtime authority
-- Runtime source of truth: `data/KHAL.sqlite`
+- Runtime data authority: `data/operators/*.sqlite` (bootstrapped from `data/KHAL.sqlite`)
 - Excel `Genesis.xlsx` is archival/reference only
 
 ## Product spine

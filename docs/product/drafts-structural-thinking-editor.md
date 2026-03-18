@@ -14,7 +14,7 @@ Drafts exists to bridge:
 The visible surface must prioritize human readability. Agent-readable and compile-readable forms exist, but stay internal or optional.
 
 ## Doctrine
-- SQLite (`data/KHAL.sqlite`) remains the runtime source of truth.
+- Operator-scoped SQLite (`data/operators/*.sqlite`) remains the runtime data authority, with `data/KHAL.sqlite` as the bootstrap/template DB.
 - `Genesis.xlsx` remains archival/reference-only unless an explicit migration decision is made.
 - Narrative clarity matters more than dashboard density.
 - Map-first architecture remains intact.

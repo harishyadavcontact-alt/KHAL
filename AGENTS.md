@@ -3,9 +3,14 @@ Project: Khal
 Goal:
 Decision-making operating system.
 
-Single Source of Truth:
-SQLite runtime database (`data/KHAL.sqlite`).
-Excel (`Genesis.xlsx`) is archival/reference only.
+Project Source of Truth:
+`docs/product/Khal_genesis.md` is the canonical doctrine and product reference for this repository.
+
+Runtime Authority:
+Operator-scoped SQLite runtime (`data/operators/*.sqlite`) with `data/KHAL.sqlite` as the template/bootstrap database.
+
+Excel Access Policy:
+Excel (`Genesis.xlsx`) is archival/reference only and must not be opened, parsed, inspected, or treated as authority unless the user explicitly asks for `Genesis.xlsx`.
 
 Architecture Philosophy:
 - War Room = authoritative ontology

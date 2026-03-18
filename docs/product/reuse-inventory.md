@@ -60,7 +60,8 @@ Current keepers:
 
 - `Genesis`
   - files:
+    - `docs/product/Khal_genesis.md`
     - `docs/knowledge/genesis.json`
     - `docs/decision-tree/genesis.mmd`
-  - why: current best aggregate source of truth for decision logic and surface concepts
+  - why: `docs/product/Khal_genesis.md` is the canonical doctrine source; the derived Genesis artifacts are useful structure maps while simplifying the UI
   - likely use: reference while simplifying UI so semantics are not lost
