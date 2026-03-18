@@ -4,8 +4,9 @@ KHAL terminal handoff
 - Repo: E:\KHAL
 - Branch: main
 - Current head: `4c3e579` (`Add source-domain mission guidance warnings`)
+- Product doctrine source of truth: docs/product/Khal_genesis.md
 - Runtime authority: operator-scoped SQLite via data/operators/*.sqlite selected through .khal.local.json
-- Excel: Genesis.xlsx is archival only
+- Excel: Genesis.xlsx is archival only and should not be opened unless the user explicitly asks for it
 
 Current clean commit chain:
 

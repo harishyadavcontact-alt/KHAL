@@ -2,8 +2,9 @@
 
 - Runtime: Web + local API
 - Tooling: npm workspaces + Turborepo
-- Source-of-truth policy (v0.3): SQLite is the runtime and strategic authority.
-- Excel policy (v0.3): `Genesis.xlsx` is retained as archival/reference material only.
+- Source-of-truth policy (v0.6): `docs/product/Khal_genesis.md` is the canonical product doctrine and repository source of truth.
+- Runtime authority policy (v0.6): SQLite is the runtime data authority.
+- Excel policy (v0.6): `Genesis.xlsx` is retained as archival/reference material only and must not be opened unless explicitly requested.
 - Runtime strategy: local SQLite reads/writes for speed, offline execution, and deterministic API behavior.
 - Product doctrine: Affairs reduce fragility; Interests increase convexity; Mission Command orders execution.
 - Lab doctrine (v0.4.1): Interests are treated as experiments with Forge -> Wield -> Tinker lifecycle and hard protocol gate before execution.
