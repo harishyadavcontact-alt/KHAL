@@ -143,3 +143,4 @@ node scripts/qa-report.mjs
 ## References
 - Web implementation notes: `apps/web/README.md`
 - Decision compatibility spec: `docs/reports/khal-decision-compatibility-test-cases.md`
+- All other docs are downstream, operational, or generated artifacts and must not redefine product doctrine.
