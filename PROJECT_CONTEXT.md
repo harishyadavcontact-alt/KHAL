@@ -44,9 +44,10 @@ UI / UX principles:
 - `Show, don't tell`
 - `The medium is the message`
 
-Data model policy:
-- SQLite is the operational and strategic source of truth.
-- `Genesis.xlsx` is retained as historical reference only.
+Source-of-truth policy:
+- `docs/product/Khal_genesis.md` is the canonical product/doctrine source of truth for the repository.
+- SQLite is the operational runtime data authority.
+- `Genesis.xlsx` is retained as historical reference only and must not be inspected unless explicitly requested.
 
 End goal:
 - a decision system that gives the user clarity in under one second.

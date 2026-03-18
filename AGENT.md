@@ -6,11 +6,13 @@ Purpose:
 - point back to canonical continuity files instead of duplicating them
 
 Read first:
+- `docs/product/Khal_genesis.md`
 - `TERMINAL_HANDOFF.md`
 - `docs/agent-log/README.md`
 - `docs/agent-log/2026-03.md`
 
 Current product spine:
+- Product doctrine source of truth: `docs/product/Khal_genesis.md`
 - Runtime authority: operator-scoped SQLite
 - Doctrine order:
   - `State of the Art`
