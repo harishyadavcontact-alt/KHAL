@@ -307,15 +307,6 @@
       "height": 60
     },
     {
-      "id": "f40",
-      "type": "file",
-      "file": "docs/release/v0.4.4-reliability-dominance.md",
-      "x": 1520,
-      "y": 440,
-      "width": 340,
-      "height": 60
-    },
-    {
       "id": "f41",
       "type": "file",
       "file": "docs/reports/khal-decision-compatibility-test-cases.md",
@@ -325,38 +316,11 @@
       "height": 60
     },
     {
-      "id": "f42",
-      "type": "file",
-      "file": "docs/reports/personal-operator-journey-2026-03-10.md",
-      "x": 0,
-      "y": 590,
-      "width": 340,
-      "height": 60
-    },
-    {
       "id": "f43",
       "type": "file",
       "file": "docs/reports/state-of-the-art-alignment-2026-03-10.md",
       "x": 0,
       "y": 660,
-      "width": 340,
-      "height": 60
-    },
-    {
-      "id": "f44",
-      "type": "file",
-      "file": "docs/reports/ui-usability-benchmark-2026-03-10.md",
-      "x": 0,
-      "y": 730,
-      "width": 340,
-      "height": 60
-    },
-    {
-      "id": "f45",
-      "type": "file",
-      "file": "docs/reports/v0.4.4-architecture-benchmark.md",
-      "x": 0,
-      "y": 800,
       "width": 340,
       "height": 60
     },
@@ -582,39 +546,15 @@
       "label": "contains"
     },
     {
-      "id": "e24",
-      "fromNode": "d10",
-      "toNode": "f40",
-      "label": "contains"
-    },
-    {
       "id": "e25",
       "fromNode": "d11",
       "toNode": "f41",
       "label": "contains"
     },
     {
-      "id": "e26",
-      "fromNode": "d11",
-      "toNode": "f42",
-      "label": "contains"
-    },
-    {
       "id": "e27",
       "fromNode": "d11",
       "toNode": "f43",
-      "label": "contains"
-    },
-    {
-      "id": "e28",
-      "fromNode": "d11",
-      "toNode": "f44",
-      "label": "contains"
-    },
-    {
-      "id": "e29",
-      "fromNode": "d11",
-      "toNode": "f45",
       "label": "contains"
     },
     {

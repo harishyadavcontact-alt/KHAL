@@ -146,3 +146,4 @@ node scripts/qa-report.mjs
 - SQLite architecture: `docs/architecture/sqlite-architecture.md`
 - Product decisions log: `docs/product/decisions-log.md`
 - Web implementation notes: `apps/web/README.md`
+- All other docs are downstream, operational, or generated artifacts and must not redefine product doctrine.

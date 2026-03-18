@@ -135,37 +135,13 @@
       "action": "migrate"
     },
     {
-      "file": "docs/release/v0.4.4-reliability-dominance.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
       "file": "docs/reports/khal-decision-compatibility-test-cases.md",
       "format": ".md",
       "entropy": "high",
       "action": "migrate"
     },
     {
-      "file": "docs/reports/personal-operator-journey-2026-03-10.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
       "file": "docs/reports/state-of-the-art-alignment-2026-03-10.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
-      "file": "docs/reports/ui-usability-benchmark-2026-03-10.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
-      "file": "docs/reports/v0.4.4-architecture-benchmark.md",
       "format": ".md",
       "entropy": "high",
       "action": "migrate"
@@ -254,5 +230,7 @@
       "entropy": "low",
       "action": "keep"
     }
-  ]
+  ],
+  "canonical_doctrine": "docs/product/Khal_genesis.md",
+  "policy": "All other docs are downstream, operational, or generated artifacts."
 }
