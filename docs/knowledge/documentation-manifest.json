@@ -3,24 +3,6 @@
   "generated_from": "docs tree",
   "items": [
     {
-      "file": "PROJECT_CONTEXT.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "keep"
-    },
-    {
-      "file": "docs/agent-log/2026-03.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
-      "file": "docs/agent-log/README.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
       "file": "docs/architecture/api-contract.md",
       "format": ".md",
       "entropy": "high",
@@ -49,18 +31,6 @@
       "format": ".dot",
       "entropy": "low",
       "action": "keep"
-    },
-    {
-      "file": "docs/architecture/v0.1-system-design.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
-      "file": "docs/architecture/war-gaming-rewrite-slice-2026-03-11.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
     },
     {
       "file": "docs/architecture/war-gaming.dot",
@@ -148,12 +118,6 @@
     },
     {
       "file": "docs/product/visual-encoding-spec.md",
-      "format": ".md",
-      "entropy": "high",
-      "action": "migrate"
-    },
-    {
-      "file": "docs/refactor-audit-2026-03-10.md",
       "format": ".md",
       "entropy": "high",
       "action": "migrate"

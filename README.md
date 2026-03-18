@@ -39,9 +39,10 @@ UI / UX principles:
 - `Show, don't tell`
 - `The medium is the message`
 
-## Runtime Authority
-- **Single runtime and strategic authority**: SQLite (`data/KHAL.sqlite`).
-- `Genesis.xlsx` is retained in the repo as historical/reference material only.
+## Source of Truth
+- **Project doctrine source of truth**: `docs/product/Khal_genesis.md`.
+- **Runtime data authority**: SQLite (`data/KHAL.sqlite`).
+- `Genesis.xlsx` is retained in the repo as historical/reference material only and should not be opened unless explicitly requested.
 - No active Excel sync or Excel-authority path is required for runtime behavior.
 
 ## Repository Structure
@@ -139,6 +140,9 @@ node scripts/qa-report.mjs
   - War Gaming `TriageActionPanel` + `DoctrineFixButtons`
   - Dashboard `NextActionStrip`
 
-## References
+## Canonical Docs
+- Product doctrine: `docs/product/Khal_genesis.md`
+- Runtime authority: `docs/architecture/runtime-authority.md`
+- SQLite architecture: `docs/architecture/sqlite-architecture.md`
+- Product decisions log: `docs/product/decisions-log.md`
 - Web implementation notes: `apps/web/README.md`
-- Decision compatibility spec: `docs/reports/khal-decision-compatibility-test-cases.md`
