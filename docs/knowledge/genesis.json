@@ -3,7 +3,7 @@
     "status": "derived",
     "confidence": "medium",
     "version": "v0.1.0",
-    "purpose": "Conceptual source of truth for the War Room decision hierarchy and downstream decomposition.",
+    "purpose": "Derived structural map for the War Room decision hierarchy and downstream decomposition; canonical doctrine lives in docs/product/Khal_genesis.md.",
     "source_files": [
       "docs/decision-tree/war-room-fractal-decision-tree.md",
       "docs/reports/state-of-the-art-alignment-2026-03-10.md",
