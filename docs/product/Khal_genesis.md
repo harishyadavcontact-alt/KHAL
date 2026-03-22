@@ -366,7 +366,13 @@ Must include:
 - hedge %
 - edge %
 - irreversibility
+- planning & preparation
+- project plan
+- pipeline design
+- funnel design
+- channel thesis
 - protocol readiness
+- linked campaigns
 - linked execution
 
 ### Mission Command
@@ -400,12 +406,19 @@ Stages:
   - form thesis
 - `Wield`
   - deploy under protocol
+- `Hone`
+  - sharpen the live branch from early evidence
 - `Tinker`
   - refine or kill from evidence
 
+Doctrine:
+- the canonical lab loop remains `Forge -> Wield -> Tinker`
+- `Hone` is a practical post-deployment sharpening subloop, not a competing lifecycle
+- use `Hone` to tighten wedge, protocol, framing, channel assumptions, or first-use path after live contact
+
 ### Campaign
 Function:
-- repeated execution pattern attached to an Interest, optionally associated with an Affair
+- strategy and repeated execution pattern attached to an Interest, optionally associated with an Affair
 
 Current logic shape:
 - a campaign is detected from an `INTEREST` task root whose title starts with `Campaign:`
@@ -421,6 +434,14 @@ Doctrine:
 - Campaign belongs below Interest and Execution
 - Campaign is not Portfolio
 - Campaign is how an option is operationally probed across multiple attempts
+- Campaign is the strategic machine around the option:
+  - roadmap
+  - GTM
+  - growth
+  - distribution
+  - funding
+- pipeline, funnel, and channel design belong to Campaign logic, not to Portfolio
+- Campaign is where stage gates, milestone chains, funnel stages, channel thesis, and decision triggers are carried
 
 ### Portfolio War Room
 Function:
@@ -662,7 +683,11 @@ flowchart TD
         WI4 --> WI5["Max loss"]
         WI5 --> WI6["Hedge % / Edge %"]
         WI6 --> WI7["Irreversibility"]
-        WI7 --> WI8["Protocol readiness"]
+        WI7 --> WI8["Planning & preparation"]
+        WI8 --> WI9["Project plan"]
+        WI9 --> WI10["Pipeline / funnel / channel design"]
+        WI10 --> WI11["Protocol readiness"]
+        WI11 --> WI12["Linked campaigns"]
     end
 
     subgraph VSN["Vision Command"]
@@ -687,17 +712,24 @@ flowchart TD
         LF9 --> LW1["Wield<br/>deploy under protocol"]
         LW1 --> LW2["Queue execution"]
         LW2 --> LW3["Gather evidence"]
-        LW3 --> LT1["Tinker<br/>refine or kill"]
+        LW3 --> LH1["Hone<br/>sharpen live branch"]
+        LH1 --> LT1["Tinker<br/>refine or kill"]
         LT1 --> LT2["Scale / revise / terminate"]
     end
 
     subgraph CAM["Campaign"]
         H --> CPG1["Campaign root from Interest"]
-        CPG1 --> CPG2["Parallel attempts"]
-        CPG2 --> CPG3["Attempt count"]
-        CPG3 --> CPG4["Converged count"]
-        CPG4 --> CPG5["Conversion %"]
-        CPG5 --> CPG6["Fragility band"]
+        CPG1 --> CPG2["Campaign type<br/>roadmap / GTM / growth / distribution / funding"]
+        CPG2 --> CPG3["Stage gate"]
+        CPG3 --> CPG4["Milestone chain"]
+        CPG4 --> CPG5["Funnel stage"]
+        CPG5 --> CPG6["Channel thesis"]
+        CPG6 --> CPG7["Pipeline design"]
+        CPG7 --> CPG8["Parallel attempts"]
+        CPG8 --> CPG9["Attempt count"]
+        CPG9 --> CPG10["Converged count"]
+        CPG10 --> CPG11["Conversion %"]
+        CPG11 --> CPG12["Fragility band"]
     end
 
     subgraph MIS["Mission Command"]
@@ -808,5 +840,6 @@ The whole product should be read in this order:
 - `Interest` must show protocol and downside explicitly
 - `Lab` is not generic experimentation; it is the controlled lifecycle of `Interest`
 - `Campaign` is not Portfolio; it is repeated execution under an `Interest`
+- `Campaign` also carries the strategy layer around the option: roadmap, GTM, growth, distribution, funding, and funnel logic
 - `Portfolio` is above bets, not below them
 
