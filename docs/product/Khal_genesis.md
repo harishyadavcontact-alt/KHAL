@@ -40,6 +40,8 @@ It exists to:
 - `Mission Command` = organize affairs
 - `Vision Command` = organize interests
 - `Surgical Execution` = execute task chains
+- `Crafts` = doctrine of means
+- `Lineage` = blast radius and inheritance of consequence
 - `Dashboard` = global system telemetry
 
 ### Two-layer ontology
@@ -263,6 +265,53 @@ Example:
 - campaign snapshots
 - time horizon profile
 
+## Canonical source rules
+### Source packet rule
+A live `Source of Volatility` note is the top of the operational stream inside `War Room`.
+
+It is not just a label.
+
+It should carry the first complete pass of:
+- associated domains
+- stakes
+- risks
+- odds
+- vulnerabilities
+- fragility
+- ends
+- means
+- crafts
+- downstream affairs
+- downstream interests
+- downstream mission or campaign links
+
+The source note stays authoritative until repeated use clearly earns decomposition into more specific downstream notes.
+
+### Source stream rule
+The law stream itself is canonical.
+
+`Laws of the Universe` remains the top of that stream.
+
+Do not invent a synthetic parent above the laws unless explicitly required.
+
+### Derived surface rule
+`State of the Art`, `State of Affairs`, `Ends`, and `Means` may exist as traversal surfaces.
+
+They are derived views across canonical source and domain notes.
+
+They must not hold exclusive truth missing from the source packet or its downstream canonical entities.
+
+### Decomposition rule
+Do not split a source into separate means, framework, or craft pages just because folders exist.
+
+Create downstream doctrine notes only when:
+- the same means doctrine is reused across multiple active sources
+- a craft has enough substance to stand alone
+- the operator explicitly asks for deeper decomposition
+- the source packet is becoming too dense to remain legible
+
+Until then, keep the first war-game pass on the source note itself.
+
 ## Operational data model
 KHAL must preserve a parsimonious data model even when the operating doctrine becomes richer.
 
@@ -311,6 +360,24 @@ These are command surfaces, not separate canonical data classes:
 - `Portfolio`
 - `Dashboard`
 - `Drafts`
+
+### Canonical note rule
+Each live entity should have one canonical note.
+
+Dashboards, indexes, canvases, and chambers point to that note.
+
+They do not replace it.
+
+### Active-only chamber rule
+War Gaming chambers are not created for every entity.
+
+Create a chamber only when:
+- the entity is active
+- planning is needed now
+- simulation or sequencing matters
+- the canonical entity note is no longer enough
+
+The chamber is never the authority.
 
 ## Old and new synthesis
 KHAL already had the deep skeleton.
