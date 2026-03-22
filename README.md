@@ -3,10 +3,19 @@
 Status: downstream
 
 ## First Read
-- Start with `docs/product/Khal_genesis.md`.
-- Treat `docs/product/Khal_genesis.md` as the single source of truth for product doctrine, ontology, surface purpose, and operating sequence.
+- Start with `KHAL_genesis.md`.
+- Then read `docs/product/Khal_genesis.md`.
+- Treat `KHAL_genesis.md` as the repo-root entrypoint and `docs/product/Khal_genesis.md` as the full doctrine source of truth for product doctrine, ontology, surface purpose, and operating sequence.
 - If any downstream doc, report, note, or implementation detail conflicts with `docs/product/Khal_genesis.md`, `docs/product/Khal_genesis.md` wins.
 - Use this `README.md` only as a repository entrypoint and implementation map.
+
+## Development Model
+
+KHAL follows a genesis-first, bottom-up development model:
+
+- global doctrine is anchored in `docs/product/Khal_genesis.md`
+- `KHAL_genesis.md` is the repo-root agent entrypoint
+- implementation should resolve ambiguity as locally as possible
 
 KHAL is a local-first decision operating system.
 
@@ -49,17 +58,19 @@ UI / UX principles:
 
 ## Source of Truth
 - **Project doctrine source of truth**: `docs/product/Khal_genesis.md`.
+- **Repo root entrypoint**: `KHAL_genesis.md`.
 - **Runtime data authority**: SQLite-first runtime, with `data/KHAL.sqlite` as template DB and `data/operators/*.sqlite` as active operator DBs when selected.
-- `Genesis.xlsx` is retained in the repo as historical/reference material only and should not be opened unless explicitly requested.
+- `docs/root-docs/Genesis.xlsx` is retained as historical/reference material only and should not be opened unless explicitly requested.
 - No active Excel sync or Excel-authority path is required for runtime behavior.
 
 ## Repo Reading Order
 1. `docs/product/Khal_genesis.md`
-2. `AGENTS.md`
-3. `README.md`
-4. `docs/architecture/*` as needed for implementation reality
-5. `docs/product/*` only for local surface contracts
-6. `docs/reports/*` as historical analysis, never as doctrine authority
+2. `KHAL_genesis.md`
+3. `AGENTS.md`
+4. `README.md`
+5. `docs/architecture/*` as needed for implementation reality
+6. `docs/product/*` only for local surface contracts
+7. `docs/reports/*` as historical analysis, never as doctrine authority
 
 ## Repository Structure
 - `apps/web`: Next.js UI + API routes.
@@ -69,6 +80,7 @@ UI / UX principles:
 - `packages/ui`: shared UI package.
 - `scripts`: smoke checks, db bootstrapping, exports.
 - `docs`: architecture, product decisions, reports.
+- `docs/root-docs`: historical root-level docs retained outside the repo root.
 
 ## Quickstart
 ```bash
