@@ -81,6 +81,10 @@ The world as it is.
   - avoid
   - protocols
   - rules
+  - preparation
+  - logistics
+  - resourcing
+  - scheduling and cadence
   - doctrine-chain shape
 
 #### 2. State of Affairs
@@ -398,6 +402,13 @@ The newer operating additions should be understood as refinements inside that sk
 - venture stage
 - portfolio decision
 - protocol readiness
+- preparation state
+- logistics state
+- resource posture
+- capacity constraint
+- cadence
+- supply risk
+- demand signal
 - pipeline design
 - funnel design
 - channel thesis
@@ -453,6 +464,13 @@ It should carry:
 - primary metric
 - milestone chain
 - decision trigger
+- preparation state
+- logistics state
+- resource posture
+- capacity constraint
+- cadence
+- supply risk
+- demand signal
 - pipeline
 - pipeline stage
 - funnel
@@ -506,6 +524,11 @@ So:
 - `pipeline` = work-flow machine
 - `funnel` = conversion machine
 - `channel` = route to reality
+
+Preparation, logistics, resourcing, and cadence follow the same rule:
+- keep the doctrine in `Crafts`
+- keep the live state in the relevant `Campaign`
+- avoid creating a separate top-level logistics ontology unless repeated live use forces it
 
 ## Stakeholder doctrine for projects
 Projects are not just code artifacts.
@@ -582,6 +605,8 @@ Must include:
 - inherited fragility posture
 - inherited risks / vulnerabilities
 - planning & preparation
+- logistics posture
+- resource constraints
 - objectives
 - uncertainty
 - time horizon
@@ -623,6 +648,8 @@ Must include:
 - irreversibility
 - planning & preparation
 - project plan
+- logistics posture
+- resource constraints
 - pipeline design
 - funnel design
 - channel thesis
@@ -695,6 +722,11 @@ Doctrine:
   - growth
   - distribution
   - funding
+- Campaign also carries live preparation and logistics state:
+  - readiness
+  - resourcing
+  - cadence
+  - supply and demand pressure
 - pipeline, funnel, and channel design belong to Campaign logic, not to Portfolio
 - Campaign is where stage gates, milestone chains, funnel stages, channel thesis, and decision triggers are carried
 
