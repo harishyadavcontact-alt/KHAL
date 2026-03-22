@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import { decisionTypeLabel, methodPostureForQuadrant, quadrantNarrative, tailClassLabel } from "../../lib/war-room/source-map";
 import { buildSourceWarGameProtocol } from "../../lib/war-room/state-of-art";
-import { Domain, LineageNodeDto, LineageRiskDto, SourceMapDecisionType, SourceMapProfileDto, SourceMapTailClass, VolatilitySourceDto } from "./types";
+import { Domain, LineageNodeDto, LineageRiskDto, SourceMapDecisionType, SourceMapOddsBand, SourceMapProfileDto, SourceMapSurvivalImpact, SourceMapTailClass, VolatilitySourceDto } from "./types";
 import type { WarGameDoctrineChain } from "../../lib/war-room/bootstrap";
 
 interface WarGameVolatilityProps {
@@ -25,6 +25,12 @@ type SourceMapUpdate = Partial<
     | "notes"
     | "stakesText"
     | "risksText"
+    | "oddsText"
+    | "oddsBand"
+    | "repeatRateText"
+    | "baseRateText"
+    | "triggerConditionText"
+    | "survivalImpact"
     | "playersText"
     | "lineageThreatText"
     | "fragilityPosture"
@@ -56,12 +62,84 @@ const splitLines = (value?: string | null) =>
     .filter(Boolean)
     .slice(0, 4);
 
+const repeatCadenceLabel = (value?: string | null) => {
+  const hay = String(value ?? "").toLowerCase();
+  if (!hay.trim()) return "Unknown";
+  if (["continuous", "intraday", "hourly", "daily", "always-on", "mark-to-market"].some((token) => hay.includes(token))) return "Continuous";
+  if (["weekly", "repeated", "rollover", "monthly", "per cycle", "refinancing"].some((token) => hay.includes(token))) return "Repeated";
+  if (["episodic", "quarterly", "seasonal", "event-driven", "occasionally", "sometimes"].some((token) => hay.includes(token))) return "Episodic";
+  if (["one-off", "one off", "single event", "single-shot", "once"].some((token) => hay.includes(token))) return "One-off";
+  return "Unknown";
+};
+
+const sourceGateVerdict = (profile?: SourceMapProfileDto) => {
+  if (!profile) return { verdict: "Observe", tone: "watch" as const, summary: "Classify the field before choosing branch direction.", warnings: [] as string[], cadence: "Unknown" };
+  const cadence = repeatCadenceLabel(profile.repeatRateText);
+  const repeated = cadence === "Repeated" || cadence === "Continuous";
+  const oddsBand = profile.oddsBand ?? "unclear";
+  const survival = profile.survivalImpact ?? "recoverable";
+  const hasHedge = !isBlank(profile.hedgeText);
+  const hasEdge = !isBlank(profile.edgeText);
+  const warnings = [
+    (repeated || ["elevated", "high", "intolerable"].includes(oddsBand) || ["damaging", "existential"].includes(survival)) && isBlank(profile.baseRateText)
+      ? "Base rate missing"
+      : null,
+    ["high", "intolerable"].includes(oddsBand) && isBlank(profile.triggerConditionText)
+      ? "Trigger missing"
+      : null,
+    oddsBand === "low" && repeated && ["damaging", "existential"].includes(survival)
+      ? "Odds contradiction"
+      : null
+  ].filter(Boolean) as string[];
+  if (repeated && (oddsBand === "intolerable" || survival === "damaging" || survival === "existential")) {
+    return {
+      verdict: "Affair-biased",
+      tone: "risk" as const,
+      summary: "Protect first. Repeated exposure plus survival damage makes this an obligation before it is an option.",
+      warnings,
+      cadence
+    };
+  }
+  if (hasEdge && hasHedge && !repeated && ["low", "unclear"].includes(oddsBand) && survival === "recoverable") {
+    return {
+      verdict: "Interest-biased",
+      tone: "safe" as const,
+      summary: "Keep the option alive. Downside is bounded enough to preserve convex upside.",
+      warnings,
+      cadence
+    };
+  }
+  if (hasHedge && hasEdge) {
+    return {
+      verdict: "Mixed",
+      tone: "watch" as const,
+      summary: "Split the posture. Hedge the recurring downside, then keep only capped optionality.",
+      warnings,
+      cadence
+    };
+  }
+  return {
+    verdict: "Observe",
+    tone: "watch" as const,
+    summary: "Observe and classify further before committing branch direction.",
+    warnings,
+    cadence
+  };
+};
+
 const shortStateNarrative = (profile?: SourceMapProfileDto) => {
   if (!profile) return "Map the source-domain pair first. Posture and means should follow the field, not intuition.";
   const quadrant = profile.quadrant ?? "Q4";
   const posture = profile.methodPosture ?? methodPostureForQuadrant(quadrant);
   const stakes = profile.stakesText?.trim();
   const risks = profile.risksText?.trim();
+  const odds = profile.oddsText?.trim();
+  const oddsBand = profile.oddsBand?.trim();
+  const repeatRate = profile.repeatRateText?.trim();
+  const survivalImpact = profile.survivalImpact?.trim();
+  if (stakes && risks && odds && repeatRate) {
+    return `${stakes}. The main break path is ${risks}. Odds profile: ${odds}${oddsBand ? ` (${oddsBand})` : ""}. Exposure cadence: ${repeatRate}${survivalImpact ? `. Survival impact: ${survivalImpact}` : ""}. Current admissible posture: ${posture}.`;
+  }
   if (stakes && risks) return `${stakes}. The main break path is ${risks}. Current admissible posture: ${posture}.`;
   return quadrantNarrative({ decisionType: profile.decisionType, tailClass: profile.tailClass, quadrant });
 };
@@ -139,6 +217,7 @@ export function WarGameVolatility({ sourceId, sources, domains, lineages, lineag
   const domainProtocol = activeDomain ? protocol.domains.find((item) => item.domainId === activeDomain.id) : undefined;
   const doctrineChains = domainProtocol?.doctrineChains ?? [];
   const methodPosture = profile?.methodPosture ?? methodPostureForQuadrant(profile?.quadrant ?? "Q4");
+  const gateVerdict = sourceGateVerdict(profile);
   const activeCraft = crafts.find((craft) => craft.id === profile?.primaryCraftId);
   const heuristics = splitLines(profile?.heuristicsText);
   const avoid = splitLines(profile?.avoidText);
@@ -176,6 +255,12 @@ export function WarGameVolatility({ sourceId, sources, domains, lineages, lineag
           notes: updates.notes ?? existing?.notes ?? "",
           stakesText: updates.stakesText ?? existing?.stakesText ?? "",
           risksText: updates.risksText ?? existing?.risksText ?? "",
+          oddsText: updates.oddsText ?? existing?.oddsText ?? "",
+          oddsBand: updates.oddsBand ?? existing?.oddsBand ?? "unclear",
+          repeatRateText: updates.repeatRateText ?? existing?.repeatRateText ?? "",
+          baseRateText: updates.baseRateText ?? existing?.baseRateText ?? "",
+          triggerConditionText: updates.triggerConditionText ?? existing?.triggerConditionText ?? "",
+          survivalImpact: updates.survivalImpact ?? existing?.survivalImpact ?? "recoverable",
           playersText: updates.playersText ?? existing?.playersText ?? "",
           lineageThreatText: updates.lineageThreatText ?? existing?.lineageThreatText ?? "",
           fragilityPosture: updates.fragilityPosture ?? existing?.fragilityPosture ?? "",
@@ -336,6 +421,16 @@ export function WarGameVolatility({ sourceId, sources, domains, lineages, lineag
                     ))}
                   </div>
                   <p className="max-w-3xl text-[15px] italic leading-7 text-[var(--color-text-muted)]">{shortStateNarrative(profile)}</p>
+                  <div className="mt-4 rounded-sm border border-[var(--color-line)] bg-[var(--color-editor-bg-soft)] px-4 py-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Pill tone={gateVerdict.tone}>Gate verdict: {gateVerdict.verdict}</Pill>
+                      <Pill>Cadence: {gateVerdict.cadence}</Pill>
+                      {profile?.oddsBand ? <Pill tone={profile.oddsBand === "intolerable" || profile.oddsBand === "high" ? "risk" : profile.oddsBand === "elevated" ? "watch" : "default"}>Odds: {profile.oddsBand}</Pill> : null}
+                      {profile?.survivalImpact ? <Pill tone={profile.survivalImpact === "existential" ? "risk" : profile.survivalImpact === "damaging" ? "watch" : "safe"}>Survival: {profile.survivalImpact}</Pill> : null}
+                    </div>
+                    <div className="mt-3 max-w-3xl text-sm text-[var(--color-text)]">{gateVerdict.summary}</div>
+                    {gateVerdict.warnings.length ? <div className="mt-2 text-[11px] uppercase tracking-[0.08em] text-[var(--color-warning)] font-[var(--font-mono)]">Warnings: {gateVerdict.warnings.join(" | ")}</div> : null}
+                  </div>
                 </div>
 
                 <div>
@@ -374,6 +469,30 @@ export function WarGameVolatility({ sourceId, sources, domains, lineages, lineag
                       <div className="mt-4 space-y-4">
                         {renderTextarea(activeDomain.id, "Stakes", "What is at risk here?", profile?.stakesText, "stakesText")}
                         {renderTextarea(activeDomain.id, "Risks", "How can this break or spread?", profile?.risksText, "risksText")}
+                        {renderTextarea(activeDomain.id, "Odds", "What are the odds bands, base rates, or trigger-conditional paths here?", profile?.oddsText, "oddsText")}
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <label className="space-y-2">
+                            <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Odds band</span>
+                            <select className="khal-select px-4 py-3 text-sm" value={profile?.oddsBand ?? "unclear"} disabled={savingDomainId === activeDomain.id} onChange={(event) => void saveProfile(activeDomain.id, { oddsBand: event.target.value as SourceMapOddsBand })}>
+                              <option value="low">Low</option>
+                              <option value="unclear">Unclear</option>
+                              <option value="elevated">Elevated</option>
+                              <option value="high">High</option>
+                              <option value="intolerable">Intolerable</option>
+                            </select>
+                          </label>
+                          <label className="space-y-2">
+                            <span className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Survival impact</span>
+                            <select className="khal-select px-4 py-3 text-sm" value={profile?.survivalImpact ?? "recoverable"} disabled={savingDomainId === activeDomain.id} onChange={(event) => void saveProfile(activeDomain.id, { survivalImpact: event.target.value as SourceMapSurvivalImpact })}>
+                              <option value="recoverable">Recoverable</option>
+                              <option value="damaging">Damaging</option>
+                              <option value="existential">Existential</option>
+                            </select>
+                          </label>
+                        </div>
+                        {renderTextarea(activeDomain.id, "Repeat rate", "How often does this exposure repeat through time?", profile?.repeatRateText, "repeatRateText")}
+                        {renderTextarea(activeDomain.id, "Base rate", "What baseline frequency or reference class informs this?", profile?.baseRateText, "baseRateText")}
+                        {renderTextarea(activeDomain.id, "Trigger condition", "What event or threshold materially changes the odds?", profile?.triggerConditionText, "triggerConditionText")}
                         {renderTextarea(activeDomain.id, "Lineage", "Which lineage layer is threatened?", profile?.lineageThreatText, "lineageThreatText")}
                         {renderTextarea(activeDomain.id, "Players / Fragilistas", "Who can worsen fragility?", profile?.playersText, "playersText")}
                       </div>

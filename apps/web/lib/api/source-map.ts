@@ -16,6 +16,12 @@ const sourceMapProfileSchema = z.object({
   notes: z.string().optional(),
   stakesText: z.string().optional(),
   risksText: z.string().optional(),
+  oddsText: z.string().optional(),
+  oddsBand: z.enum(["low", "unclear", "elevated", "high", "intolerable"]).optional(),
+  repeatRateText: z.string().optional(),
+  baseRateText: z.string().optional(),
+  triggerConditionText: z.string().optional(),
+  survivalImpact: z.enum(["recoverable", "damaging", "existential"]).optional(),
   playersText: z.string().optional(),
   lineageThreatText: z.string().optional(),
   fragilityPosture: z.string().optional(),
@@ -44,6 +50,12 @@ function mapSourceMapProfile(row: AnyRow): SourceMapProfileDto {
     notes: row.notes ? String(row.notes) : undefined,
     stakesText: row.stakes_text ? String(row.stakes_text) : undefined,
     risksText: row.risks_text ? String(row.risks_text) : undefined,
+    oddsText: row.odds_text ? String(row.odds_text) : undefined,
+    oddsBand: row.odds_band ? row.odds_band as SourceMapProfileDto["oddsBand"] : undefined,
+    repeatRateText: row.repeat_rate_text ? String(row.repeat_rate_text) : undefined,
+    baseRateText: row.base_rate_text ? String(row.base_rate_text) : undefined,
+    triggerConditionText: row.trigger_condition_text ? String(row.trigger_condition_text) : undefined,
+    survivalImpact: row.survival_impact ? row.survival_impact as SourceMapProfileDto["survivalImpact"] : undefined,
     playersText: row.players_text ? String(row.players_text) : undefined,
     lineageThreatText: row.lineage_threat_text ? String(row.lineage_threat_text) : undefined,
     fragilityPosture: row.fragility_posture ? String(row.fragility_posture) : undefined,
@@ -59,15 +71,42 @@ function mapSourceMapProfile(row: AnyRow): SourceMapProfileDto {
 }
 
 function seedAffairScores(profile: AnyRow) {
+  const oddsBand = String(profile.odds_band ?? "").toLowerCase();
+  const survivalImpact = String(profile.survival_impact ?? "").toLowerCase();
+  const repeatRate = String(profile.repeat_rate_text ?? "").toLowerCase();
+  const repeatedExposure = ["continuous", "daily", "weekly", "repeated", "rollover", "mark-to-market"].some((token) => repeatRate.includes(token));
+  if (repeatedExposure && (oddsBand === "intolerable" || survivalImpact === "existential")) return { stakes: 10, risk: 10 };
+  if (oddsBand === "high" || survivalImpact === "damaging") return { stakes: 9, risk: 8 };
   if (String(profile.fragility_posture ?? "") === "fragile") return { stakes: 8, risk: 8 };
   if (String(profile.fragility_posture ?? "") === "antifragile") return { stakes: 5, risk: 3 };
   return { stakes: 6, risk: 5 };
 }
 
 function seedInterestScores(profile: AnyRow) {
+  const oddsBand = String(profile.odds_band ?? "").toLowerCase();
+  const survivalImpact = String(profile.survival_impact ?? "").toLowerCase();
+  if (oddsBand === "intolerable" || survivalImpact === "existential") return { stakes: 3, risk: 6, convexity: 4 };
+  if (oddsBand === "high" || survivalImpact === "damaging") return { stakes: 4, risk: 5, convexity: 5 };
   if (String(profile.fragility_posture ?? "") === "antifragile") return { stakes: 6, risk: 3, convexity: 8 };
   if (String(profile.fragility_posture ?? "") === "robust") return { stakes: 5, risk: 4, convexity: 6 };
   return { stakes: 4, risk: 4, convexity: 5 };
+}
+
+function isErgodicAffairBias(profile: AnyRow): boolean {
+  const oddsBand = String(profile.odds_band ?? "").toLowerCase();
+  const survivalImpact = String(profile.survival_impact ?? "").toLowerCase();
+  const repeatRate = String(profile.repeat_rate_text ?? "").toLowerCase();
+  const repeatedExposure = ["continuous", "daily", "weekly", "repeated", "rollover", "mark-to-market"].some((token) => repeatRate.includes(token));
+  return repeatedExposure && (oddsBand === "high" || oddsBand === "intolerable" || survivalImpact === "damaging" || survivalImpact === "existential");
+}
+
+function buildProfileBiasNotes(profile: AnyRow): string[] {
+  const notes: string[] = [];
+  if (String(profile.odds_band ?? "").trim()) notes.push(`Odds band: ${String(profile.odds_band)}`);
+  if (String(profile.survival_impact ?? "").trim()) notes.push(`Survival impact: ${String(profile.survival_impact)}`);
+  if (String(profile.repeat_rate_text ?? "").trim()) notes.push(`Repeat rate: ${String(profile.repeat_rate_text)}`);
+  if (String(profile.trigger_condition_text ?? "").trim()) notes.push(`Trigger: ${String(profile.trigger_condition_text)}`);
+  return notes;
 }
 
 function collectDoctrineWarnings(db: Database.Database, profile: AnyRow): string[] {
@@ -81,7 +120,7 @@ export function loadSourceMapProfiles(db: Database.Database): SourceMapProfileDt
   const rows = db
     .prepare(
       `SELECT id, source_id, domain_id, decision_type, tail_class, quadrant, method_posture, notes
-             , stakes_text, risks_text, players_text, lineage_threat_text, fragility_posture, vulnerabilities_text
+             , stakes_text, risks_text, odds_text, odds_band, repeat_rate_text, base_rate_text, trigger_condition_text, survival_impact, players_text, lineage_threat_text, fragility_posture, vulnerabilities_text
              , hedge_text, edge_text, primary_craft_id, heuristics_text, avoid_text, affair_id, interest_id
        FROM source_map_profiles
        ORDER BY source_id, domain_id, updated_at DESC`
@@ -97,7 +136,7 @@ export async function handleSourceMapGet(sourceId: string) {
     const rows = db
       .prepare(
         `SELECT id, source_id, domain_id, decision_type, tail_class, quadrant, method_posture, notes
-               , stakes_text, risks_text, players_text, lineage_threat_text, fragility_posture, vulnerabilities_text
+               , stakes_text, risks_text, odds_text, odds_band, repeat_rate_text, base_rate_text, trigger_condition_text, survival_impact, players_text, lineage_threat_text, fragility_posture, vulnerabilities_text
                , hedge_text, edge_text, primary_craft_id, heuristics_text, avoid_text, affair_id, interest_id
          FROM source_map_profiles
          WHERE source_id=?
@@ -118,7 +157,7 @@ export async function handleSourceMapPut(sourceId: string, rawBody: unknown) {
 
     const priorProfile = db
       .prepare(
-        `SELECT id, decision_type, tail_class, notes, stakes_text, risks_text, players_text, lineage_threat_text,
+        `SELECT id, decision_type, tail_class, notes, stakes_text, risks_text, odds_text, odds_band, repeat_rate_text, base_rate_text, trigger_condition_text, survival_impact, players_text, lineage_threat_text,
                 fragility_posture, vulnerabilities_text, hedge_text, edge_text, primary_craft_id, heuristics_text, avoid_text, affair_id, interest_id
          FROM source_map_profiles
          WHERE source_id=? AND domain_id=?`
@@ -133,7 +172,7 @@ export async function handleSourceMapPut(sourceId: string, rawBody: unknown) {
     if (priorProfile) {
       db.prepare(
         `UPDATE source_map_profiles
-         SET decision_type=?, tail_class=?, quadrant=?, method_posture=?, notes=?, stakes_text=?, risks_text=?, players_text=?,
+         SET decision_type=?, tail_class=?, quadrant=?, method_posture=?, notes=?, stakes_text=?, risks_text=?, odds_text=?, odds_band=?, repeat_rate_text=?, base_rate_text=?, trigger_condition_text=?, survival_impact=?, players_text=?,
              lineage_threat_text=?, fragility_posture=?, vulnerabilities_text=?, hedge_text=?, edge_text=?, primary_craft_id=?,
              heuristics_text=?, avoid_text=?, updated_at=datetime('now')
          WHERE id=?`
@@ -145,6 +184,12 @@ export async function handleSourceMapPut(sourceId: string, rawBody: unknown) {
         parsed.notes ?? priorProfile.notes ?? null,
         parsed.stakesText ?? priorProfile.stakes_text ?? null,
         parsed.risksText ?? priorProfile.risks_text ?? null,
+        parsed.oddsText ?? priorProfile.odds_text ?? null,
+        parsed.oddsBand ?? priorProfile.odds_band ?? null,
+        parsed.repeatRateText ?? priorProfile.repeat_rate_text ?? null,
+        parsed.baseRateText ?? priorProfile.base_rate_text ?? null,
+        parsed.triggerConditionText ?? priorProfile.trigger_condition_text ?? null,
+        parsed.survivalImpact ?? priorProfile.survival_impact ?? null,
         parsed.playersText ?? priorProfile.players_text ?? null,
         parsed.lineageThreatText ?? priorProfile.lineage_threat_text ?? null,
         parsed.fragilityPosture ?? priorProfile.fragility_posture ?? null,
@@ -159,10 +204,10 @@ export async function handleSourceMapPut(sourceId: string, rawBody: unknown) {
     } else {
       db.prepare(
         `INSERT INTO source_map_profiles
-         (id, source_id, domain_id, decision_type, tail_class, quadrant, method_posture, notes, stakes_text, risks_text,
-          players_text, lineage_threat_text, fragility_posture, vulnerabilities_text, hedge_text, edge_text, primary_craft_id,
+         (id, source_id, domain_id, decision_type, tail_class, quadrant, method_posture, notes, stakes_text, risks_text, odds_text, odds_band,
+          repeat_rate_text, base_rate_text, trigger_condition_text, survival_impact, players_text, lineage_threat_text, fragility_posture, vulnerabilities_text, hedge_text, edge_text, primary_craft_id,
           heuristics_text, avoid_text)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).run(
         id,
         sourceId,
@@ -174,6 +219,12 @@ export async function handleSourceMapPut(sourceId: string, rawBody: unknown) {
         parsed.notes ?? null,
         parsed.stakesText ?? null,
         parsed.risksText ?? null,
+        parsed.oddsText ?? null,
+        parsed.oddsBand ?? null,
+        parsed.repeatRateText ?? null,
+        parsed.baseRateText ?? null,
+        parsed.triggerConditionText ?? null,
+        parsed.survivalImpact ?? null,
         parsed.playersText ?? null,
         parsed.lineageThreatText ?? null,
         parsed.fragilityPosture ?? null,
@@ -197,6 +248,12 @@ export async function handleSourceMapPut(sourceId: string, rawBody: unknown) {
       notes: parsed.notes ?? priorProfile?.notes ?? undefined,
       stakesText: parsed.stakesText ?? priorProfile?.stakes_text ?? undefined,
       risksText: parsed.risksText ?? priorProfile?.risks_text ?? undefined,
+      oddsText: parsed.oddsText ?? priorProfile?.odds_text ?? undefined,
+      oddsBand: parsed.oddsBand ?? priorProfile?.odds_band ?? undefined,
+      repeatRateText: parsed.repeatRateText ?? priorProfile?.repeat_rate_text ?? undefined,
+      baseRateText: parsed.baseRateText ?? priorProfile?.base_rate_text ?? undefined,
+      triggerConditionText: parsed.triggerConditionText ?? priorProfile?.trigger_condition_text ?? undefined,
+      survivalImpact: parsed.survivalImpact ?? priorProfile?.survival_impact ?? undefined,
       playersText: parsed.playersText ?? priorProfile?.players_text ?? undefined,
       lineageThreatText: parsed.lineageThreatText ?? priorProfile?.lineage_threat_text ?? undefined,
       fragilityPosture: parsed.fragilityPosture ?? priorProfile?.fragility_posture ?? undefined,
@@ -237,6 +294,7 @@ export async function handleSourceMapStateOfAffairs(sourceId: string, rawBody: u
     }
 
     const doctrineWarnings = collectDoctrineWarnings(db, profile);
+    const biasNotes = buildProfileBiasNotes(profile);
 
     if (parsed.kind === "affair") {
       const linkedAffairId = profile.affair_id ? String(profile.affair_id) : randomUUID();
@@ -250,14 +308,14 @@ export async function handleSourceMapStateOfAffairs(sourceId: string, rawBody: u
           title: existingAffair?.title ? String(existingAffair.title) : `Hedge: ${String(domain.name)} - ${String(source.name)}`,
           description: existingAffair?.description
             ? String(existingAffair.description)
-            : doctrineWarnings.length
-              ? `Doctrine warnings: ${doctrineWarnings.join(" ")}`
-              : "",
+            : [...biasNotes, doctrineWarnings.length ? `Doctrine warnings: ${doctrineWarnings.join(" ")}` : ""].filter(Boolean).join(" | "),
           timeline: existingAffair?.timeline
             ? String(existingAffair.timeline)
-            : doctrineWarnings.length
-              ? "Immediate obligation seeded from State of the Art. Penalized due to unresolved doctrine gaps."
-              : "Immediate obligation seeded from State of the Art",
+            : isErgodicAffairBias(profile)
+              ? "Immediate no-ruin obligation seeded from repeated high-odds exposure."
+              : doctrineWarnings.length
+                ? "Immediate obligation seeded from State of the Art. Penalized due to unresolved doctrine gaps."
+                : "Immediate obligation seeded from State of the Art",
           stakes: existingAffair?.stakes ? Number(existingAffair.stakes) : affairScores.stakes,
           risk: existingAffair?.risk ? Number(existingAffair.risk) : affairScores.risk,
           status: (existingAffair?.status ? String(existingAffair.status) : "NOT_STARTED") as Status
@@ -274,7 +332,7 @@ export async function handleSourceMapStateOfAffairs(sourceId: string, rawBody: u
            WHERE affair_id=?`
         ).run(
           JSON.stringify(objectives),
-          [String(profile.risks_text ?? profile.vulnerabilities_text ?? ""), doctrineWarnings.length ? `Doctrine warnings: ${doctrineWarnings.join(" ")}` : ""]
+          [String(profile.risks_text ?? profile.vulnerabilities_text ?? ""), ...biasNotes, doctrineWarnings.length ? `Doctrine warnings: ${doctrineWarnings.join(" ")}` : ""]
             .filter(Boolean)
             .join(" | "),
           "WEEK",
@@ -287,7 +345,7 @@ export async function handleSourceMapStateOfAffairs(sourceId: string, rawBody: u
         ).run(
           linkedAffairId,
           JSON.stringify(objectives),
-          [String(profile.risks_text ?? profile.vulnerabilities_text ?? ""), doctrineWarnings.length ? `Doctrine warnings: ${doctrineWarnings.join(" ")}` : ""]
+          [String(profile.risks_text ?? profile.vulnerabilities_text ?? ""), ...biasNotes, doctrineWarnings.length ? `Doctrine warnings: ${doctrineWarnings.join(" ")}` : ""]
             .filter(Boolean)
             .join(" | "),
           "WEEK"
@@ -366,6 +424,7 @@ export async function handleSourceMapStateOfAffairs(sourceId: string, rawBody: u
           ? String(existingInterest.notes)
           : [
               `Generated from source ${String(source.name)} in domain ${String(domain.name)}.`,
+              ...biasNotes,
               doctrineWarnings.length ? `Doctrine warnings: ${doctrineWarnings.join(" ")}` : ""
             ]
               .filter(Boolean)

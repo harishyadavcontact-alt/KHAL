@@ -67,7 +67,7 @@ export function WarGamingModeClient({ mode, targetId, onboarding = false }: { mo
                 <div className="khal-meta text-[10px]">First Decision Loop</div>
                 <h2 className="khal-title mt-2 text-xl font-semibold">First we need to war-game your sources of volatility.</h2>
                 <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-                  Start with each volatility source. For each one, identify the domains it touches. Then in each domain capture stakes, risks, fragility, hedge, and edge.
+                  Start with each volatility source. For each source, identify the domains it touches, then work the source-domain pair through Map, Stone, Ends, and Means before generating an Affair or Interest.
                 </p>
                 <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
                   <div className="khal-editor-block p-4">
@@ -101,9 +101,9 @@ export function WarGamingModeClient({ mode, targetId, onboarding = false }: { mo
                       {[
                         "1. Capture each volatility source.",
                         "2. Select one source and identify the domains it touches.",
-                        "3. In each domain, state the stakes and the risks.",
-                        "4. Then define fragility, hedge, and edge.",
-                        "5. Convert the highest-pressure items into action."
+                        "3. Classify the source-domain pair through Map and Stone.",
+                        "4. Define Ends and Means for the active quadrant.",
+                        "5. Generate the right branch: Affair for no-ruin, Interest for convexity."
                       ].map((step, index) => (
                         <div key={step} className="khal-list-step px-3 py-3">
                           <div className="khal-meta text-[10px]">Step {index + 1}</div>

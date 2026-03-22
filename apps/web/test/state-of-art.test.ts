@@ -16,6 +16,12 @@ describe("state of the art projection", () => {
     methodPosture: "No-ruin first.",
     stakesText: "Capital survival.",
     risksText: "Liquidity shock.",
+    oddsText: "Elevated downside odds under leverage; survival odds fall under repetition.",
+    oddsBand: "high",
+    repeatRateText: "Monthly refinancing exposure.",
+    baseRateText: "Past tightening cycles with leverage concentration.",
+    triggerConditionText: "Liquidity spread widening beyond refinancing capacity.",
+    survivalImpact: "damaging",
     playersText: "Fragilistas",
     lineageThreatText: "Family and state",
     fragilityPosture: "fragile",
@@ -32,6 +38,10 @@ describe("state of the art projection", () => {
   it("builds a readable projection from the source-map profile", () => {
     const projection = buildStateOfArtProjection({ profile, source, domain, crafts: [craft] });
     expect(projection.stone.asymmetry.skinInTheGame.stakes).toBe("Capital survival.");
+    expect(projection.stone.asymmetry.skinInTheGame.odds).toContain("Elevated downside odds");
+    expect(projection.stone.asymmetry.skinInTheGame.oddsBand).toBe("high");
+    expect(projection.stone.asymmetry.skinInTheGame.repeatRate).toContain("Monthly");
+    expect(projection.stone.asymmetry.skinInTheGame.survivalImpact).toBe("damaging");
     expect(projection.stone.nonLinearity.shortVolatilityLabel).toBe("Short volatility");
     expect(projection.means.primaryCraftName).toBe("Bellwether");
     expect(projection.links.affairId).toBe("aff-1");

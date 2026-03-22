@@ -1,5 +1,13 @@
 # KHAL
 
+Status: downstream
+
+## First Read
+- Start with `docs/product/Khal_genesis.md`.
+- Treat `docs/product/Khal_genesis.md` as the single source of truth for product doctrine, ontology, surface purpose, and operating sequence.
+- If any downstream doc, report, note, or implementation detail conflicts with `docs/product/Khal_genesis.md`, `docs/product/Khal_genesis.md` wins.
+- Use this `README.md` only as a repository entrypoint and implementation map.
+
 KHAL is a local-first decision operating system.
 
 At its simplest:
@@ -41,9 +49,17 @@ UI / UX principles:
 
 ## Source of Truth
 - **Project doctrine source of truth**: `docs/product/Khal_genesis.md`.
-- **Runtime data authority**: SQLite (`data/KHAL.sqlite`).
+- **Runtime data authority**: SQLite-first runtime, with `data/KHAL.sqlite` as template DB and `data/operators/*.sqlite` as active operator DBs when selected.
 - `Genesis.xlsx` is retained in the repo as historical/reference material only and should not be opened unless explicitly requested.
 - No active Excel sync or Excel-authority path is required for runtime behavior.
+
+## Repo Reading Order
+1. `docs/product/Khal_genesis.md`
+2. `AGENTS.md`
+3. `README.md`
+4. `docs/architecture/*` as needed for implementation reality
+5. `docs/product/*` only for local surface contracts
+6. `docs/reports/*` as historical analysis, never as doctrine authority
 
 ## Repository Structure
 - `apps/web`: Next.js UI + API routes.
@@ -70,7 +86,7 @@ npm --workspace @khal/web run dev
 - `/lab`
 - `/interests`
 - `/affairs`
-- `/war-gaming` (landing redirects to `/war-gaming/affair`)
+- `/war-gaming` (landing redirects to `/war-gaming/source`)
 - `/war-gaming/source`
 - `/war-gaming/domain`
 - `/war-gaming/affair`
@@ -82,6 +98,8 @@ npm --workspace @khal/web run dev
 - `/crafts-library`
 - `/time-horizon`
 - `/lineage-map`
+- `/drafts`
+- `/missionCommand/portfolio`
 - `/maya`
 - `/brand`
 - `/khal/logo`

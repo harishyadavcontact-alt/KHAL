@@ -291,6 +291,12 @@ export function DomainModal({ selectedDomain, data, onClose, onOpenAffair, onNav
                         </div>
                         <div className="mt-2 text-xs text-zinc-300">Skin in the game: {projection.stone.asymmetry.skinInTheGame.stakes ?? "Undefined"}</div>
                         <div className="mt-1 text-xs text-zinc-400">Risks: {projection.stone.asymmetry.skinInTheGame.risks ?? "Undefined"}</div>
+                        <div className="mt-1 text-xs text-zinc-400">Odds: {projection.stone.asymmetry.skinInTheGame.odds ?? "Undefined"}</div>
+                        <div className="mt-1 text-xs text-zinc-400">Odds band: {projection.stone.asymmetry.skinInTheGame.oddsBand ?? "Undefined"}</div>
+                        <div className="mt-1 text-xs text-zinc-400">Repeat rate: {projection.stone.asymmetry.skinInTheGame.repeatRate ?? "Undefined"}</div>
+                        <div className="mt-1 text-xs text-zinc-400">Base rate: {projection.stone.asymmetry.skinInTheGame.baseRate ?? "Undefined"}</div>
+                        <div className="mt-1 text-xs text-zinc-400">Trigger: {projection.stone.asymmetry.skinInTheGame.triggerCondition ?? "Undefined"}</div>
+                        <div className="mt-1 text-xs text-zinc-400">Survival impact: {projection.stone.asymmetry.skinInTheGame.survivalImpact ?? "Undefined"}</div>
                         <div className="mt-1 text-xs text-zinc-400">Lineage: {projection.stone.asymmetry.skinInTheGame.lineage ?? "Undefined"}</div>
                         <div className="mt-1 text-xs text-zinc-400">Short volatility: {projection.stone.nonLinearity.shortVolatilityLabel ?? "Undefined"}</div>
                         <div className="mt-1 text-xs text-zinc-400">Hedge / Edge: {projection.ends.hedge ?? "Undefined"} / {projection.ends.edge ?? "Undefined"}</div>

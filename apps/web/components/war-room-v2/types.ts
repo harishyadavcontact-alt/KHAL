@@ -20,6 +20,8 @@ export type DoctrineRuleKind = "RULE" | "POLICY" | "OMISSION" | "TRIGGER" | "BAR
 export type SourceMapDecisionType = "simple" | "complex";
 export type SourceMapTailClass = "thin" | "fat" | "unknown";
 export type SourceMapQuadrant = "Q1" | "Q2" | "Q3" | "Q4";
+export type SourceMapOddsBand = "low" | "unclear" | "elevated" | "high" | "intolerable";
+export type SourceMapSurvivalImpact = "recoverable" | "damaging" | "existential";
 
 export interface UserProfile {
   name?: string;
@@ -853,7 +855,11 @@ export interface StateOfArtStageStatus {
 
 export interface StateOfArtAssessment {
   dominantQuadrant?: string;
+  gateVerdict: "AFFAIR_BIASED" | "INTEREST_BIASED" | "MIXED" | "OBSERVE";
+  repeatCadence: "ONE_OFF" | "EPISODIC" | "REPEATED" | "CONTINUOUS" | "UNKNOWN";
   recommendedPosture: string;
+  exotericSignal: string;
+  signalWarnings: string[];
   lineageAtThreat?: string;
   requiredEnds: string[];
   admissibleMeans: string[];
@@ -1051,6 +1057,12 @@ export interface SourceMapProfileDto {
   notes?: string;
   stakesText?: string;
   risksText?: string;
+  oddsText?: string;
+  oddsBand?: SourceMapOddsBand;
+  repeatRateText?: string;
+  baseRateText?: string;
+  triggerConditionText?: string;
+  survivalImpact?: SourceMapSurvivalImpact;
   playersText?: string;
   lineageThreatText?: string;
   fragilityPosture?: string;
@@ -1136,6 +1148,12 @@ export interface StateOfArtProjection {
       skinInTheGame: {
         stakes?: string;
         risks?: string;
+        odds?: string;
+        oddsBand?: SourceMapOddsBand;
+        repeatRate?: string;
+        baseRate?: string;
+        triggerCondition?: string;
+        survivalImpact?: SourceMapSurvivalImpact;
         lineage?: string;
         players?: string;
       };

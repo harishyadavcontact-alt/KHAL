@@ -53,6 +53,83 @@ const SPEC: DecisionSpecDto = decisionSpecSchema.parse({
   ]
 });
 
+const ODDS_BAND_SCORE: Record<NonNullable<SourceMapProfileDto["oddsBand"]>, number> = {
+  low: 1,
+  unclear: 2,
+  elevated: 3,
+  high: 4,
+  intolerable: 5
+};
+
+const SURVIVAL_IMPACT_SCORE: Record<NonNullable<SourceMapProfileDto["survivalImpact"]>, number> = {
+  recoverable: 1,
+  damaging: 2,
+  existential: 3
+};
+
+function repeatCadence(text?: string): "ONE_OFF" | "EPISODIC" | "REPEATED" | "CONTINUOUS" | "UNKNOWN" {
+  const hay = String(text ?? "").toLowerCase();
+  if (!hay.trim()) return "UNKNOWN";
+  if (["continuous", "intraday", "hourly", "daily", "always-on", "mark-to-market"].some((token) => hay.includes(token))) return "CONTINUOUS";
+  if (["weekly", "repeated", "rollover", "monthly", "per cycle", "refinancing"].some((token) => hay.includes(token))) return "REPEATED";
+  if (["episodic", "quarterly", "seasonal", "event-driven", "occasionally", "sometimes"].some((token) => hay.includes(token))) return "EPISODIC";
+  if (["one-off", "one off", "single event", "single-shot", "once"].some((token) => hay.includes(token))) return "ONE_OFF";
+  return "UNKNOWN";
+}
+
+function isHighRepeatRate(text?: string): boolean {
+  const cadence = repeatCadence(text);
+  return cadence === "REPEATED" || cadence === "CONTINUOUS";
+}
+
+function requiresBaseRate(profile: SourceMapProfileDto): boolean {
+  const oddsScore = profile.oddsBand ? ODDS_BAND_SCORE[profile.oddsBand] : 0;
+  const survivalScore = profile.survivalImpact ? SURVIVAL_IMPACT_SCORE[profile.survivalImpact] : 0;
+  return oddsScore >= ODDS_BAND_SCORE.elevated || survivalScore >= SURVIVAL_IMPACT_SCORE.damaging || isHighRepeatRate(profile.repeatRateText);
+}
+
+function sourceProfileGateSignals(profiles: SourceMapProfileDto[]) {
+  const maxOddsBand = profiles.reduce((max, profile) => Math.max(max, profile.oddsBand ? ODDS_BAND_SCORE[profile.oddsBand] : 0), 0);
+  const maxSurvivalImpact = profiles.reduce((max, profile) => Math.max(max, profile.survivalImpact ? SURVIVAL_IMPACT_SCORE[profile.survivalImpact] : 0), 0);
+  const repeatedExposure = profiles.some((profile) => isHighRepeatRate(profile.repeatRateText));
+  const cadenceRank: Record<ReturnType<typeof repeatCadence>, number> = { UNKNOWN: 0, ONE_OFF: 1, EPISODIC: 2, REPEATED: 3, CONTINUOUS: 4 };
+  const maxRepeatCadence = profiles.reduce<ReturnType<typeof repeatCadence>>((max, profile) => {
+    const cadence = repeatCadence(profile.repeatRateText);
+    return cadenceRank[cadence] > cadenceRank[max] ? cadence : max;
+  }, "UNKNOWN");
+  const intolerableOdds = profiles.some((profile) => profile.oddsBand === "intolerable");
+  const highOdds = profiles.some((profile) => profile.oddsBand === "high" || profile.oddsBand === "intolerable");
+  const elevatedOdds = profiles.some((profile) => profile.oddsBand === "elevated" || profile.oddsBand === "high" || profile.oddsBand === "intolerable");
+  const existentialSurvival = profiles.some((profile) => profile.survivalImpact === "existential");
+  const cappedDownside = profiles.some((profile) => Boolean(profile.hedgeText?.trim()));
+  const convexUpside = profiles.some((profile) => Boolean(profile.edgeText?.trim()));
+  const triggerAware = profiles.some((profile) => Boolean(profile.triggerConditionText?.trim()));
+  const baseRateAnchored = profiles.some((profile) => Boolean(profile.baseRateText?.trim()));
+  const baseRateRequired = profiles.some((profile) => requiresBaseRate(profile));
+  const contradiction = profiles.some((profile) => {
+    const oddsLow = profile.oddsBand === "low";
+    const cadence = repeatCadence(profile.repeatRateText);
+    const survivalSevere = profile.survivalImpact === "damaging" || profile.survivalImpact === "existential";
+    return oddsLow && survivalSevere && (cadence === "REPEATED" || cadence === "CONTINUOUS");
+  });
+  return {
+    maxOddsBand,
+    maxSurvivalImpact,
+    repeatedExposure,
+    maxRepeatCadence,
+    intolerableOdds,
+    highOdds,
+    elevatedOdds,
+    existentialSurvival,
+    cappedDownside,
+    convexUpside,
+    triggerAware,
+    baseRateAnchored,
+    baseRateRequired,
+    contradiction
+  };
+}
+
 function isComplexDomain(domain: KhalState["domains"][number] | undefined): boolean {
   if (!domain) return false;
   const hay = `${domain.description ?? ""} ${domain.stateOfTheArtNotes ?? ""}`.toLowerCase();
@@ -341,10 +418,15 @@ function computeStateOfArtAssessment(args: {
           : inheritedPosture;
 
   const mapComplete = profiles.length > 0 && profiles.every((profile) => Boolean(profile.decisionType && profile.tailClass && profile.quadrant && profile.methodPosture));
+  const signals = sourceProfileGateSignals(profiles);
   const stoneComplete = profiles.length > 0 && profiles.every((profile) =>
     Boolean(
       profile.stakesText?.trim() &&
       profile.risksText?.trim() &&
+      profile.oddsText?.trim() &&
+      profile.oddsBand &&
+      profile.repeatRateText?.trim() &&
+      profile.survivalImpact &&
       profile.lineageThreatText?.trim() &&
       profile.fragilityPosture?.trim() &&
       profile.vulnerabilitiesText?.trim()
@@ -378,10 +460,33 @@ function computeStateOfArtAssessment(args: {
     args.lineagePressure?.requiredPosture === "CAP_DOWNSIDE" ? ["downside cap"] :
     ["observe"];
   const mapAligned = profiles.length === 0 || profiles.every((profile) => postureCompatible(profile.methodPosture, args.lineagePressure?.requiredPosture));
+  const gateVerdict =
+    profiles.length === 0 ? "OBSERVE" :
+    signals.repeatedExposure && (signals.intolerableOdds || signals.maxSurvivalImpact >= SURVIVAL_IMPACT_SCORE.damaging) ? "AFFAIR_BIASED" :
+    signals.convexUpside && signals.cappedDownside && !signals.repeatedExposure && signals.maxOddsBand <= ODDS_BAND_SCORE.unclear && signals.maxSurvivalImpact <= SURVIVAL_IMPACT_SCORE.recoverable ? "INTEREST_BIASED" :
+    signals.cappedDownside || signals.convexUpside ? "MIXED" :
+    "OBSERVE";
+  const signalWarnings = [
+    signals.baseRateRequired && !signals.baseRateAnchored ? "Base rate missing for a repeated or elevated-odds exposure." : null,
+    signals.highOdds && !signals.triggerAware ? "Trigger condition missing for a high-odds regime shift." : null,
+    signals.contradiction ? "Odds band conflicts with repetition and survival damage; reclassify the field." : null
+  ].filter(Boolean) as string[];
+  const exotericSignal =
+    gateVerdict === "AFFAIR_BIASED"
+      ? "Protect first. Repeated exposure plus survival damage makes this an obligation before it is an option."
+      : gateVerdict === "INTEREST_BIASED"
+        ? "Keep the option alive. Downside is bounded enough to preserve convex upside."
+        : gateVerdict === "MIXED"
+          ? "Split the posture. Hedge the recurring downside, then keep only capped optionality."
+          : "Observe and classify further before committing branch direction.";
 
   return {
     dominantQuadrant,
+    gateVerdict,
+    repeatCadence: signals.maxRepeatCadence,
     recommendedPosture,
+    exotericSignal,
+    signalWarnings,
     lineageAtThreat: args.lineagePressure?.maxLevel ?? profiles.find((profile) => profile.lineageThreatText?.trim())?.lineageThreatText,
     requiredEnds,
     admissibleMeans,
@@ -399,8 +504,8 @@ function computeStateOfArtAssessment(args: {
         id: "stone",
         complete: stoneComplete,
         message: stoneComplete
-          ? `Stakes, risks, fragility, and lineage threat are explicit${args.lineagePressure?.maxLevel ? ` at ${args.lineagePressure.maxLevel}` : ""}.`
-          : "Stone is incomplete: define stakes, risks, lineage threat, fragility, and vulnerabilities."
+          ? `Stakes, risks, odds, odds band, repeat rate, survival impact, fragility, and lineage threat are explicit${args.lineagePressure?.maxLevel ? ` at ${args.lineagePressure.maxLevel}` : ""}.`
+          : "Stone is incomplete: define stakes, risks, odds, odds band, repeat rate, survival impact, lineage threat, fragility, and vulnerabilities."
       },
       {
         id: "ends",
@@ -447,6 +552,10 @@ function missingForMode(
       completeCoverage && allMappedProfiles.every((item) => Boolean(item.methodPosture)) ? null : "means_posture",
       completeCoverage && allMappedProfiles.every((item) => Boolean(item.stakesText?.trim())) ? null : "stakes",
       completeCoverage && allMappedProfiles.every((item) => Boolean(item.risksText?.trim())) ? null : "risks",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.oddsText?.trim())) ? null : "odds",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.oddsBand)) ? null : "odds_band",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.repeatRateText?.trim())) ? null : "repeat_rate",
+      completeCoverage && allMappedProfiles.every((item) => Boolean(item.survivalImpact)) ? null : "survival_impact",
       completeCoverage && allMappedProfiles.every((item) => Boolean(item.fragilityPosture?.trim()) && Boolean(item.vulnerabilitiesText?.trim())) ? null : "fragility_profile",
       completeCoverage && allMappedProfiles.every((item) => Boolean(item.hedgeText?.trim()) && Boolean(item.edgeText?.trim())) ? null : "ends",
       completeCoverage && allMappedProfiles.every((item) => Boolean(item.primaryCraftId?.trim()) && Boolean(item.heuristicsText?.trim()) && Boolean(item.avoidText?.trim())) ? null : "means"
@@ -545,6 +654,7 @@ function evaluateGuards(args: {
   overrides: string[];
   lineagePressure: LineagePressureSummaryDto | null;
   stateOfArt: StateOfArtAssessmentDto | null;
+  sourceMapProfiles?: SourceMapProfileDto[];
 }): DecisionBlockReasonDto[] {
   const reasons: DecisionBlockReasonDto[] = [];
   const hasOverride = (guardId: string) => args.overrides.includes(guardId);
@@ -570,6 +680,51 @@ function evaluateGuards(args: {
         code: "STATE_OF_ART_POSTURE_MISMATCH",
         message: mapStage.message,
         missingItems: ["method posture", "lineage-aware map"],
+        overridable: false
+      });
+    }
+  }
+
+  if (args.mode === "source") {
+    const profiles = sourceProfilesForMode(args.mode, args.targetId, args.state, args.sourceMapProfiles);
+    const signals = sourceProfileGateSignals(profiles);
+    if (signals.repeatedExposure && (signals.intolerableOdds || signals.existentialSurvival)) {
+      reasons.push({
+        code: "SOURCE_ERGODICITY_BLOCK",
+        message: "Repeated exposure with intolerable odds or existential survival impact requires an Affair/no-ruin posture before proceeding.",
+        missingItems: ["ergodicity gate verdict", "affair / hedge branch", signals.intolerableOdds ? "odds_band=intolerable" : null, signals.existentialSurvival ? "survival_impact=existential" : null].filter(Boolean) as string[],
+        overridable: false
+      });
+    }
+    if (signals.convexUpside && !signals.cappedDownside) {
+      reasons.push({
+        code: "SOURCE_FALSE_OPTIONALITY",
+        message: "Convex upside is asserted without explicit downside cap posture.",
+        missingItems: ["hedgeText", "capped downside"],
+        overridable: false
+      });
+    }
+    if (signals.highOdds && !signals.triggerAware) {
+      reasons.push({
+        code: "SOURCE_TRIGGER_MISSING",
+        message: "High-odds source profile needs an explicit trigger condition before it can be treated as decision-ready.",
+        missingItems: ["triggerConditionText"],
+        overridable: false
+      });
+    }
+    if (signals.baseRateRequired && !signals.baseRateAnchored) {
+      reasons.push({
+        code: "SOURCE_BASE_RATE_MISSING",
+        message: "Repeated or elevated-odds exposure needs a base-rate anchor before it can be treated as decision-ready.",
+        missingItems: ["baseRateText"],
+        overridable: false
+      });
+    }
+    if (signals.contradiction) {
+      reasons.push({
+        code: "SOURCE_SIGNAL_CONTRADICTION",
+        message: "Odds band conflicts with repeat cadence and survival impact; the field is internally inconsistent.",
+        missingItems: ["oddsBand", "repeatRateText", "survivalImpact"],
         overridable: false
       });
     }
@@ -696,7 +851,8 @@ export function evaluateDecision(args: {
     noRuinGate: args.noRuinGate ?? true,
     overrides: args.overrides ?? [],
     lineagePressure,
-    stateOfArt
+    stateOfArt,
+    sourceMapProfiles: args.sourceMapProfiles
   });
   const role = args.role ?? "MISSIONARY";
   const dependencyBlocked = role === "MISSIONARY" && missingPredecessors.length > 0;
@@ -841,6 +997,56 @@ function triageActionsForReason(args: {
     ];
   }
 
+  if (args.reason.code === "SOURCE_FALSE_OPTIONALITY") {
+    return [
+      action(
+        "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE",
+        "Set downside cap + convex upside template",
+        { hedgeText: "Cap downside explicitly before expressing edge.", edgeText: "Keep only convex upside that survives the hedge." }
+      )
+    ];
+  }
+
+  if (args.reason.code === "SOURCE_ERGODICITY_BLOCK") {
+    return [
+      action(
+        "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE",
+        "Bias to affair / no-ruin branch",
+        { hedgeText: "Bias toward no-ruin and downside protection before any optionality.", edgeText: "Only retain edge that survives the hedge." }
+      )
+    ];
+  }
+
+  if (args.reason.code === "SOURCE_TRIGGER_MISSING") {
+    return [
+      action(
+        "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE",
+        "Add trigger-aware posture template",
+        { hedgeText: "Pre-commit defensive action at trigger.", edgeText: "Allow optionality only after trigger discipline is explicit." }
+      )
+    ];
+  }
+
+  if (args.reason.code === "SOURCE_BASE_RATE_MISSING") {
+    return [
+      action(
+        "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE",
+        "Anchor posture to a base rate",
+        { hedgeText: "Start from the historical failure base rate before sizing exposure.", edgeText: "Keep optionality only after the reference class is explicit." }
+      )
+    ];
+  }
+
+  if (args.reason.code === "SOURCE_SIGNAL_CONTRADICTION") {
+    return [
+      action(
+        "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE",
+        "Resolve odds contradiction",
+        { hedgeText: "Reclassify odds from the repeated survival exposure, not from narrative comfort.", edgeText: "Retain upside only after the exposure map is coherent." }
+      )
+    ];
+  }
+
   if (args.mode === "source" && args.reason.code === "GRAMMAR_INCOMPLETE") {
     const has = (key: string) => args.reason.missingItems.includes(key);
     const route = (playbook: "chain" | "scenario" | "threat" | "response") =>
@@ -866,8 +1072,13 @@ function triageActionsForReason(args: {
 
 function reasonPriority(reason: DecisionBlockReasonDto): number {
   if (reason.code === "NO_RUIN_GATE_FAILED") return 100;
+  if (reason.code === "SOURCE_ERGODICITY_BLOCK") return 97;
+  if (reason.code === "SOURCE_SIGNAL_CONTRADICTION") return 95;
+  if (reason.code === "SOURCE_TRIGGER_MISSING") return 92;
+  if (reason.code === "SOURCE_BASE_RATE_MISSING") return 91;
   if (reason.code === "COMPLEX_MONOMODAL_BLOCK") return 90;
   if (reason.code === "STATE_OF_ART_POSTURE_MISMATCH") return 89;
+  if (reason.code === "SOURCE_FALSE_OPTIONALITY") return 87;
   if (reason.code === "AFFAIR_NO_HEDGE") return 85;
   if (reason.code === "INTEREST_CONVEXITY_INCOMPLETE") return 80;
   if (reason.code === "LINEAGE_HEDGE_REQUIRED") return 88;

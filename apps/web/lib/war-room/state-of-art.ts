@@ -27,8 +27,8 @@ const SOURCE_STEP_ORDER: Array<{ id: StateOfArtStepId; label: string; prompt: st
   {
     id: "stone",
     label: "Stone",
-    prompt: "Diagnose stakes, risks, fragility, and lineage exposure.",
-    doctrinePrompt: "Use threats to pressure-test risks, fragility, and lineage exposure instead of treating them as abstract prose."
+    prompt: "Diagnose stakes, risks, odds, repeat rate, fragility, and lineage exposure.",
+    doctrinePrompt: "Use threats to pressure-test risks, odds, repeat rate, fragility, and lineage exposure instead of treating them as abstract prose."
   },
   {
     id: "ends",
@@ -85,6 +85,12 @@ export function buildStateOfArtProjection(args: {
         skinInTheGame: {
           stakes: args.profile.stakesText,
           risks: args.profile.risksText,
+          odds: args.profile.oddsText,
+          oddsBand: args.profile.oddsBand,
+          repeatRate: args.profile.repeatRateText,
+          baseRate: args.profile.baseRateText,
+          triggerCondition: args.profile.triggerConditionText,
+          survivalImpact: args.profile.survivalImpact,
           lineage: args.profile.lineageThreatText,
           players: args.profile.playersText
         }
@@ -115,7 +121,16 @@ export function buildStateOfArtProjection(args: {
 function sourceStepCompletion(profile?: SourceMapProfileDto | null): Record<StateOfArtStepId, boolean> {
   return {
     map: Boolean(profile?.decisionType && profile?.tailClass && profile?.quadrant && profile?.methodPosture),
-    stone: Boolean(profile?.stakesText?.trim() && profile?.risksText?.trim() && profile?.fragilityPosture?.trim() && profile?.vulnerabilitiesText?.trim()),
+    stone: Boolean(
+      profile?.stakesText?.trim() &&
+      profile?.risksText?.trim() &&
+      profile?.oddsText?.trim() &&
+      profile?.oddsBand &&
+      profile?.repeatRateText?.trim() &&
+      profile?.survivalImpact &&
+      profile?.fragilityPosture?.trim() &&
+      profile?.vulnerabilitiesText?.trim()
+    ),
     ends: Boolean(profile?.hedgeText?.trim() && profile?.edgeText?.trim()),
     means: Boolean(profile?.primaryCraftId?.trim() && profile?.heuristicsText?.trim() && profile?.avoidText?.trim())
   };

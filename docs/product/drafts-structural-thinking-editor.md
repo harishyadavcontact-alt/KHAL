@@ -1,7 +1,11 @@
 # Drafts: Prose-First Structural Thinking
 
+Status: downstream
+
 ## One-line definition
 Drafts is a prose-first, structure-aware thinking environment inside KHAL. It lets the user think in plain English while the system detects structural anchors that can later be promoted into durable KHAL entities.
+
+Derived from `docs/product/Khal_genesis.md`. This document describes the Drafts surface contract only.
 
 ## Product role inside KHAL
 Drafts is not a code editor, schema form, or JSON debugger.
@@ -14,11 +18,11 @@ Drafts exists to bridge:
 The visible surface must prioritize human readability. Agent-readable and compile-readable forms exist, but stay internal or optional.
 
 ## Doctrine
-- SQLite (`data/KHAL.sqlite`) remains the runtime source of truth.
+- Active runtime is the selected SQLite database as defined in `docs/product/Khal_genesis.md`.
 - `Genesis.xlsx` remains archival/reference-only unless an explicit migration decision is made.
 - Narrative clarity matters more than dashboard density.
 - Map-first architecture remains intact.
-- RRFI, Laws, scenario logic, and existing hierarchy are constraints, not optional flavor.
+- Source-of-volatility structure, scenario logic, and existing hierarchy are constraints, not optional flavor.
 
 ## Core interaction model
 ### Writing canvas
@@ -128,8 +132,6 @@ Current implementation:
 This rebuild is intentionally honest about backend maturity.
 
 Current limitations:
-- no durable `drafts` table yet
-- no persisted `structural_anchors` table yet
 - only partial promotion into canonical runtime entities
 - existing-entity linking is heuristic and UI-side
 - inference is deterministic heuristics, not full semantic modeling
@@ -144,8 +146,7 @@ Drafts now aligns with KHAL because it:
 
 ## Extension points
 Highest-leverage next steps:
-1. Add durable `drafts`, `draft_blocks`, `structural_anchors`, and `promotion_events` tables in SQLite.
-2. Promote additional anchor types into knowledge primitives through canonical APIs.
-3. Add map-aware anchor linking so drafts can target domains, laws, and lineage nodes explicitly.
-4. Add ambiguity review workflows for uncertain anchors.
-5. Add richer block-level provenance and side-by-side promotion review.
+1. Promote additional anchor types into knowledge primitives through canonical APIs.
+2. Add map-aware anchor linking so drafts can target domains, volatility sources, and lineage nodes explicitly.
+3. Add ambiguity review workflows for uncertain anchors.
+4. Add richer block-level provenance and side-by-side promotion review.

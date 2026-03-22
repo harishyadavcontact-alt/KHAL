@@ -148,14 +148,14 @@ export function LawsView({ data, selectedLawId, onSelectLaw, onSelectDomain, onW
       <div className="mb-8 flex flex-wrap items-end justify-between gap-5 border-b border-[var(--color-line)] pb-5">
         <div>
           <div className="text-[10px] uppercase tracking-[0.24em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Sources of Volatility</div>
-          <h2 className="khal-serif-hero mt-2 text-4xl text-[var(--color-text-strong)]">Volatility laws</h2>
+          <h2 className="khal-serif-hero mt-2 text-4xl text-[var(--color-text-strong)]">Sources of volatility</h2>
           <p className="mt-3 max-w-3xl text-sm text-[var(--color-text-muted)]">
             This surface should answer one question: what class of volatility is this, and which domains currently live under it.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className={doctrineChipClass("hard")}>Hard laws {hardLawCount}</span>
-          <span className={doctrineChipClass("human")}>Human laws {humanLawCount}</span>
+          <span className={doctrineChipClass("hard")}>Hard sources {hardLawCount}</span>
+          <span className={doctrineChipClass("human")}>Human sources {humanLawCount}</span>
         </div>
       </div>
 
@@ -173,11 +173,11 @@ export function LawsView({ data, selectedLawId, onSelectLaw, onSelectDomain, onW
                   className="text-left"
                 >
                   <SurfaceRow accent={selected ? "var(--color-accent)" : "var(--color-line)"}>
-                    <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Volatility law</div>
+                    <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Volatility source</div>
                     <div className="mt-1 text-lg text-[var(--color-text-strong)]">{lawAliasForSlot(slot.key) ?? slot.canonicalLabel}</div>
                     <div className="mt-3 flex items-center gap-2">
                       <span className={doctrineChipClass(doctrineClass)}>
-                        {doctrineClass === "hard" ? "Hard law" : "Human law"}
+                        {doctrineClass === "hard" ? "Hard source" : "Human source"}
                       </span>
                     </div>
                     <div className="mt-3 text-xs text-[var(--color-text-muted)]">Linked domains: {linkedDomains}</div>
@@ -190,13 +190,13 @@ export function LawsView({ data, selectedLawId, onSelectLaw, onSelectDomain, onW
           <DeepPanel>
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--color-line)] pb-4">
               <div>
-                <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Active law</div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-text-faint)] font-[var(--font-mono)]">Active source</div>
                 <div className="mt-1 text-2xl text-[var(--color-text-strong)]">{lawAliasForSlot(activeSlot.key) ?? activeSlot.canonicalLabel}</div>
                 <div className="mt-2 text-sm text-[var(--color-text-muted)]">{activeSource?.name ?? "No mapped runtime source yet"}</div>
               </div>
               <div className="flex items-center gap-2">
                 <span className={doctrineChipClass(activeSlotClass)}>
-                  {activeSlotClass === "hard" ? "Hard law" : "Human law"}
+                  {activeSlotClass === "hard" ? "Hard source" : "Human source"}
                 </span>
                 <button
                   onClick={() => onWarGameSource(warGameTarget)}

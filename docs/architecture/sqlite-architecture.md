@@ -1,6 +1,10 @@
 # KHAL SQLite Architecture (v0.2 Pivot)
 
+Status: downstream
+
 ## Canonical Data Model
+Derived from `docs/product/Khal_genesis.md`.
+
 - **Product template DB**: `data/KHAL.sqlite`
 - **Active runtime DB**: selected operator database, typically `data/operators/<operator-slug>.sqlite`
 - **Runtime mode**: local-first, offline-capable, deterministic API reads/writes

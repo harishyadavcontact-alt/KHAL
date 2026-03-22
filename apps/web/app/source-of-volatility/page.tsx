@@ -17,7 +17,7 @@ export default function SourceOfVolatilityPage() {
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
 
   return (
-    <KhalOpsShell title="Source of Volatility" subtitle="Volatility Mapping">
+    <KhalOpsShell title="Source of Volatility" subtitle="Source classification and domain mapping">
       {!data || loading ? (
         <div className="max-w-7xl mx-auto p-5 text-zinc-400">Loading Sources...</div>
       ) : error ? (

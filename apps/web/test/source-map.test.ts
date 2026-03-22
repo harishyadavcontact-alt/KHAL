@@ -38,6 +38,12 @@ describe("source map doctrine", () => {
       tailClass: "fat",
       stakesText: "Capital survival and continuity.",
       risksText: "Liquidity shock and forced sale.",
+      oddsText: "Elevated downside odds under forced deleveraging; conditional survival depends on liquidity buffer.",
+      oddsBand: "high",
+      repeatRateText: "Quarterly rollover with daily mark-to-market sensitivity.",
+      baseRateText: "Historical tightening cycles with crowded leverage.",
+      triggerConditionText: "Funding spread blowout or collateral haircut step-change.",
+      survivalImpact: "damaging",
       playersText: "Fragilistas who intervene without skin in the game.",
       lineageThreatText: "Self, family, and downstream obligations.",
       fragilityPosture: "fragile",
@@ -58,12 +64,19 @@ describe("source map doctrine", () => {
     try {
       const row = verifyDb
         .prepare(
-          `SELECT stakes_text, fragility_posture, hedge_text, edge_text, primary_craft_id, heuristics_text, avoid_text
+          `SELECT stakes_text, risks_text, odds_text, odds_band, repeat_rate_text, base_rate_text, trigger_condition_text, survival_impact, fragility_posture, hedge_text, edge_text, primary_craft_id, heuristics_text, avoid_text
            FROM source_map_profiles
            WHERE source_id='src-universe' AND domain_id='domain-infrastructure-energy'`
         )
         .get() as Record<string, string>;
       expect(row.stakes_text).toBe("Capital survival and continuity.");
+      expect(row.risks_text).toBe("Liquidity shock and forced sale.");
+      expect(row.odds_text).toContain("Elevated downside odds");
+      expect(row.odds_band).toBe("high");
+      expect(row.repeat_rate_text).toContain("Quarterly rollover");
+      expect(row.base_rate_text).toContain("Historical tightening cycles");
+      expect(row.trigger_condition_text).toContain("Funding spread blowout");
+      expect(row.survival_impact).toBe("damaging");
       expect(row.fragility_posture).toBe("fragile");
       expect(row.hedge_text).toBe("Hold cash and shorten commitments.");
       expect(row.edge_text).toBe("Keep small convex bets alive.");
@@ -91,6 +104,10 @@ describe("source map doctrine", () => {
       tailClass: "fat",
       stakesText: "Capital survival and continuity.",
       risksText: "Liquidity shock and forced sale.",
+      oddsText: "Elevated downside odds under forced deleveraging; conditional survival depends on liquidity buffer.",
+      oddsBand: "high",
+      repeatRateText: "Quarterly rollover with daily mark-to-market sensitivity.",
+      survivalImpact: "damaging",
       fragilityPosture: "fragile",
       vulnerabilitiesText: "Leverage and serial dependence.",
       hedgeText: "Hold cash and shorten commitments.",
@@ -132,6 +149,41 @@ describe("source map doctrine", () => {
       expect(affair.title).toContain("Hedge:");
       expect(interest.title).toContain("Edge:");
       expect(interest.hypothesis).toContain("Keep small convex bets alive.");
+    } finally {
+      verifyDb.close();
+    }
+  });
+
+  it("biases generated affair toward no-ruin when repeated exposure and survival damage are explicit", async () => {
+    await handleSourceMapPut("src-universe", {
+      domainId: "domain-infrastructure-energy",
+      decisionType: "complex",
+      tailClass: "fat",
+      stakesText: "Capital survival and continuity.",
+      risksText: "Liquidity shock and forced sale.",
+      oddsText: "Repeated stress creates high downside odds.",
+      oddsBand: "intolerable",
+      repeatRateText: "Continuous repeated exposure with rollover risk.",
+      triggerConditionText: "Funding spread blowout.",
+      survivalImpact: "existential",
+      fragilityPosture: "fragile",
+      vulnerabilitiesText: "Leverage and serial dependence.",
+      hedgeText: "Hold cash and shorten commitments.",
+      edgeText: "Keep tiny convex bets alive."
+    });
+
+    const affairResponse = await handleSourceMapStateOfAffairs("src-universe", {
+      domainId: "domain-infrastructure-energy",
+      kind: "affair"
+    });
+    const affairPayload = await affairResponse.json();
+
+    const verifyDb = new Database(dbPath, { readonly: true });
+    try {
+      const affair = verifyDb.prepare("SELECT timeline, description, stakes, risk FROM affairs WHERE id=?").get(affairPayload.id) as Record<string, string | number>;
+      expect(String(affair.timeline)).toContain("no-ruin");
+      expect(Number(affair.stakes)).toBeGreaterThanOrEqual(9);
+      expect(Number(affair.risk)).toBeGreaterThanOrEqual(9);
     } finally {
       verifyDb.close();
     }

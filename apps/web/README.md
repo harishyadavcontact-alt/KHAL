@@ -1,5 +1,7 @@
 # @khal/web
 
+Status: downstream
+
 Next.js application layer for KHAL.
 
 ## Purpose
@@ -29,11 +31,13 @@ $env:NEXT_PUBLIC_FRONTEND_ONLY="1"; npm --workspace @khal/web run dev
 - `/source-of-volatility`
 - `/interests`
 - `/affairs`
-- `/war-gaming` and `/war-gaming/[mode]`
+- `/war-gaming` and `/war-gaming/[mode]` (`/war-gaming` resolves to `/war-gaming/source`)
 - `/surgical-execution`
 - `/crafts-library`
 - `/time-horizon`
 - `/lineage-map`
+- `/drafts`
+- `/missionCommand/portfolio`
 - `/brand`
 - `/khal/logo`
 - `/khal/wordmark`

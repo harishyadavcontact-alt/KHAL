@@ -67,7 +67,7 @@ const App = () => {
   const [selectedInterestId, setSelectedInterestId] = useState<string | null>(null);
   const [returnPath, setReturnPath] = useState<{ view: string; id: string | null } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [warGameContext, setWarGameContext] = useState<{ mode: WarGameMode; targetId?: string }>({ mode: 'affair' });
+  const [warGameContext, setWarGameContext] = useState<{ mode: WarGameMode; targetId?: string }>({ mode: 'source' });
 
   const handleWarGameContextChange = useCallback((mode: WarGameMode, targetId?: string) => {
     setWarGameContext((prev) => {
@@ -164,7 +164,7 @@ const App = () => {
   const navigateView = (nextView: WarRoomViewState) => {
     const route = routeForSectionView(nextView);
     if (route !== '/dashboard' || nextView === 'dashboard') {
-      router.push(route === '/war-gaming/affair' ? '/war-gaming' : route);
+      router.push(route);
       return;
     }
     setActiveView(nextView);

@@ -1,6 +1,10 @@
 # KHAL Runtime Authority
 
-KHAL is SQLite-first, but runtime authority is now operator-scoped.
+Status: downstream
+
+Derived from `docs/product/Khal_genesis.md`.
+
+KHAL is SQLite-first, and the active runtime is operator-scoped.
 
 - Product template DB: `data/KHAL.sqlite`
 - Active operator DBs: `data/operators/*.sqlite`

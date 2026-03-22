@@ -23,10 +23,14 @@ export function TriageActionPanel({
       <div className="text-xs text-zinc-300 mb-2">Next: {triage.nextAction}</div>
       {triage.stateOfArt ? (
         <div className="mb-2 rounded border border-sky-400/20 bg-sky-500/5 px-2.5 py-2 text-[11px] text-sky-100">
-          state of the art {triage.stateOfArt.dominantQuadrant ? `| ${triage.stateOfArt.dominantQuadrant.toLowerCase()}` : ""} | posture {triage.stateOfArt.recommendedPosture}
+          state of the art {triage.stateOfArt.dominantQuadrant ? `| ${triage.stateOfArt.dominantQuadrant.toLowerCase()}` : ""} | verdict {triage.stateOfArt.gateVerdict.toLowerCase().replace("_", "-")} | posture {triage.stateOfArt.recommendedPosture}
+          <div className="mt-1 text-sky-100/80">
+            cadence {triage.stateOfArt.repeatCadence.toLowerCase()} | {triage.stateOfArt.exotericSignal}
+          </div>
           <div className="mt-1 text-sky-100/80">
             {triage.stateOfArt.stages.map((stage) => `${stage.id}:${stage.complete ? "ok" : "gap"}`).join(" | ")}
           </div>
+          {triage.stateOfArt.signalWarnings.length ? <div className="mt-1 text-amber-100/90">warnings: {triage.stateOfArt.signalWarnings.join(" | ")}</div> : null}
         </div>
       ) : null}
       {triage.lineagePressure ? (

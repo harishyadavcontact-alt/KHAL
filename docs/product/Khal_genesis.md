@@ -1,5 +1,7 @@
 # Khal_genesis
 
+Status: canonical
+
 ## Canonical status
 This file is the canonical product doctrine reference for KHAL and the single source of truth for this repository's product intent.
 
@@ -16,8 +18,10 @@ All other repository docs are downstream, operational, or generated artifacts an
 
 This file does **not** replace runtime authority.
 
-Runtime authority remains:
-- SQLite: `data/KHAL.sqlite`
+Runtime authority remains SQLite-first:
+- product template DB: `data/KHAL.sqlite`
+- active runtime DB: selected operator database, typically `data/operators/<operator-slug>.sqlite`
+- local runtime selection override: `.khal.local.json`
 - Excel: `Genesis.xlsx` is archival/reference only and must not be opened unless explicitly requested
 
 ## Core doctrine
@@ -51,6 +55,8 @@ The world as it is.
   - `Skin in the Game`
     - stakes
     - risks
+    - odds
+    - stakeholders / affected parties
     - lineage
     - players / fragilistas
     - capital at risk
@@ -92,10 +98,70 @@ What follows from the world as it is.
 ## Unified branch logic
 KHAL should be understood through two explicit decision gates:
 
+## Odds doctrine
+`Odds` belongs inside `Skin in the Game`.
+
+It answers:
+- how likely the named paths are under current conditions
+- how often the exposure repeats through time
+- whether survival odds remain acceptable
+- whether convex payoff odds justify preserving optionality
+
+`Odds` is not treated as a promise of precise risk measurement.
+
+Use:
+- odds bands
+- scenario-weighted judgment
+- base rates when available
+- conditional estimates tied to triggers
+
+In `Q3` and `Q4`, prefer:
+- low
+- unclear
+- elevated
+- high
+- intolerable
+
+`Odds` links:
+- stakes to prioritization
+- risks to branch selection
+- stakeholders to consequence-bearing actors
+- lineage to propagation
+- repetition to ergodicity
+- capped downside to convexity judgment
+
+## Stakeholder doctrine
+`Stakeholders` belongs inside `Skin in the Game`.
+
+It answers:
+- who bears the consequence if the path resolves badly
+- who benefits if the path resolves well
+- who has standing, exposure, or dependence even if they are not direct operators
+
+Use:
+- stakeholders / affected parties for consequence-bearing actors
+- players / fragilistas for actors who shape the field, incentives, or fragility
+- lineage for how consequence propagates upward, outward, and forward through time
+
+Distinguish:
+- `shareholder` = a narrow ownership role
+- `stakeholder` = any actor with material exposure to the outcome
+
+That means:
+- shareholders are often one class of stakeholders
+- stakeholders are broader than owners
+- lineage is not a substitute for stakeholders; it is the propagation map across layers
+
+In KHAL:
+- `stakeholders` identifies who has skin in the game
+- `lineage` identifies where the consequence travels
+- `players / fragilistas` identifies who can worsen, exploit, or reshape the field
+
 ### Ergodicity Gate
 Question:
 - if this exposure is repeated through time, does ruin compound faster than averages suggest?
 - is there path dependence, an absorbing barrier, or irreversible downside?
+- are survival odds unacceptable under repetition?
 
 If yes:
 - generate or prioritize `Affair`
@@ -105,6 +171,7 @@ If yes:
 Question:
 - does volatility improve payoff because the response is convex?
 - can downside be capped while preserving nonlinear upside?
+- do the odds justify keeping the convex bet alive?
 
 If yes:
 - generate or prioritize `Interest`
@@ -482,7 +549,7 @@ flowchart TD
 
         SOA --> MAP["Map<br/>decision type<br/>tail behavior<br/>quadrant<br/>admissible posture"]
         SOA --> STONE["Stone"]
-        STONE --> SIG["Skin in the Game<br/>stakes<br/>risks<br/>lineage<br/>players / fragilistas<br/>capital / time / reputation at risk"]
+        STONE --> SIG["Skin in the Game<br/>stakes<br/>risks<br/>odds<br/>stakeholders / affected parties<br/>lineage<br/>players / fragilistas<br/>capital / time / reputation at risk"]
         STONE --> PST["Philosopher's Stone<br/>fragility<br/>vulnerabilities<br/>non-linearity<br/>propagation<br/>irreversibility<br/>short vol / long vol"]
         SOA --> ENDS["Ends<br/>hedge<br/>edge<br/>barbell posture"]
         SOA --> MEANS["Means<br/>craft<br/>heuristics<br/>avoid<br/>protocol shape"]
@@ -496,8 +563,8 @@ flowchart TD
         PST --> GATE
         ENDS --> GATE
 
-        GATE --> ERG["Ergodicity Gate<br/>ruin under repetition?<br/>path dependence?<br/>absorbing barrier?"]
-        GATE --> JEN["Jensen Gate<br/>convexity?<br/>volatility benefit?<br/>capped downside?"]
+        GATE --> ERG["Ergodicity Gate<br/>ruin under repetition?<br/>path dependence?<br/>absorbing barrier?<br/>survival odds acceptable?"]
+        GATE --> JEN["Jensen Gate<br/>convexity?<br/>volatility benefit?<br/>capped downside?<br/>odds justify bet?"]
 
         SOA --> STR["Scenario / Threat / Response"]
         STR --> CHAINS["Doctrine chains<br/>wargames -> scenarios -> threats -> responses"]

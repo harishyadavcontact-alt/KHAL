@@ -131,6 +131,11 @@ export function WarGameDomains({ domainId, domains, sources, crafts, affairs, in
 
   const stakesRows = doctrineRows(projections, (projection) => projection.stone.asymmetry.skinInTheGame.stakes);
   const risksRows = doctrineRows(projections, (projection) => projection.stone.asymmetry.skinInTheGame.risks);
+  const oddsRows = doctrineRows(projections, (projection) => projection.stone.asymmetry.skinInTheGame.odds);
+  const oddsBandRows = doctrineRows(projections, (projection) => projection.stone.asymmetry.skinInTheGame.oddsBand);
+  const repeatRateRows = doctrineRows(projections, (projection) => projection.stone.asymmetry.skinInTheGame.repeatRate);
+  const triggerRows = doctrineRows(projections, (projection) => projection.stone.asymmetry.skinInTheGame.triggerCondition);
+  const survivalRows = doctrineRows(projections, (projection) => projection.stone.asymmetry.skinInTheGame.survivalImpact);
   const lineageRows = doctrineRows(projections, (projection) => projection.stone.asymmetry.skinInTheGame.lineage);
   const fragilityRows = doctrineRows(
     projections,
@@ -215,14 +220,19 @@ export function WarGameDomains({ domainId, domains, sources, crafts, affairs, in
                   </p>
                 </div>
 
-                <div>
-                  <PanelLabel>Skin in the Game</PanelLabel>
-                  <div className="grid gap-3 md:grid-cols-3">
-                    <FieldBox label="Stakes" rows={stakesRows} empty="No stakes written yet." />
-                    <FieldBox label="Risks" rows={risksRows} empty="No risks written yet." tone="risk" />
-                    <FieldBox label="Lineage" rows={lineageRows} empty="No lineage pressure written yet." tone="watch" />
+                  <div>
+                    <PanelLabel>Skin in the Game</PanelLabel>
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+                      <FieldBox label="Stakes" rows={stakesRows} empty="No stakes written yet." />
+                      <FieldBox label="Risks" rows={risksRows} empty="No risks written yet." tone="risk" />
+                      <FieldBox label="Odds" rows={oddsRows} empty="No odds profile written yet." tone="watch" />
+                      <FieldBox label="Odds band" rows={oddsBandRows} empty="No odds band set." tone="watch" />
+                      <FieldBox label="Repeat rate" rows={repeatRateRows} empty="No exposure cadence written yet." tone="watch" />
+                      <FieldBox label="Trigger" rows={triggerRows} empty="No trigger condition written yet." tone="watch" />
+                      <FieldBox label="Survival" rows={survivalRows} empty="No survival impact set." tone="risk" />
+                      <FieldBox label="Lineage" rows={lineageRows} empty="No lineage pressure written yet." tone="watch" />
+                    </div>
                   </div>
-                </div>
 
                 <div>
                   <PanelLabel>Philosopher's Stone</PanelLabel>

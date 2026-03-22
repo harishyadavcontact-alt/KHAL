@@ -45,6 +45,10 @@ How does this source of volatility propagate into one selected domain, what post
   - `Skin in the Game`
     - stakes
     - risks
+    - odds
+    - repeat rate
+    - base rate
+    - trigger condition
     - lineage
     - players / fragilistas
   - `Philosopher's Stone`
@@ -107,6 +111,13 @@ Use:
 - thin rule
 - small mono section label
 - content below
+
+Inside `Skin in the Game`, `odds` should not be a single vague note.
+It should be supported by:
+- odds profile
+- repeat rate
+- base rate
+- trigger condition
 
 This should replace card-heavy subsection wrappers wherever possible.
 

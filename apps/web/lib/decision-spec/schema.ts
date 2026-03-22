@@ -46,6 +46,8 @@ export const lineagePolicyBandSchema = z.enum(["LOCAL", "ELEVATED", "SYSTEMIC", 
 export const lineageRequiredPostureSchema = z.enum(["OBSERVE", "CAP_DOWNSIDE", "HEDGE", "NO_RUIN"]);
 
 export const stateOfArtStepSchema = z.enum(["map", "stone", "ends", "means"]);
+export const stateOfArtGateVerdictSchema = z.enum(["AFFAIR_BIASED", "INTEREST_BIASED", "MIXED", "OBSERVE"]);
+export const stateOfArtRepeatCadenceSchema = z.enum(["ONE_OFF", "EPISODIC", "REPEATED", "CONTINUOUS", "UNKNOWN"]);
 
 export const stateOfArtStageStatusSchema = z.object({
   id: stateOfArtStepSchema,
@@ -55,7 +57,11 @@ export const stateOfArtStageStatusSchema = z.object({
 
 export const stateOfArtAssessmentSchema = z.object({
   dominantQuadrant: z.string().optional(),
+  gateVerdict: stateOfArtGateVerdictSchema,
+  repeatCadence: stateOfArtRepeatCadenceSchema,
   recommendedPosture: z.string(),
+  exotericSignal: z.string(),
+  signalWarnings: z.array(z.string()).default([]),
   lineageAtThreat: z.string().optional(),
   requiredEnds: z.array(z.string()).default([]),
   admissibleMeans: z.array(z.string()).default([]),

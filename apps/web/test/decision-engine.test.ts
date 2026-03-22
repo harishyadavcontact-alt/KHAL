@@ -170,6 +170,11 @@ describe("decision-spec engine", () => {
         methodPosture: "Use structured analysis, base rates, and explicit measurement. Statistical tools are admissible.",
         stakesText: "Civil continuity and energy access.",
         risksText: "Grid failure can propagate into essential services.",
+        oddsText: "Repeated grid stress raises tail odds.",
+        oddsBand: "high",
+        repeatRateText: "Continuous operational exposure with repeated stress cycles.",
+        triggerConditionText: "Reserve margin collapse or cascading transformer failure.",
+        survivalImpact: "existential",
         lineageThreatText: "Humanity-level continuity is exposed.",
         fragilityPosture: "Short volatility due to tight coupling.",
         vulnerabilitiesText: "Single-point failures and slow recovery paths.",
@@ -181,8 +186,246 @@ describe("decision-spec engine", () => {
       }]
     });
     expect(result.stateOfArt?.stages.find((stage) => stage.id === "map")?.complete).toBe(false);
+    expect(result.stateOfArt?.gateVerdict).toBe("AFFAIR_BIASED");
+    expect(result.stateOfArt?.repeatCadence).toBe("CONTINUOUS");
+    expect(result.stateOfArt?.exotericSignal).toContain("Protect first");
     expect(result.stateOfArt?.recommendedPosture).toContain("Precaution first");
     expect(result.blockReasons.some((reason) => reason.code === "STATE_OF_ART_POSTURE_MISMATCH")).toBe(true);
+  });
+
+  it("blocks repeated high-odds source exposure with existential survival impact", () => {
+    const now = new Date().toISOString();
+    const state = baseState();
+    state.domains.push({ id: "d1", name: "Power", createdAt: now, updatedAt: now });
+    state.sources!.push({
+      id: "s1",
+      code: "grid",
+      name: "Grid instability",
+      sortOrder: 1,
+      domains: [{ id: "link-1", sourceId: "s1", domainId: "d1", dependencyKind: "PRIMARY", pathWeight: 1 }]
+    } as never);
+
+    const result = evaluateDecision({
+      mode: "source",
+      targetId: "s1",
+      state,
+      noRuinGate: true,
+      role: "MISSIONARY",
+      sourceMapProfiles: [{
+        id: "smp-1",
+        sourceId: "s1",
+        domainId: "d1",
+        decisionType: "complex",
+        tailClass: "fat",
+        quadrant: "Q4",
+        methodPosture: "No-ruin first.",
+        stakesText: "Civil continuity.",
+        risksText: "Grid failure cascades.",
+        oddsText: "Repeated stress creates high failure odds.",
+        oddsBand: "intolerable",
+        repeatRateText: "Continuous repeated exposure.",
+        triggerConditionText: "Reserve margin collapse.",
+        survivalImpact: "existential",
+        lineageThreatText: "State and humanity continuity.",
+        fragilityPosture: "fragile",
+        vulnerabilitiesText: "Tight coupling.",
+        hedgeText: "Build redundancy.",
+        edgeText: "Retain small experiments."
+      }]
+    });
+
+    expect(result.blockReasons.some((reason) => reason.code === "SOURCE_ERGODICITY_BLOCK")).toBe(true);
+    const triage = buildDeterministicTriage({
+      mode: "source",
+      targetId: "s1",
+      state,
+      noRuinGate: true,
+      role: "MISSIONARY",
+      sourceMapProfiles: [{
+        id: "smp-1",
+        sourceId: "s1",
+        domainId: "d1",
+        decisionType: "complex",
+        tailClass: "fat",
+        quadrant: "Q4",
+        methodPosture: "No-ruin first.",
+        stakesText: "Civil continuity.",
+        risksText: "Grid failure cascades.",
+        oddsText: "Repeated stress creates high failure odds.",
+        oddsBand: "intolerable",
+        repeatRateText: "Continuous repeated exposure.",
+        triggerConditionText: "Reserve margin collapse.",
+        survivalImpact: "existential",
+        lineageThreatText: "State and humanity continuity.",
+        fragilityPosture: "fragile",
+        vulnerabilitiesText: "Tight coupling.",
+        hedgeText: "Build redundancy.",
+        edgeText: "Retain small experiments."
+      }]
+    });
+    expect(triage[0]?.title).toContain("Bias to affair");
+  });
+
+  it("blocks false optionality when source edge lacks downside cap", () => {
+    const now = new Date().toISOString();
+    const state = baseState();
+    state.domains.push({ id: "d1", name: "Markets", createdAt: now, updatedAt: now });
+    state.sources!.push({
+      id: "s1",
+      code: "macro",
+      name: "Macro volatility",
+      sortOrder: 1,
+      domains: [{ id: "link-1", sourceId: "s1", domainId: "d1", dependencyKind: "PRIMARY", pathWeight: 1 }]
+    } as never);
+
+    const result = evaluateDecision({
+      mode: "source",
+      targetId: "s1",
+      state,
+      noRuinGate: true,
+      role: "MISSIONARY",
+      sourceMapProfiles: [{
+        id: "smp-1",
+        sourceId: "s1",
+        domainId: "d1",
+        decisionType: "complex",
+        tailClass: "fat",
+        quadrant: "Q4",
+        methodPosture: "No-ruin first.",
+        stakesText: "Capital continuity.",
+        risksText: "Forced unwind.",
+        oddsText: "Elevated downside odds.",
+        oddsBand: "high",
+        repeatRateText: "Weekly repeated exposure.",
+        triggerConditionText: "Funding stress.",
+        survivalImpact: "damaging",
+        lineageThreatText: "Family capital.",
+        fragilityPosture: "fragile",
+        vulnerabilitiesText: "Leverage.",
+        edgeText: "Keep convex trades alive."
+      }]
+    });
+
+    expect(result.blockReasons.some((reason) => reason.code === "SOURCE_FALSE_OPTIONALITY")).toBe(true);
+    const triage = buildDeterministicTriage({
+      mode: "source",
+      targetId: "s1",
+      state,
+      noRuinGate: true,
+      role: "MISSIONARY",
+      sourceMapProfiles: [{
+        id: "smp-1",
+        sourceId: "s1",
+        domainId: "d1",
+        decisionType: "complex",
+        tailClass: "fat",
+        quadrant: "Q4",
+        methodPosture: "No-ruin first.",
+        stakesText: "Capital continuity.",
+        risksText: "Forced unwind.",
+        oddsText: "Elevated downside odds.",
+        oddsBand: "high",
+        repeatRateText: "Weekly repeated exposure.",
+        triggerConditionText: "Funding stress.",
+        survivalImpact: "damaging",
+        lineageThreatText: "Family capital.",
+        fragilityPosture: "fragile",
+        vulnerabilitiesText: "Leverage.",
+        edgeText: "Keep convex trades alive."
+      }]
+    });
+    expect(triage.some((item) => item.actionKind === "SET_DOMAIN_BIMODAL_POSTURE_TEMPLATE")).toBe(true);
+  });
+
+  it("blocks elevated or repeated exposure that has no base-rate anchor", () => {
+    const now = new Date().toISOString();
+    const state = baseState();
+    state.domains.push({ id: "d1", name: "Credit", createdAt: now, updatedAt: now });
+    state.sources!.push({
+      id: "s1",
+      code: "credit",
+      name: "Credit rollover risk",
+      sortOrder: 1,
+      domains: [{ id: "link-1", sourceId: "s1", domainId: "d1", dependencyKind: "PRIMARY", pathWeight: 1 }]
+    } as never);
+
+    const result = evaluateDecision({
+      mode: "source",
+      targetId: "s1",
+      state,
+      noRuinGate: true,
+      role: "MISSIONARY",
+      sourceMapProfiles: [{
+        id: "smp-1",
+        sourceId: "s1",
+        domainId: "d1",
+        decisionType: "complex",
+        tailClass: "fat",
+        quadrant: "Q4",
+        methodPosture: "No-ruin first.",
+        stakesText: "Funding continuity.",
+        risksText: "Rollover failure.",
+        oddsText: "Elevated odds under refinancing stress.",
+        oddsBand: "elevated",
+        repeatRateText: "Monthly refinancing exposure.",
+        triggerConditionText: "Credit spread blowout.",
+        survivalImpact: "damaging",
+        lineageThreatText: "Family capital.",
+        fragilityPosture: "fragile",
+        vulnerabilitiesText: "Debt stack.",
+        hedgeText: "Extend duration and hold liquidity.",
+        edgeText: "Keep small distressed optionality."
+      }]
+    });
+
+    expect(result.blockReasons.some((reason) => reason.code === "SOURCE_BASE_RATE_MISSING")).toBe(true);
+    expect(result.stateOfArt?.signalWarnings).toContain("Base rate missing for a repeated or elevated-odds exposure.");
+  });
+
+  it("flags contradictory odds labels against repeated survival damage", () => {
+    const now = new Date().toISOString();
+    const state = baseState();
+    state.domains.push({ id: "d1", name: "Ops", createdAt: now, updatedAt: now });
+    state.sources!.push({
+      id: "s1",
+      code: "ops",
+      name: "Operational fragility",
+      sortOrder: 1,
+      domains: [{ id: "link-1", sourceId: "s1", domainId: "d1", dependencyKind: "PRIMARY", pathWeight: 1 }]
+    } as never);
+
+    const result = evaluateDecision({
+      mode: "source",
+      targetId: "s1",
+      state,
+      noRuinGate: true,
+      role: "MISSIONARY",
+      sourceMapProfiles: [{
+        id: "smp-1",
+        sourceId: "s1",
+        domainId: "d1",
+        decisionType: "complex",
+        tailClass: "fat",
+        quadrant: "Q4",
+        methodPosture: "No-ruin first.",
+        stakesText: "Operational continuity.",
+        risksText: "Repeated outage.",
+        oddsText: "Narratively framed as low despite repeated breaks.",
+        oddsBand: "low",
+        repeatRateText: "Daily repeated exposure.",
+        baseRateText: "This system has broken repeatedly under load.",
+        triggerConditionText: "Peak traffic spike.",
+        survivalImpact: "existential",
+        lineageThreatText: "Business survival.",
+        fragilityPosture: "fragile",
+        vulnerabilitiesText: "Single point of failure.",
+        hedgeText: "Add redundancy.",
+        edgeText: "Keep only tiny experiments."
+      }]
+    });
+
+    expect(result.blockReasons.some((reason) => reason.code === "SOURCE_SIGNAL_CONTRADICTION")).toBe(true);
+    expect(result.stateOfArt?.signalWarnings).toContain("Odds band conflicts with repetition and survival damage; reclassify the field.");
   });
 
   it("tightens affair readiness when higher-lineage exposure is unhedged", () => {

@@ -1,5 +1,7 @@
 # KHAL Product Brief for Image Generation
 
+Status: downstream
+
 ## Purpose
 KHAL is a local-first decision-making operating system for one operator.
 
@@ -19,7 +21,7 @@ KHAL is not:
 KHAL is a decision operating system.
 
 ## Runtime authority
-- Runtime source of truth: `data/KHAL.sqlite`
+- Runtime source of truth: selected SQLite runtime as defined in `docs/product/Khal_genesis.md`, with `data/KHAL.sqlite` as template DB
 - Excel `Genesis.xlsx` is archival/reference only
 
 ## Product spine

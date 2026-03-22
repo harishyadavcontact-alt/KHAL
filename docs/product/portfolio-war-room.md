@@ -1,7 +1,11 @@
 # Portfolio War Room
 
+Status: downstream
+
 ## One-line definition
 Portfolio War Room is Mission Command for multiple bets. It is the surface that lets the operator command several active projects, ventures, and probes from one strategic-operational view.
+
+Derived from `docs/product/Khal_genesis.md`. This document defines the local surface contract for Portfolio War Room.
 
 ## Placement inside KHAL
 - Canonical route: `/missionCommand/portfolio`
@@ -17,7 +21,7 @@ Portfolio War Room is not:
 It is the command layer above bets.
 
 ## Product doctrine
-- SQLite is the runtime authority.
+- Active runtime is the selected SQLite database as defined in `docs/product/Khal_genesis.md`.
 - Visual signal beats textual clutter.
 - One tile equals one strategic bet, not one repository.
 - The surface is inspect-first. Editing exists, but does not dominate the screen.

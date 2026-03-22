@@ -14,7 +14,7 @@ export interface DecisionTreeModeDefinition {
   grammarSummary: string[];
 }
 
-export const DEFAULT_WARGAME_MODE: DecisionTreeModeId = "affair";
+export const DEFAULT_WARGAME_MODE: DecisionTreeModeId = "source";
 export const DEFAULT_WARGAME_ROUTE = `/war-gaming/${DEFAULT_WARGAME_MODE}` as const;
 
 export const DECISION_TREE_MODES: readonly DecisionTreeModeDefinition[] = [
