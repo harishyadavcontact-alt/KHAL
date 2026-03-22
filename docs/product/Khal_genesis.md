@@ -525,10 +525,24 @@ So:
 - `funnel` = conversion machine
 - `channel` = route to reality
 
-Preparation, logistics, resourcing, and cadence follow the same rule:
-- keep the doctrine in `Crafts`
-- keep the live state in the relevant `Campaign`
-- avoid creating a separate top-level logistics ontology unless repeated live use forces it
+Planning, preparation, logistics, resourcing, and cadence follow the same rule.
+
+They are not a separate live layer from pipeline, funnel, and channel.
+
+They are part of the same campaign operating packet.
+
+So for live use:
+- `Campaign` carries plan shape
+- `Campaign` carries preparation state
+- `Campaign` carries logistics state
+- `Campaign` carries resource posture
+- `Campaign` carries scheduling / cadence
+- `Campaign` carries pipeline / funnel / channel logic
+
+And for reusable doctrine:
+- `Crafts` explains how to design and run that packet well
+
+Avoid creating a separate top-level logistics ontology unless repeated live use forces it.
 
 ## Stakeholder doctrine for projects
 Projects are not just code artifacts.
@@ -716,18 +730,28 @@ Doctrine:
 - Campaign belongs below Interest and Execution
 - Campaign is not Portfolio
 - Campaign is how an option is operationally probed across multiple attempts
-- Campaign is the strategic machine around the option:
+- Campaign is the unified operating machine around the option:
   - roadmap
   - GTM
   - growth
   - distribution
   - funding
+- Campaign also carries the plan packet:
+  - planning
+  - preparation
+  - logistics
+  - resourcing
+  - scheduling / cadence
+- Campaign also carries the movement packet:
+  - pipeline
+  - funnel
+  - channel
 - Campaign also carries live preparation and logistics state:
   - readiness
   - resourcing
   - cadence
   - supply and demand pressure
-- pipeline, funnel, and channel design belong to Campaign logic, not to Portfolio
+- pipeline, funnel, channel, plan, preparation, and logistics belong to Campaign logic, not to Portfolio
 - Campaign is where stage gates, milestone chains, funnel stages, channel thesis, and decision triggers are carried
 
 ### Portfolio War Room
