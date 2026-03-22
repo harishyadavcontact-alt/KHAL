@@ -263,6 +263,194 @@ Example:
 - campaign snapshots
 - time horizon profile
 
+## Operational data model
+KHAL must preserve a parsimonious data model even when the operating doctrine becomes richer.
+
+That means:
+- do not create a new database for every useful concept
+- keep canonical entity types small
+- place lifecycle, strategy, and execution concepts onto the right entity layer
+
+### Core live entities
+- `Source`
+  - volatility source
+- `Domain`
+  - where volatility lands
+- `Affair`
+  - obligation / hedge / no-ruin branch
+- `Interest`
+  - option / edge / convexity branch
+- `Craft`
+  - means doctrine and reusable methods
+- `Campaign`
+  - strategy and repeated execution machine below `Interest`
+- `Task`
+  - concrete execution attempt
+
+### Supporting entity families
+- `Heap`
+- `Model`
+- `Framework`
+- `Barbell`
+- `Stack`
+- `Protocol`
+- `Rule`
+- `Heuristic`
+- `Wargame`
+- `Scenario`
+- `Threat`
+- `Response`
+
+### Surface-only layers
+These are command surfaces, not separate canonical data classes:
+- `War Room`
+- `War Gaming`
+- `Mission Command`
+- `Vision Command`
+- `Lab`
+- `Portfolio`
+- `Dashboard`
+- `Drafts`
+
+## Old and new synthesis
+KHAL already had the deep skeleton.
+
+The newer operating additions should be understood as refinements inside that skeleton, not as a replacement of it.
+
+### Stable old frame
+- `War Room`
+- `War Gaming`
+- `Mission Command`
+- `Vision Command`
+- `Lab`
+- `Campaign`
+- `Portfolio`
+- `Surgical Execution`
+
+### Newer operating refinements
+- venture stage
+- portfolio decision
+- protocol readiness
+- pipeline design
+- funnel design
+- channel thesis
+- channel stack
+- milestone chain
+- stage gate
+- stakeholder mapping
+- players / fragilistas
+- affected parties
+
+These refinements do not require a new top-level ontology.
+
+They are distributed across:
+- `Interest`
+- `Campaign`
+- `Task`
+- doctrine pages under `Means`
+
+## Entity field doctrine
+### Interest
+`Interest` should remain sparse enough to preserve clarity.
+
+It should carry:
+- hypothesis
+- downside
+- evidence note
+- expiry
+- max loss
+- hedge %
+- edge %
+- irreversibility
+- planning & preparation
+- project plan
+- protocol readiness
+- venture stage
+- lab stage
+- current wedge
+- current bottleneck
+- metric that matters
+- portfolio decision
+- stakeholders
+- players / fragilistas
+- affected parties
+- linked campaigns
+- linked execution
+
+### Campaign
+`Campaign` is the strategy side around an option.
+
+It should carry:
+- campaign type
+- stage gate
+- primary metric
+- milestone chain
+- decision trigger
+- pipeline
+- pipeline stage
+- funnel
+- funnel stage
+- channel thesis
+- channel stack
+- pipeline design
+- repeated attempts
+- convergence
+- fragility band
+
+### Task
+`Task` should remain concrete.
+
+It should answer:
+- what move is being made
+- under which interest / campaign / affair
+- on what horizon
+- with what next action
+
+## Portfolio decision doctrine
+Portfolio decisions belong above execution and inside branch command.
+
+Use:
+- `iterate`
+- `pivot`
+- `persist`
+- `pause`
+- `kill`
+- `double_down`
+
+Rule:
+- do not let branches drift without an explicit portfolio decision
+
+## Pipeline and funnel doctrine
+Pipeline and funnel logic must stay generic.
+
+Do not hardcode separate permanent systems for:
+- content
+- media
+- software delivery
+- sales
+- GTM
+
+Instead:
+- define the specific pipeline or funnel in the relevant `Campaign`
+- keep the schema generic
+- let the campaign describe the machine
+
+So:
+- `pipeline` = work-flow machine
+- `funnel` = conversion machine
+- `channel` = route to reality
+
+## Stakeholder doctrine for projects
+Projects are not just code artifacts.
+
+Each `Interest` should identify:
+- `stakeholders`
+  - who benefits or bears consequence
+- `players / fragilistas`
+  - who shapes incentives, risk, or field conditions
+- `affected parties`
+  - who is exposed even if not directly operating the branch
+
 ## Surface contracts
 ### War Room
 Function:
