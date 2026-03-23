@@ -459,7 +459,7 @@ It should carry:
 `Campaign` is the strategy side around an option.
 
 It should carry:
-- campaign type
+- strategy
 - stage gate
 - primary metric
 - milestone chain
@@ -1033,7 +1033,7 @@ flowchart TD
 
     subgraph CAM["Campaign"]
         H --> CPG1["Campaign root from Interest"]
-        CPG1 --> CPG2["Campaign type<br/>roadmap / GTM / growth / distribution / funding"]
+        CPG1 --> CPG2["Strategy<br/>roadmap / GTM / growth / distribution / funding / blitzscaling readiness"]
         CPG2 --> CPG3["Stage gate"]
         CPG3 --> CPG4["Milestone chain"]
         CPG4 --> CPG5["Funnel stage"]
@@ -1154,6 +1154,6 @@ The whole product should be read in this order:
 - `Interest` must show protocol and downside explicitly
 - `Lab` is not generic experimentation; it is the controlled lifecycle of `Interest`
 - `Campaign` is not Portfolio; it is repeated execution under an `Interest`
-- `Campaign` also carries the strategy layer around the option: roadmap, GTM, growth, distribution, funding, and funnel logic
+- `Campaign` also carries the strategy layer around the option: roadmap, GTM, growth, distribution, funding, blitzscaling readiness, and funnel logic
 - `Portfolio` is above bets, not below them
 
