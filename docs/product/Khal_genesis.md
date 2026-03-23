@@ -731,11 +731,14 @@ Doctrine:
 - Campaign is not Portfolio
 - Campaign is how an option is operationally probed across multiple attempts
 - Campaign is the unified operating machine around the option:
+  - strategy
   - roadmap
   - GTM
   - growth
   - distribution
   - funding
+  - blitzscaling readiness
+- Campaign is where pipeline, funnel, channel, planning, preparation, logistics, and scheduling live together
 - Campaign also carries the plan packet:
   - planning
   - preparation
